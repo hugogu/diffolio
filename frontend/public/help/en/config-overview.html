@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Management Overview - Dictionary Research Platform</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>Configuration Management Overview</h1>
+            <p>Configuration management allows you to create and manage dictionary parsing rules. Through custom configurations, you can improve the accuracy and efficiency of dictionary file parsing. The system provides flexible configuration templates and a powerful rule editor.</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>Configuration Management Interface</h2>
+                <div class="screenshot">
+                    <img src="../images/config-management.png" alt="Configuration Management Interface">
+                    <p class="screenshot-caption">Configuration management list interface</p>
+                </div>
+                
+                <p>The configuration management interface displays all available parsing configurations, including system built-in configurations and user custom configurations.</p>
+            </div>
+
+            <div class="help-section">
+                <h2>Main Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Custom Rules</h3>
+                        <p>Create parsing rules suitable for specific dictionary formats</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>Configuration Templates</h3>
+                        <p>Provide configuration templates for common dictionary formats</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🧪</div>
+                        <h3>Real-time Testing</h3>
+                        <p>Test parsing effects of configuration rules instantly</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Effect Statistics</h3>
+                        <p>Display parsing success rate and error statistics</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Configuration Types</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🏢</div>
+                        <h3>System Built-in Configurations</h3>
+                        <p>Standard configurations provided by the platform, suitable for common dictionary formats</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Modern Chinese Dictionary configuration</li>
+                                <li>Classical Chinese Dictionary configuration</li>
+                                <li>Idiom Dictionary configuration</li>
+                                <li>Professional Dictionary configuration</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">👤</div>
+                        <h3>User Custom Configurations</h3>
+                        <p>Personalized configurations created according to specific needs</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Clone based on existing configurations</li>
+                                <li>Create completely custom configurations</li>
+                                <li>Independent management after cloning</li>
+                                <li>Version history records</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Clone Configuration</h3>
+                        <p>Create variants based on existing configurations to quickly adapt to similar formats</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Inherit original configuration rules</li>
+                                <li>Can adjust specific parameters</li>
+                                <li>Maintain configuration associations</li>
+                                <li>Batch clone support</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Configuration Rule Types</h2>
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag required">Required</span>
+                        <div class="field-info">
+                            <strong>Entry Recognition Rule</strong> - Defines how to recognize and extract entry names, usually using regular expressions
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag required">Required</span>
+                        <div class="field-info">
+                            <strong>Definition Extraction Rule</strong> - Defines how to extract definition content, supports multi-line matching
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>POS Recognition Rule</strong> - Defines extraction patterns for part-of-speech annotations
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Example Recognition Rule</strong> - Defines start and end markers for examples
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Pinyin Recognition Rule</strong> - Defines extraction method for pinyin information
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Extended Field Rule</strong> - Defines extraction rules for custom fields
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Configuration Creation Workflow</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>Select Creation Method</h4>
+                        </div>
+                        <p>You can choose to create from template, clone existing configuration, or create completely custom configuration.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>Set Basic Information</h4>
+                        </div>
+                        <p>Fill in configuration name, description, and other basic information for subsequent management and identification.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>Configure Parsing Rules</h4>
+                        </div>
+                        <p>Use the rule editor to set recognition and extraction rules for various fields.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>Test Configuration Effect</h4>
+                        </div>
+                        <p>Use test text to verify the parsing effect of configuration rules.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">5</div>
+                            <h4>Save Configuration</h4>
+                        </div>
+                        <p>After confirming the configuration is correct, save it. It can then be used during dictionary upload.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Rule Editor</h2>
+                <p>The rule editor provides powerful regular expression editing and testing functions:</p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">✏️</div>
+                        <h3>Syntax Highlighting</h3>
+                        <p>Regular expression syntax highlighting display for easy writing and debugging</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🧪</div>
+                        <h3>Real-time Testing</h3>
+                        <p>Input test text to view matching results in real-time</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>Template Library</h3>
+                        <p>Provides common regular expression templates and examples</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💡</div>
+                        <h3>Smart Tips</h3>
+                        <p>Provides syntax hints and error checking functions</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Configuration Validation</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">✅</div>
+                        <h3>Syntax Validation</h3>
+                        <p>Check correctness of regular expression syntax</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Logic Validation</h3>
+                        <p>Validate logical relationships and compatibility between rules</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Effect Validation</h3>
+                        <p>Test parsing effects using sample data</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h3>Error Prompts</h3>
+                        <p>Provide detailed error information and modification suggestions</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Best Practices</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Start from Templates</h4>
+                        <p>Prioritize using system-provided configuration templates and adjust based on them to save development time.</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Thorough Testing</h4>
+                        <p>Use various types of test text to validate configuration, ensuring rule universality and accuracy.</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Version Management</h4>
+                        <p>Important configurations are recommended to have version backups for easy rollback and comparison of different version effects.</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Documentation</h4>
+                        <p>Add detailed descriptions and usage instructions for configurations for team members to understand and use.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>FAQ</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">Not familiar with regular expressions, what to do?</div>
+                        <div class="faq-answer">
+                            The system provides rich templates and examples. You can start with simple rules and gradually learn regular expression syntax.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">Can configurations be shared with other users?</div>
+                        <div class="faq-answer">
+                            Currently configurations are managed under the current user account only. To share, other users can create similar configurations based on the same templates.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">How to improve parsing accuracy?</div>
+                        <div class="faq-answer">
+                            Through continuous testing and optimization of rules, using more sample data for validation, and considering edge case handling.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Related Features</h2>
+                <div class="related-links">
+                    <a href="dictionary-upload.html" class="related-link">File Upload</a>
+                    <a href="dictionary-overview.html" class="related-link">Dictionary Management Overview</a>
+                    <a href="comparison-overview.html" class="related-link">Version Comparison Overview</a>
+                    <a href="search-overview.html" class="related-link">Headword Search Overview</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../help.js"></script>
+</body>
+</html>

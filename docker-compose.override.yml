@@ -1,0 +1,55 @@
+# Development overrides: volume mounts, hot reload, exposed ports
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      target: development
+      args:
+        REGISTRY_PREFIX: ${REGISTRY_PREFIX:-}
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - ${DATA_DIR:-./data}/uploads:/data/uploads
+    # Re-run prisma generate on each start so schema changes in the volume are picked up
+    # Note: schema sync to DB should be done from host: cd backend && DATABASE_URL=postgresql://dict:dict@localhost:5432/dictdb npx prisma db push
+    command: ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run dev"]
+
+  worker:
+    build:
+      target: development
+      args:
+        REGISTRY_PREFIX: ${REGISTRY_PREFIX:-}
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - ${DATA_DIR:-./data}/uploads:/data/uploads
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=2560
+    mem_limit: 3000m
+    command: ["sh", "-c", "npx prisma generate && npm run worker:all"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        REGISTRY_PREFIX: ${REGISTRY_PREFIX:-}
+    environment:
+      VITE_API_PROXY_TARGET: http://api:3000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    ports:
+      - "5174:5173"
+    command: ["npm", "run", "dev", "--", "--host"]
+
+networks:
+  common_backend:
+    external: false

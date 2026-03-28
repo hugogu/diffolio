@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload - Dictionary Research Platform</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>File Upload</h1>
+            <p>The file upload function supports multiple dictionary formats. Through intelligent parsing configuration, dictionary content is converted into structured data, providing a foundation for subsequent version comparison and analysis.</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>Supported File Formats</h2>
+                <div class="format-grid">
+                    <div class="format-card recommended">
+                        <div class="format-icon">TXT</div>
+                        <h4>Text File</h4>
+                        <p>Plain text format, suitable for dictionaries with simple structure</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>UTF-8 encoding recommended</li>
+                                <li>Supports line breaks</li>
+                                <li>Easy to edit and view</li>
+                                <li>Moderate file size</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">JSON</div>
+                        <h4>JSON Format</h4>
+                        <p>Structured data, suitable for program processing</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Standard data format</li>
+                                <li>Clear hierarchical structure</li>
+                                <li>Supports complex data types</li>
+                                <li>Easy for program parsing</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">XML</div>
+                        <h4>XML Format</h4>
+                        <p>Markup language, suitable for complex dictionaries</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Self-describing structure</li>
+                                <li>Supports namespaces</li>
+                                <li>Stylesheet support</li>
+                                <li>Internationalization friendly</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">XLSX</div>
+                        <h4>Excel Spreadsheet</h4>
+                        <p>Spreadsheet format, suitable for batch processing</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Visual editing</li>
+                                <li>Formula support</li>
+                                <li>Data validation features</li>
+                                <li>Widely compatible format</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Upload Steps</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>Select File</h4>
+                        </div>
+                        <p>Click the upload area or drag and drop files to the designated area to select dictionary files for upload.</p>
+                        <div class="screenshot">
+                            <img src="../images/dictionary-management.png" alt="File Upload Interface">
+                            <p class="screenshot-caption">File upload interface</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>Configure Parsing</h4>
+                        </div>
+                        <p>Select a suitable parsing configuration, or create a new configuration to define entry recognition rules.</p>
+                        <div class="screenshot">
+                            <img src="../images/config-management.png" alt="Parsing Configuration Interface">
+                            <p class="screenshot-caption">Parsing configuration selection interface</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>Start Upload</h4>
+                        </div>
+                        <p>After confirming the configuration is correct, click the "Start Upload" button to begin processing the file.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>Processing</h4>
+                        </div>
+                        <p>The system automatically parses file content, extracting entries, definitions, and example sentences.</p>
+                        <div class="screenshot">
+                            <img src="../images/processing.png" alt="File Processing">
+                            <p class="screenshot-caption">Dictionary file parsing and processing</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">5</div>
+                            <h4>Verify Results</h4>
+                        </div>
+                        <p>After upload is complete, check parsing results and confirm entry recognition accuracy.</p>
+                        <div class="screenshot">
+                            <img src="../images/comparison-results.jpg" alt="Parse Result Verification">
+                            <p class="screenshot-caption">Parse result verification interface</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Parsing Configuration</h2>
+                <p>Parsing configuration defines how the system recognizes and extracts entry information from dictionaries:</p>
+                
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag required">Required</span>
+                        <div class="field-info">
+                            <strong>Entry Pattern</strong> - Defines entry recognition rules, such as regular expressions
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag required">Required</span>
+                        <div class="field-info">
+                            <strong>Definition Pattern</strong> - Defines extraction rules for definition content
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Example Pattern</strong> - Defines recognition rules for example sentences
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>POS Pattern</strong> - Defines extraction rules for part-of-speech information
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>File Requirements</h2>
+                <div class="tips">
+                    <div class="tip-alert">
+                        <h4>File Size</h4>
+                        <ul>
+                            <li>Maximum single file size 100MB</li>
+                            <li>Recommended file size under 10MB</li>
+                            <li>Large files may take longer to process</li>
+                            <li>Please split files if over limit</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-alert">
+                        <h4>Encoding Format</h4>
+                        <ul>
+                            <li>UTF-8 encoding recommended</li>
+                            <li>Avoid using old encodings like GBK, GB2312</li>
+                            <li>Check file encoding before upload</li>
+                            <li>Encoding errors may cause parsing failures</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-alert">
+                        <h4>File Structure</h4>
+                        <ul>
+                            <li>Ensure clear and consistent file structure</li>
+                            <li>Avoid using complex formatting</li>
+                            <li>Check for special characters</li>
+                            <li>Recommended to test with small batches first</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Error Handling</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h3>Format Error</h3>
+                        <p>Check if file format meets requirements and encoding is correct</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Parse Failed</h3>
+                        <p>Adjust parsing configuration and optimize recognition rules</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Low Recognition Rate</h3>
+                        <p>Check file structure and improve configuration rules</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Re-upload</h3>
+                        <p>Re-upload files after correcting issues</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Best Practices</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Preprocess Files</h4>
+                        <p>Organize file format before upload to ensure unified structure and correct encoding.</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Test Configuration</h4>
+                        <p>Use small files to test parsing configuration, confirm effectiveness before uploading complete files.</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Monitor Progress</h4>
+                        <p>Monitor processing progress during upload to discover and resolve issues promptly.</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Verify Results</h4>
+                        <p>Carefully verify parsing results after upload to ensure data accuracy.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>FAQ</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">What to do if upload fails?</div>
+                        <div class="faq-answer">
+                            Check network connection, file size, and if format meets requirements. You can try re-uploading or contact technical support.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">How to improve parsing accuracy?</div>
+                        <div class="faq-answer">
+                            Optimize parsing configuration, use suitable recognition rules, and ensure clear and consistent file structure.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">Can I upload multiple files at once?</div>
+                        <div class="faq-answer">
+                            Currently supports single file upload. For multiple files, please upload separately or contact technical support.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Related Features</h2>
+                <div class="related-links">
+                    <a href="dictionary-overview.html" class="related-link">Dictionary Management Overview</a>
+                    <a href="dictionary-create.html" class="related-link">Add Book</a>
+                    <a href="dictionary-version.html" class="related-link">Version Management</a>
+                    <a href="config-overview.html" class="related-link">Configuration Management</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../help.js"></script>
+</body>
+</html>

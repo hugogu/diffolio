@@ -1,0 +1,644 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Auth
+// ─────────────────────────────────────────────
+
+model User {
+  id                      String    @id @default(uuid())
+  username                String?   @unique
+  email                   String    @unique
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  verificationToken       String?   @map("verification_token")
+  verificationTokenExpiry DateTime? @map("verification_token_expiry")
+  passwordHash String @map("password_hash")
+  role                    UserRole  @default(REGULAR)
+  exportEnabled           Boolean   @default(false) @map("export_enabled")
+  maxVersions             Int       @default(2) @map("max_versions")
+  maxBooks                Int       @default(1) @map("max_books")
+  canEditBuiltinConfigs   Boolean   @default(false) @map("can_edit_builtin_configs")
+  watermarkEnabled        Boolean   @default(true)  @map("watermark_enabled")
+  disabled                Boolean   @default(false) @map("disabled")
+  agreedToTerms           Boolean   @default(false) @map("agreed_to_terms")
+  termsAgreedAt           DateTime? @map("terms_agreed_at")
+  lastLoginAt             DateTime? @map("last_login_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  dictionaries            Dictionary[]
+  taxonomySources         TaxonomySource[]
+  subscription            UserSubscription?
+  energyBalance           EnergyBalance?
+  energyEvents            EnergyEvent[]
+  wordUnlocks             WordUnlock[]
+  systemFormatConfigs      SystemFormatConfig[]
+  systemConfigVisibilities SystemConfigVisibility[]
+  userFormatConfigs        UserFormatConfig[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  REGULAR
+  SUBSCRIBED
+  READER // legacy; treated as REGULAR in code
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+
+// ─────────────────────────────────────────────
+// Dictionary & Versions
+// ─────────────────────────────────────────────
+
+model Dictionary {
+  id             String              @id @default(uuid())
+  name           String              @unique
+  publisher      String
+  language       String              @default("zh")
+  encodingScheme String @map("encoding_scheme")
+  description    String?
+  userId         String?             @map("user_id")
+  user           User?               @relation(fields: [userId], references: [id])
+  lastAccessedAt DateTime?           @map("last_accessed_at")
+  deletedAt      DateTime?           @map("deleted_at")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  versions       DictionaryVersion[]
+  wordUnlocks    WordUnlock[]
+
+  @@map("dictionaries")
+}
+
+model DictionaryVersion {
+  id            String       @id @default(uuid())
+  dictionaryId String @map("dictionary_id")
+  dictionary    Dictionary   @relation(fields: [dictionaryId], references: [id])
+  label         String
+  publishedYear Int? @map("published_year")
+  notes         String?
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  formatConfig  FormatConfig?
+  parseTasks    ParseTask[]
+  entries       Entry[]
+
+  comparisonsAsA Comparison[] @relation("CompVersionA")
+  comparisonsAsB Comparison[] @relation("CompVersionB")
+
+  @@unique([dictionaryId, label])
+  @@map("dictionary_versions")
+}
+
+// ─────────────────────────────────────────────
+// Format Configuration
+// ─────────────────────────────────────────────
+
+model FormatConfig {
+  id               String            @id @default(uuid())
+  versionId String            @unique @map("version_id")
+  version          DictionaryVersion @relation(fields: [versionId], references: [id])
+  parentConfigId String? @map("parent_config_id")
+  name             String
+  configJson Json @map("config_json")
+  validationStatus ConfigStatus      @default(PENDING) @map("validation_status")
+  validationReport Json? @map("validation_report")
+  sourceConfigId   String?           @map("source_config_id")
+  sourceConfigType ConfigSourceType? @map("source_config_type")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@map("format_configs")
+}
+
+enum ConfigStatus {
+  PENDING
+  VALID
+  INVALID
+}
+
+enum ConfigVisibility {
+  ALL_USERS
+  SPECIFIC_USERS
+}
+
+enum ConfigSourceType {
+  SYSTEM
+  USER
+}
+
+// ─────────────────────────────────────────────
+// Config Management (007-config-management)
+// ─────────────────────────────────────────────
+
+model SystemFormatConfig {
+  id               String                   @id @default(uuid())
+  name             String
+  description      String?
+  configJson       Json                     @map("config_json")
+  validationStatus ConfigStatus             @default(PENDING) @map("validation_status")
+  validationReport Json?                    @map("validation_report")
+  visibility       ConfigVisibility         @default(ALL_USERS)
+  createdById      String                   @map("created_by")
+  createdBy        User                     @relation(fields: [createdById], references: [id])
+  allowedUsers     SystemConfigVisibility[]
+  createdAt        DateTime                 @default(now()) @map("created_at")
+  updatedAt        DateTime                 @updatedAt @map("updated_at")
+
+  @@index([visibility])
+  @@index([createdById])
+  @@map("system_format_configs")
+}
+
+model SystemConfigVisibility {
+  id             String             @id @default(uuid())
+  systemConfigId String             @map("system_config_id")
+  systemConfig   SystemFormatConfig @relation(fields: [systemConfigId], references: [id], onDelete: Cascade)
+  userId         String             @map("user_id")
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  @@unique([systemConfigId, userId])
+  @@index([userId])
+  @@map("system_config_visibility")
+}
+
+model UserFormatConfig {
+  id               String       @id @default(uuid())
+  userId           String       @map("user_id")
+  user             User         @relation(fields: [userId], references: [id])
+  name             String
+  description      String?
+  configJson       Json         @map("config_json")
+  validationStatus ConfigStatus @default(PENDING) @map("validation_status")
+  validationReport Json?        @map("validation_report")
+  clonedFromId     String?      @map("cloned_from_id")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("user_format_configs")
+}
+
+// ─────────────────────────────────────────────
+// Parse Tasks
+// ─────────────────────────────────────────────
+
+model ParseTask {
+  id                String            @id @default(uuid())
+  versionId String @map("version_id")
+  version           DictionaryVersion @relation(fields: [versionId], references: [id])
+  bullmqJobId String?           @unique @map("bullmq_job_id")
+  status            TaskStatus        @default(PENDING)
+  fileType FileType @map("file_type")
+  originalFileName String @map("original_file_name")
+  storedFilePath String @map("stored_file_path")
+  totalPages Int? @map("total_pages")
+  totalEntries Int? @map("total_entries")
+  processedPages Int               @default(0) @map("processed_pages")
+  processedEntries Int               @default(0) @map("processed_entries")
+  failedEntries Int               @default(0) @map("failed_entries")
+  checkpointOffset Int               @default(0) @map("checkpoint_offset")
+  startedAt DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  errors            ParseError[]
+
+  @@map("parse_tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum FileType {
+  TXT
+  DOC
+  DOCX
+  PDF
+}
+
+// ─────────────────────────────────────────────
+// Parse Errors
+// ─────────────────────────────────────────────
+
+model ParseError {
+  id            String      @id @default(uuid())
+  taskId String @map("task_id")
+  task          ParseTask   @relation(fields: [taskId], references: [id])
+  pageNumber Int? @map("page_number")
+  lineNumber Int? @map("line_number")
+  rawText String @map("raw_text")
+  fieldName String @map("field_name")
+  errorCode String @map("error_code")
+  errorDetail String @map("error_detail")
+  status        ErrorStatus @default(PENDING)
+  correctedText String? @map("corrected_text")
+  correctedBy String? @map("corrected_by")
+  correctedAt DateTime? @map("corrected_at")
+  retriedAt DateTime? @map("retried_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@map("parse_errors")
+}
+
+enum ErrorStatus {
+  PENDING
+  CORRECTED
+  COMMITTED
+  DISMISSED
+}
+
+// ─────────────────────────────────────────────
+// Parsed Dictionary Entries
+// ─────────────────────────────────────────────
+
+model Entry {
+  id                 String            @id @default(uuid())
+  versionId String @map("version_id")
+  version            DictionaryVersion @relation(fields: [versionId], references: [id])
+  taskId String? @map("task_id")
+  rawHeadword String @map("raw_headword")
+  normalizedHeadword String @map("normalized_headword")
+  entrySequence      Int?              @map("entry_sequence")
+  phonetic           String?
+  pageNumber Int? @map("page_number")
+  lineNumber Int? @map("line_number")
+  metadata           Json?
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  senses             Sense[]
+  alignmentsAsA      EntryAlignment[]  @relation("AlignEntryA")
+  alignmentsAsB      EntryAlignment[]  @relation("AlignEntryB")
+
+  @@index([versionId, normalizedHeadword])
+  @@map("entries")
+}
+
+model Sense {
+  id               String   @id @default(uuid())
+  entryId String @map("entry_id")
+  entry            Entry    @relation(fields: [entryId], references: [id])
+  rawNumber String @map("raw_number")
+  normalizedNumber String @map("normalized_number")
+  definition       String
+  rawDefinition String @map("raw_definition")
+  phonetic         String?
+  grammaticalCat String? @map("grammatical_cat")
+  register         String?
+  etymology        String?
+  position         Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  examples         Example[]
+
+  @@index([entryId])
+  @@map("senses")
+}
+
+model Example {
+  id             String   @id @default(uuid())
+  senseId String @map("sense_id")
+  sense          Sense    @relation(fields: [senseId], references: [id])
+  rawText String @map("raw_text")
+  normalizedText String @map("normalized_text")
+  position       Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([senseId])
+  @@map("examples")
+}
+
+// ─────────────────────────────────────────────
+// Comparisons & Alignment
+// ─────────────────────────────────────────────
+
+model Comparison {
+  id           String            @id @default(uuid())
+  versionAId String @map("version_a_id")
+  versionBId String @map("version_b_id")
+  versionA     DictionaryVersion @relation("CompVersionA", fields: [versionAId], references: [id])
+  versionB     DictionaryVersion @relation("CompVersionB", fields: [versionBId], references: [id])
+  status       CompStatus        @default(PENDING)
+  totalA       Int? @map("total_a")
+  totalB       Int? @map("total_b")
+  matched      Int?
+  addedInB Int? @map("added_in_b")
+  deletedFromA Int? @map("deleted_from_a")
+  bullmqJobId String? @map("bullmq_job_id")
+  createdAt DateTime          @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  alignments   EntryAlignment[]
+  exports      ExportJob[]
+
+  @@unique([versionAId, versionBId])
+  @@map("comparisons")
+}
+
+enum CompStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model EntryAlignment {
+  id           String         @id @default(uuid())
+  comparisonId String @map("comparison_id")
+  comparison   Comparison     @relation(fields: [comparisonId], references: [id])
+  entryAId String? @map("entry_a_id")
+  entryBId String? @map("entry_b_id")
+  entryA       Entry?         @relation("AlignEntryA", fields: [entryAId], references: [id])
+  entryB       Entry?         @relation("AlignEntryB", fields: [entryBId], references: [id])
+  changeType ChangeType @map("change_type")
+  alignScore Float? @map("align_score")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  senseDiffs   SenseDiff[]
+
+  @@index([comparisonId, changeType])
+  @@index([entryAId])
+  @@index([entryBId])
+  @@map("entry_alignments")
+}
+
+enum ChangeType {
+  MATCHED
+  ADDED
+  DELETED
+  MATCHED_VARIANT
+}
+
+model SenseDiff {
+  id          String          @id @default(uuid())
+  alignmentId String @map("alignment_id")
+  alignment   EntryAlignment  @relation(fields: [alignmentId], references: [id])
+  senseAId String? @map("sense_a_id")
+  senseBId String? @map("sense_b_id")
+  changeType SenseChangeType @map("change_type")
+  diffSummary Json? @map("diff_summary")
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@index([alignmentId])
+  @@map("sense_diffs")
+}
+
+enum SenseChangeType {
+  MATCHED
+  DEFINITION_CHANGED
+  POS_CHANGED
+  EXAMPLE_CHANGED
+  RENUMBERED
+  SPLIT
+  MERGED
+  ADDED
+  DELETED
+}
+
+// ─────────────────────────────────────────────
+// Export Jobs
+// ─────────────────────────────────────────────
+
+model ExportJob {
+  id           String       @id @default(uuid())
+  comparisonId String @map("comparison_id")
+  comparison   Comparison   @relation(fields: [comparisonId], references: [id])
+  format       ExportFormat @default(EXCEL)
+  status       TaskStatus   @default(PENDING)
+  bullmqJobId String? @map("bullmq_job_id")
+  orderBy String? @map("order_by")
+  taxonomySourceId String? @map("taxonomy_source_id")
+  downloadPath String? @map("download_path")
+  downloadUrl String? @map("download_url")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@map("export_jobs")
+}
+
+enum ExportFormat {
+  EXCEL
+}
+
+// ─────────────────────────────────────────────
+// Taxonomy (Semantic Classification)
+// ─────────────────────────────────────────────
+
+enum TaxonomySourceStatus {
+  PENDING
+  IMPORTING
+  ACTIVE
+  FAILED
+}
+
+model TaxonomySource {
+  id             String               @id @default(uuid())
+  name           String
+  description    String?
+  sourceFilePath String? @map("source_file_path")
+  configJson Json @map("config_json")
+  status         TaxonomySourceStatus @default(PENDING)
+  totalEntries Int? @map("total_entries")
+  userId         String?              @map("user_id")
+  user           User?                @relation(fields: [userId], references: [id])
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+
+  importTasks    TaxonomyImportTask[]
+  nodes          TaxonomyNode[]
+
+  @@map("taxonomy_sources")
+}
+
+model TaxonomyImportTask {
+  id               String               @id @default(uuid())
+  taxonomySourceId String @map("taxonomy_source_id")
+  source           TaxonomySource       @relation(fields: [taxonomySourceId], references: [id], onDelete: Cascade)
+  status           TaskStatus           @default(PENDING)
+  processedLines Int                  @default(0) @map("processed_lines")
+  failedLines Int                  @default(0) @map("failed_lines")
+  checkpointOffset Int                  @default(0) @map("checkpoint_offset")
+  errorLog Json? @map("error_log")
+  startedAt DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt DateTime             @default(now()) @map("created_at")
+
+  @@map("taxonomy_import_tasks")
+}
+
+model TaxonomyNode {
+  id               String         @id @default(uuid())
+  taxonomySourceId String @map("taxonomy_source_id")
+  source           TaxonomySource @relation(fields: [taxonomySourceId], references: [id], onDelete: Cascade)
+  parentId String? @map("parent_id")
+  parent           TaxonomyNode?  @relation("NodeChildren", fields: [parentId], references: [id])
+  children         TaxonomyNode[] @relation("NodeChildren")
+  level            Int
+  label            String
+  sequencePosition Int @map("sequence_position")
+  path             String
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  entries          TaxonomyEntry[]
+
+  @@unique([taxonomySourceId, path])
+  @@index([taxonomySourceId, level])
+  @@index([parentId])
+  @@map("taxonomy_nodes")
+}
+
+model TaxonomyEntry {
+  id                 String       @id @default(uuid())
+  nodeId String @map("node_id")
+  node               TaxonomyNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  taxonomySourceId String @map("taxonomy_source_id")
+  headword           String
+  normalizedHeadword String @map("normalized_headword")
+  sequencePosition Int @map("sequence_position")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([taxonomySourceId, normalizedHeadword])
+  @@index([nodeId, sequencePosition])
+  @@map("taxonomy_entries")
+}
+
+// ─────────────────────────────────────────────
+// Subscription & Energy System (005-coffee-subscription)
+// ─────────────────────────────────────────────
+
+enum SubscriptionTier {
+  BASIC
+  ADVANCED
+  PREMIUM
+  ELITE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  GRACE
+  EXPIRED
+}
+
+enum EnergyEventType {
+  MONTHLY_RESET
+  WORD_UNLOCK
+  BULK_UNLOCK
+  TOPUP_CREDIT
+  ADMIN_CREDIT
+  UPLOAD_DEDUCTION
+  PARSE_DEDUCTION
+  COMPARE_DEDUCTION
+}
+
+model UserSubscription {
+  id                    String             @id @default(uuid())
+  userId                String             @unique @map("user_id")
+  user                  User               @relation(fields: [userId], references: [id])
+  tier                  SubscriptionTier
+  status                SubscriptionStatus @default(ACTIVE)
+  expiresAt             DateTime           @map("expires_at")
+  monthlyEnergyAlloc    Int                @map("monthly_energy_alloc")
+  slotCount             Int                @map("slot_count")
+  gracePeriodStartedAt  DateTime?          @map("grace_period_started_at")
+  warningEmailSentAt    DateTime?          @map("warning_email_sent_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  @@map("user_subscriptions")
+}
+
+model EnergyBalance {
+  id                       String    @id @default(uuid())
+  userId                   String    @unique @map("user_id")
+  user                     User      @relation(fields: [userId], references: [id])
+  monthlyRemaining         Int       @default(0) @map("monthly_remaining")
+  purchasedRemaining       Int       @default(0) @map("purchased_remaining")
+  frozenPurchasedRemaining Int       @default(0) @map("frozen_purchased_remaining")
+  lifetimeUsed             Int       @default(0) @map("lifetime_used")
+  lastMonthlyResetAt       DateTime? @map("last_monthly_reset_at")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  @@map("energy_balances")
+}
+
+model EnergyEvent {
+  id          String          @id @default(uuid())
+  userId      String          @map("user_id")
+  user        User            @relation(fields: [userId], references: [id])
+  eventType   EnergyEventType @map("event_type")
+  description String
+  delta       Int
+  referenceId String?         @map("reference_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, eventType, referenceId])
+  @@map("energy_events")
+}
+
+model WordUnlock {
+  id                 String     @id @default(uuid())
+  userId             String     @map("user_id")
+  user               User       @relation(fields: [userId], references: [id])
+  dictionaryId       String     @map("dictionary_id")
+  dictionary         Dictionary @relation(fields: [dictionaryId], references: [id])
+  normalizedHeadword String     @map("normalized_headword")
+  unlockedAt         DateTime   @default(now()) @map("unlocked_at")
+
+  @@unique([userId, dictionaryId, normalizedHeadword])
+  @@index([userId, dictionaryId])
+  @@map("word_unlocks")
+}
+
+model SubscriptionPlan {
+  id                 String           @id @default(uuid())
+  tier               SubscriptionTier @unique
+  monthlyEnergyAlloc Int              @map("monthly_energy_alloc")
+  slotCount          Int              @map("slot_count")
+  priceYuan          Decimal          @map("price_yuan") @db.Decimal(10, 2)
+  description        String           @default("")
+  isActive           Boolean          @default(true) @map("is_active")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@map("subscription_plans")
+}
+
+model PaymentQRConfig {
+  id              String   @id @default(uuid())
+  channel         String   @unique
+  qrImagePath     String   @default("") @map("qr_image_path")
+  instructionText String   @default("") @map("instruction_text")
+  isActive        Boolean  @default(true) @map("is_active")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_qr_configs")
+}

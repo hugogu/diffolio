@@ -1,0 +1,27 @@
+{
+  "name": "示例汉语词典-扩展版格式配置",
+  "headwordPattern": "^([\\u4e00-\\u9fff\\u3400-\\u4dbf]{1,8})(?:\\s|$)",
+  "senseNumberPatterns": [
+    "^([①②③④⑤⑥⑦⑧⑨⑩])\\s*",
+    "^(\\d+)[.、]\\s*"
+  ],
+  "phoneticPattern": "\\[([a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+)\\]",
+  "exampleSeparator": "｜",
+  "substitutionRules": [
+    {
+      "symbol": "～",
+      "expandTo": "headword"
+    }
+  ],
+  "glyphVariants": [
+    {
+      "canonical": "爱",
+      "variants": ["愛"]
+    }
+  ],
+  "tradSimpMap": {
+    "愛": "爱",
+    "國": "国",
+    "語": "语"
+  }
+}

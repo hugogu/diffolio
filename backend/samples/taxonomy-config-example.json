@@ -1,0 +1,15 @@
+{
+  "name": "义类词典-示例格式",
+  "level1Pattern": "^[一二三四五六七八九十百千]+[、.．](.+)",
+  "level2Pattern": "^([A-Z].+)",
+  "level3Pattern": "^([a-z].+)",
+  "level4Pattern": "^(\\d{2,3})\\s+(.+)",
+  "headwordSeparator": "、",
+  "skipLinePatterns": ["^\\s*$"],
+  "textSanitization": {
+    "enabled": true,
+    "removeNullBytes": true,
+    "removeControlChars": true,
+    "customReplacements": []
+  }
+}

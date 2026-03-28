@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字头检索概述 - 辞书研习平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>字头检索概述</h1>
+            <p>字头检索功能让您在辞书数据库中快速查找特定的词条、释义或例句。系统支持多种检索方式，包括精确匹配、模糊搜索、正则表达式等，帮助您高效地找到需要的信息。</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>主要功能特性</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>快速检索</h3>
+                        <p>支持实时搜索，输入即显示结果</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>高级筛选</h3>
+                        <p>按辞书、版本、词性等条件筛选</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔎</div>
+                        <h3>精确查找</h3>
+                        <p>支持精确匹配和模糊搜索模式</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📄</div>
+                        <h3>结果预览</h3>
+                        <p>快速预览词条详细信息和上下文</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>搜索界面</h2>
+                <div class="screenshot">
+                    <img src="images/search-interface.png" alt="字头检索界面">
+                    <p class="screenshot-caption">字头检索主界面</p>
+                </div>
+                
+                <p>搜索界面提供了简洁直观的搜索体验，包括搜索框、筛选选项和结果展示区域。</p>
+            </div>
+
+            <div class="help-section">
+                <h2>检索方式</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>基础搜索</h3>
+                        <p>简单的关键词搜索，适合快速查找</p>
+                        <ul>
+                            <li>支持中文、英文搜索</li>
+                            <li>自动补全搜索建议</li>
+                            <li>搜索历史记录</li>
+                            <li>实时结果更新</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <h3>高级搜索</h3>
+                        <p>多条件组合搜索，精确查找目标</p>
+                        <ul>
+                            <li>多字段组合搜索</li>
+                            <li>布尔逻辑运算</li>
+                            <li>范围限定搜索</li>
+                            <li>结果排序选项</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>正则表达式</h3>
+                        <p>使用正则表达式进行复杂模式匹配</p>
+                        <ul>
+                            <li>完整的正则语法支持</li>
+                            <li>模式测试工具</li>
+                            <li>常用模式模板</li>
+                            <li>语法高亮显示</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>搜索范围</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>词条搜索</h3>
+                        <p>在词条名称中进行搜索</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>示例：网络 → 找到 12 个相关词条</li>
+                                <li>示例：计算* → 找到 8 个相关词条</li>
+                                <li>支持通配符和模糊匹配</li>
+                                <li>区分大小写选项</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📖</div>
+                        <h3>释义搜索</h3>
+                        <p>在释义内容中查找关键词</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>示例：计算机 → 在 156 个释义中找到</li>
+                                <li>示例：系统 → 在 89 个释义中找到</li>
+                                <li>支持语义搜索</li>
+                                <li>相关性排序</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>例句搜索</h3>
+                        <p>在例句中查找使用示例</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>示例：生活 → 在 45 个例句中找到</li>
+                                <li>示例：技术 → 在 67 个例句中找到</li>
+                                <li>上下文展示</li>
+                                <li>例句高亮显示</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>筛选选项</h2>
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>辞书筛选</strong> - 选择特定的辞书进行搜索，缩小搜索范围
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>版本筛选</strong> - 选择特定版本的辞书内容
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>词性筛选</strong> - 按词性类型筛选搜索结果
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>分类筛选</strong> - 使用分类词典进行语义筛选
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>搜索技巧</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>使用引号精确匹配</h4>
+                        <p>使用双引号包围搜索词进行精确匹配，避免模糊搜索结果。</p>
+                        <div class="example-item">
+                            <div class="example-query">"计算机网络"</div>
+                            <div class="example-result">只匹配完全相同的词条</div>
+                        </div>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>使用通配符</h4>
+                        <p>使用 * 匹配任意字符，扩大搜索范围。</p>
+                        <div class="example-item">
+                            <div class="example-query">网络*</div>
+                            <div class="example-result">匹配"网络"、"网络技术"、"网络系统"等</div>
+                        </div>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>组合搜索条件</h4>
+                        <p>使用 AND、OR、NOT 等逻辑运算符组合多个搜索条件。</p>
+                        <div class="example-item">
+                            <div class="example-query">网络 AND 计算机</div>
+                            <div class="example-result">同时包含"网络"和"计算机"的结果</div>
+                        </div>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>限定搜索范围</h4>
+                        <p>使用筛选器限定搜索的辞书、版本或词性范围。</p>
+                        <div class="example-item">
+                            <div class="example-query">生活 + 词性:动词</div>
+                            <div class="example-result">在动词中搜索"生活"</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>结果展示</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>列表视图</h3>
+                        <p>以列表形式展示搜索结果，包含词条、释义、例句等信息</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>详情视图</h3>
+                        <p>点击词条查看完整的详细信息和相关内容</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>统计视图</h3>
+                        <p>显示搜索结果的统计信息和分布情况</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>高亮显示</h3>
+                        <p>在结果中高亮显示匹配的关键词</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>常见问题</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">搜索不到结果怎么办？</div>
+                        <div class="faq-answer">
+                            尝试：1) 检查拼写是否正确；2) 使用更通用的关键词；3) 清除筛选条件；4) 尝试使用通配符。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">搜索结果太多怎么办？</div>
+                        <div class="faq-answer">
+                            可以：1) 使用精确匹配（双引号）；2) 添加更多关键词；3) 使用筛选器缩小范围；4) 使用更具体的搜索词。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">如何搜索特定辞书？</div>
+                        <div class="faq-answer">
+                            在筛选器中选择目标辞书，或在高级搜索中设置辞书范围。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">搜索支持拼音吗？</div>
+                        <div class="faq-answer">
+                            是的，系统支持拼音搜索，可以输入拼音查找对应的汉字词条。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>相关功能</h2>
+                <div class="related-links">
+                    <a href="comparison-overview.html" class="related-link">版本对比概述</a>
+                    <a href="dictionary-overview.html" class="related-link">辞书管理概述</a>
+                    <a href="config-overview.html" class="related-link">配置管理概述</a>
+                    <a href="taxonomy-overview.html" class="related-link">分类词典</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="help.js"></script>
+</body>
+</html>

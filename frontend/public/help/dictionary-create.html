@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加书籍 - 辞书研习平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>添加书籍</h1>
+            <p>创建新的辞书项目，填写基础信息后即可进入版本管理与文件上传流程。</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>创建步骤</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>点击新建辞书</h4>
+                        </div>
+                        <p>在辞书管理页面，点击"新建辞书"按钮开始创建。</p>
+                        <div class="screenshot">
+                            <img src="images/dictionary-create-form.png" alt="新建辞书按钮">
+                            <p class="screenshot-caption">点击新建辞书按钮</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>填写基本信息</h4>
+                        </div>
+                        <p>在弹出对话框中填写必要信息，建议优先保证名称、语言准确。</p>
+                        <div class="form-fields">
+                            <div class="field-item">
+                                <span class="field-tag required">必填</span>
+                                <div class="field-info">
+                                    <strong>辞书名称</strong> - 输入辞书的完整名称，如"现代汉语词典"
+                                </div>
+                            </div>
+                            <div class="field-item">
+                                <span class="field-tag optional">可选</span>
+                                <div class="field-info">
+                                    <strong>出版社</strong> - 输入出版社名称，如"商务印书馆"
+                                </div>
+                            </div>
+                            <div class="field-item">
+                                <span class="field-tag required">必填</span>
+                                <div class="field-info">
+                                    <strong>语言</strong> - 选择辞书的主要语言，默认为中文
+                                </div>
+                            </div>
+                            <div class="field-item">
+                                <span class="field-tag optional">可选</span>
+                                <div class="field-info">
+                                    <strong>描述</strong> - 输入辞书的简要描述和特点
+                                </div>
+                            </div>
+                        </div>
+                        <div class="screenshot">
+                            <img src="images/dictionary-create-form.png" alt="填写辞书信息">
+                            <p class="screenshot-caption">填写辞书基本信息表单</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>创建辞书</h4>
+                        </div>
+                        <p>确认信息无误后，点击"创建"按钮完成辞书创建。</p>
+                        <div class="screenshot">
+                            <img src="images/dictionary-create-form.png" alt="创建辞书">
+                            <p class="screenshot-caption">点击创建按钮完成创建</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>上传文件</h4>
+                        </div>
+                        <p>创建完成后，系统会自动跳转到辞书详情页面，您可以开始上传辞书文件。</p>
+                        <div class="screenshot">
+                            <img src="images/dictionary-management.png" alt="辞书详情页面">
+                            <p class="screenshot-caption">创建完成后进入辞书详情页面</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>字段填写建议</h2>
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag required">必填</span>
+                        <div class="field-info">
+                            <strong>辞书名称</strong> - 作为主要标识，建议使用完整正式名称，便于检索与区分。
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>出版社</strong> - 建议填写，便于后续筛选与归档。
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag required">必填</span>
+                        <div class="field-info">
+                            <strong>语言</strong> - 影响搜索与解析策略，请与源文件语言保持一致。
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>描述</strong> - 记录适用范围和版本背景，方便协作成员快速理解。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>注意事项</h2>
+                <div class="tips">
+                    <div class="tip-alert">
+                        <h4>命名规范</h4>
+                        <ul>
+                            <li>使用正式的辞书全称，避免缩写</li>
+                            <li>如果包含版本信息，请在名称中注明</li>
+                            <li>避免使用特殊字符和表情符号</li>
+                            <li>建议长度在2-50个字符之间</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-alert">
+                        <h4>信息完整性</h4>
+                        <ul>
+                            <li>尽可能填写完整的出版社信息</li>
+                            <li>描述中可以包含辞书的适用对象</li>
+                            <li>如果是系列辞书，请在描述中说明</li>
+                            <li>准确选择语言类型</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>常见问题</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">辞书名称可以修改吗？</div>
+                        <div class="faq-answer">
+                            辞书创建后，名称可以修改，但建议在创建时使用准确的名称，避免后续频繁更改。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">支持哪些语言？</div>
+                        <div class="faq-answer">
+                            目前支持中文、英文、日文、韩文等多种语言，系统会根据语言选择提供相应的解析配置。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">创建后可以删除吗？</div>
+                        <div class="faq-answer">
+                            可以删除，但如果辞书已有版本数据，需要先删除所有版本才能删除辞书本身。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>相关功能</h2>
+                <div class="related-links">
+                    <a href="dictionary-overview.html" class="related-link">辞书管理概述</a>
+                    <a href="dictionary-version.html" class="related-link">版本管理</a>
+                    <a href="dictionary-upload.html" class="related-link">文件上传</a>
+                    <a href="config-overview.html" class="related-link">配置管理</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="help.js"></script>
+</body>
+</html>

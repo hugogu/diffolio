@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辞书管理功能概述 - 辞书研习平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>辞书管理功能概述</h1>
+            <p>辞书管理功能是平台的核心模块，提供辞书的创建、版本管理、文件上传等全生命周期管理。通过直观的界面和强大的功能，您可以轻松管理各种类型的辞书资源。</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>主要功能特性</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">➕</div>
+                        <h3>添加辞书</h3>
+                        <p>创建新的辞书项目，设置基本信息和配置</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📖</div>
+                        <h3>版本管理</h3>
+                        <p>管理辞书的多个版本，追踪版本变化</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📤</div>
+                        <h3>文件上传</h3>
+                        <p>上传辞书文件，支持多种格式</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <h3>解析配置</h3>
+                        <p>自定义解析规则，提高识别准确性</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>支持文件格式</h2>
+                <div class="format-grid">
+                    <div class="format-card recommended">
+                        <div class="format-icon">.txt</div>
+                        <h4>文本文件</h4>
+                        <p>纯文本格式，推荐用于辞书内容</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>UTF-8 编码</li>
+                                <li>结构清晰</li>
+                                <li>广泛兼容</li>
+                                <li>推荐使用</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">.doc</div>
+                        <h4>Word 97-2003</h4>
+                        <p>传统Word格式</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>旧版Office兼容</li>
+                                <li>支持富文本</li>
+                                <li>常用格式</li>
+                                <li>自动解析</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">.docx</div>
+                        <h4>Word 2007+</h4>
+                        <p>现代Word格式，推荐用于富文本文档</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>新版Office标准</li>
+                                <li>支持复杂格式</li>
+                                <li>压缩存储</li>
+                                <li>解析准确</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">.pdf</div>
+                        <h4>PDF 文档</h4>
+                        <p>便携式文档格式</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>格式固定</li>
+                                <li>跨平台兼容</li>
+                                <li>适合扫描件</li>
+                                <li>OCR解析</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>工作流程</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>创建辞书</h4>
+                        </div>
+                        <p>填写辞书基本信息，包括名称、描述、语言等。</p>
+                        <div class="screenshot">
+                            <img src="images/dictionary-create-form.png" alt="创建辞书表单">
+                            <p class="screenshot-caption">创建辞书的基本信息表单</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>上传文件</h4>
+                        </div>
+                        <p>选择合适的文件格式上传辞书内容。</p>
+                        <div class="screenshot">
+                            <img src="images/dictionary-management.png" alt="文件上传界面">
+                            <p class="screenshot-caption">文件上传界面</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>配置解析</h4>
+                        </div>
+                        <p>选择或创建解析配置，定义词条识别规则。</p>
+                        <div class="screenshot">
+                            <img src="images/config-management.png" alt="解析配置界面">
+                            <p class="screenshot-caption">解析配置设置界面</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>验证结果</h4>
+                        </div>
+                        <p>检查解析结果，确认词条识别的准确性。</p>
+                        <div class="screenshot">
+                            <img src="images/comparison-results.jpg" alt="解析结果验证">
+                            <p class="screenshot-caption">解析结果验证界面</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>最佳实践</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>文件准备</h4>
+                        <p>上传前确保文件格式正确，编码统一，结构清晰。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>配置优化</h4>
+                        <p>根据辞书特点选择合适的解析配置，提高识别准确率。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>版本管理</h4>
+                        <p>合理规划版本策略，便于追踪辞书演变过程。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>质量检查</h4>
+                        <p>定期检查解析质量，及时修正识别错误。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>相关功能</h2>
+                <div class="related-links">
+                    <a href="dictionary-create.html" class="related-link">添加书籍</a>
+                    <a href="dictionary-version.html" class="related-link">版本管理</a>
+                    <a href="dictionary-upload.html" class="related-link">文件上传</a>
+                    <a href="config-overview.html" class="related-link">配置管理</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="help.js"></script>
+</body>
+</html>

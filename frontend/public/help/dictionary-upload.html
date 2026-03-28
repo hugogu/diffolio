@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传 - 辞书研习平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>文件上传</h1>
+            <p>文件上传功能支持多种辞书格式，通过智能解析配置将辞书内容转换为结构化数据，为后续的版本对比和分析提供基础。</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>支持文件格式</h2>
+                <div class="format-grid">
+                    <div class="format-card recommended">
+                        <div class="format-icon">TXT</div>
+                        <h4>文本文件</h4>
+                        <p>纯文本格式，适合结构简单的辞书</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>UTF-8 编码推荐</li>
+                                <li>支持换行分隔</li>
+                                <li>易于编辑和查看</li>
+                                <li>文件大小适中</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">JSON</div>
+                        <h4>JSON 格式</h4>
+                        <p>结构化数据，适合程序处理</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>标准数据格式</li>
+                                <li>层次结构清晰</li>
+                                <li>支持复杂数据类型</li>
+                                <li>易于程序解析</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">XML</div>
+                        <h4>XML 格式</h4>
+                        <p>标记语言，适合复杂辞书</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>自描述结构</li>
+                                <li>支持命名空间</li>
+                                <li>样式表支持</li>
+                                <li>国际化友好</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="format-card">
+                        <div class="format-icon">XLSX</div>
+                        <h4>Excel 表格</h4>
+                        <p>表格格式，适合批量处理</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>可视化编辑</li>
+                                <li>公式支持</li>
+                                <li>数据验证功能</li>
+                                <li>格式广泛兼容</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>上传步骤</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>选择文件</h4>
+                        </div>
+                        <p>点击上传区域或拖拽文件到指定区域选择要上传的辞书文件。</p>
+                        <div class="screenshot">
+                            <img src="images/dictionary-management.png" alt="文件上传界面">
+                            <p class="screenshot-caption">文件上传界面</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>配置解析</h4>
+                        </div>
+                        <p>选择适合的解析配置，或创建新的配置来定义词条识别规则。</p>
+                        <div class="screenshot">
+                            <img src="images/config-management.png" alt="解析配置界面">
+                            <p class="screenshot-caption">解析配置选择界面</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>开始上传</h4>
+                        </div>
+                        <p>确认配置无误后，点击"开始上传"按钮开始处理文件。</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>处理过程</h4>
+                        </div>
+                        <p>系统自动解析文件内容，提取词条、释义、例句等信息。</p>
+                        <div class="screenshot">
+                            <img src="images/processing.png" alt="文件处理过程">
+                            <p class="screenshot-caption">词典文件解析处理过程</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">5</div>
+                            <h4>验证结果</h4>
+                        </div>
+                        <p>上传完成后，检查解析结果，确认词条识别的准确性。</p>
+                        <div class="screenshot">
+                            <img src="images/comparison-results.jpg" alt="解析结果验证">
+                            <p class="screenshot-caption">解析结果验证界面</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>解析配置</h2>
+                <p>解析配置定义了系统如何识别和提取辞书中的词条信息：</p>
+                
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag required">必填</span>
+                        <div class="field-info">
+                            <strong>词条模式</strong> - 定义词条的识别规则，如正则表达式
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag required">必填</span>
+                        <div class="field-info">
+                            <strong>释义模式</strong> - 定义释义内容的提取规则
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>例句模式</strong> - 定义例句的识别规则
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>词性模式</strong> - 定义词性信息的提取规则
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>文件要求</h2>
+                <div class="tips">
+                    <div class="tip-alert">
+                        <h4>文件大小</h4>
+                        <ul>
+                            <li>单个文件最大 100MB</li>
+                            <li>建议文件大小在 10MB 以下</li>
+                            <li>大文件可能处理时间较长</li>
+                            <li>超过限制请分割文件</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-alert">
+                        <h4>编码格式</h4>
+                        <ul>
+                            <li>推荐使用 UTF-8 编码</li>
+                            <li>避免使用 GBK、GB2312 等旧编码</li>
+                            <li>上传前检查文件编码</li>
+                            <li>编码错误可能导致解析失败</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-alert">
+                        <h4>文件结构</h4>
+                        <ul>
+                            <li>确保文件结构清晰一致</li>
+                            <li>避免使用复杂的格式</li>
+                            <li>检查是否有特殊字符</li>
+                            <li>建议先小批量测试</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>错误处理</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h3>格式错误</h3>
+                        <p>检查文件格式是否符合要求，编码是否正确</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>解析失败</h3>
+                        <p>调整解析配置，优化识别规则</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>识别率低</h3>
+                        <p>检查文件结构，改进配置规则</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>重新上传</h3>
+                        <p>修正问题后重新上传文件</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>最佳实践</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>预处理文件</h4>
+                        <p>上传前先整理文件格式，确保结构统一，编码正确。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>测试配置</h4>
+                        <p>使用小文件测试解析配置，确认效果后再上传完整文件。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>监控进度</h4>
+                        <p>上传过程中监控处理进度，及时发现和解决问题。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>验证结果</h4>
+                        <p>上传完成后仔细验证解析结果，确保数据准确性。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>常见问题</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">上传失败怎么办？</div>
+                        <div class="faq-answer">
+                            检查网络连接、文件大小、格式是否符合要求，可以尝试重新上传或联系技术支持。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">如何提高解析准确率？</div>
+                        <div class="faq-answer">
+                            优化解析配置，使用适合的识别规则，确保文件结构清晰一致。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">可以批量上传吗？</div>
+                        <div class="faq-answer">
+                            目前支持单个文件上传，如需处理多个文件，请分别上传或联系技术支持。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>相关功能</h2>
+                <div class="related-links">
+                    <a href="dictionary-overview.html" class="related-link">辞书管理概述</a>
+                    <a href="dictionary-create.html" class="related-link">添加书籍</a>
+                    <a href="dictionary-version.html" class="related-link">版本管理</a>
+                    <a href="config-overview.html" class="related-link">配置管理</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="help.js"></script>
+</body>
+</html>

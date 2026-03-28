@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headword Search Overview - Dictionary Research Platform</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>Headword Search Overview</h1>
+            <p>The headword search function allows you to quickly find specific entries, definitions, or examples in the dictionary database. The system supports multiple search methods, including exact match, fuzzy search, and regular expressions, helping you efficiently find the information you need.</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>Main Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Quick Search</h3>
+                        <p>Supports real-time search, results displayed as you type</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Advanced Filtering</h3>
+                        <p>Filter by dictionary, version, part-of-speech, etc.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔎</div>
+                        <h3>Precise Search</h3>
+                        <p>Supports exact match and fuzzy search modes</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📄</div>
+                        <h3>Result Preview</h3>
+                        <p>Quickly preview entry details and context</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Search Interface</h2>
+                <div class="screenshot">
+                    <img src="../images/search-interface.png" alt="Headword Search Interface">
+                    <p class="screenshot-caption">Headword search main interface</p>
+                </div>
+                
+                <p>The search interface provides a clean and intuitive search experience, including a search box, filtering options, and result display area.</p>
+            </div>
+
+            <div class="help-section">
+                <h2>Search Methods</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>Basic Search</h3>
+                        <p>Simple keyword search, suitable for quick lookups</p>
+                        <ul>
+                            <li>Supports Chinese, English search</li>
+                            <li>Auto-complete search suggestions</li>
+                            <li>Search history</li>
+                            <li>Real-time result updates</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <h3>Advanced Search</h3>
+                        <p>Multi-condition combined search, precise target finding</p>
+                        <ul>
+                            <li>Multi-field combined search</li>
+                            <li>Boolean logic operations</li>
+                            <li>Range-limited search</li>
+                            <li>Result sorting options</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Regular Expressions</h3>
+                        <p>Use regular expressions for complex pattern matching</p>
+                        <ul>
+                            <li>Complete regex syntax support</li>
+                            <li>Pattern testing tool</li>
+                            <li>Common pattern templates</li>
+                            <li>Syntax highlighting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Search Scope</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>Entry Search</h3>
+                        <p>Search within entry names</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Example: network → Found 12 related entries</li>
+                                <li>Example: compute* → Found 8 related entries</li>
+                                <li>Supports wildcards and fuzzy matching</li>
+                                <li>Case sensitive options</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📖</div>
+                        <h3>Definition Search</h3>
+                        <p>Find keywords within definition content</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Example: computer → Found in 156 definitions</li>
+                                <li>Example: system → Found in 89 definitions</li>
+                                <li>Supports semantic search</li>
+                                <li>Relevance sorting</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>Example Search</h3>
+                        <p>Find usage examples within examples</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>Example: life → Found in 45 examples</li>
+                                <li>Example: technology → Found in 67 examples</li>
+                                <li>Context display</li>
+                                <li>Example highlighting</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Filter Options</h2>
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Dictionary Filter</strong> - Select specific dictionaries for search to narrow search scope
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Version Filter</strong> - Select specific version of dictionary content
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>POS Filter</strong> - Filter search results by part-of-speech type
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Category Filter</strong> - Use taxonomy dictionary for semantic filtering
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Search Tips</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Use Quotes for Exact Match</h4>
+                        <p>Use double quotes around search terms for exact match, avoiding fuzzy search results.</p>
+                        <div class="example-item">
+                            <div class="example-query">"computer network"</div>
+                            <div class="example-result">Only matches entries with exact same content</div>
+                        </div>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Use Wildcards</h4>
+                        <p>Use * to match any characters, expanding search scope.</p>
+                        <div class="example-item">
+                            <div class="example-query">network*</div>
+                            <div class="example-result">Matches "network", "network technology", "network system", etc.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Combine Search Conditions</h4>
+                        <p>Use logical operators like AND, OR, NOT to combine multiple search conditions.</p>
+                        <div class="example-item">
+                            <div class="example-query">network AND computer</div>
+                            <div class="example-result">Results containing both "network" and "computer"</div>
+                        </div>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>Limit Search Scope</h4>
+                        <p>Use filters to limit search scope by dictionary, version, or part-of-speech.</p>
+                        <div class="example-item">
+                            <div class="example-query">life + POS:verb</div>
+                            <div class="example-result">Search "life" within verbs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Result Display</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>List View</h3>
+                        <p>Display search results in list form, including entry, definition, examples, and other information</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Detail View</h3>
+                        <p>Click on an entry to view complete detailed information and related content</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Statistics View</h3>
+                        <p>Display statistical information and distribution of search results</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Highlighting</h3>
+                        <p>Highlight matched keywords in results</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>FAQ</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">What to do if no results are found?</div>
+                        <div class="faq-answer">
+                            Try: 1) Check if spelling is correct; 2) Use more general keywords; 3) Clear filter conditions; 4) Try using wildcards.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">What to do if there are too many search results?</div>
+                        <div class="faq-answer">
+                            You can: 1) Use exact match (double quotes); 2) Add more keywords; 3) Use filters to narrow scope; 4) Use more specific search terms.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">How to search a specific dictionary?</div>
+                        <div class="faq-answer">
+                            Select target dictionary in the filter, or set dictionary scope in advanced search.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">Does search support pinyin?</div>
+                        <div class="faq-answer">
+                            Yes, the system supports pinyin search. You can input pinyin to find corresponding Chinese character entries.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Related Features</h2>
+                <div class="related-links">
+                    <a href="comparison-overview.html" class="related-link">Version Comparison Overview</a>
+                    <a href="dictionary-overview.html" class="related-link">Dictionary Management Overview</a>
+                    <a href="config-overview.html" class="related-link">Configuration Management Overview</a>
+                    <a href="taxonomy-overview.html" class="related-link">Taxonomy Dictionary</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../help.js"></script>
+</body>
+</html>

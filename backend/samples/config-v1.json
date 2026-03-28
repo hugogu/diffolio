@@ -1,0 +1,35 @@
+{
+  "name": "示例汉语词典-基础版格式配置",
+  "headwordPattern": "^([\\u4e00-\\u9fff\\u3400-\\u4dbf]{1,8})(?:\\s|$)",
+  "senseNumberPatterns": [
+    "^([①②③④⑤⑥⑦⑧⑨⑩])\\s*",
+    "^(\\d+)[.、]\\s*",
+    "^([Ⅰ-Ⅹ])\\s*"
+  ],
+  "phoneticPattern": "\\[([a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+)\\]",
+  "exampleSeparator": "｜",
+  "substitutionRules": [
+    {
+      "symbol": "～",
+      "expandTo": "headword"
+    }
+  ],
+  "glyphVariants": [
+    {
+      "canonical": "爱",
+      "variants": ["愛"]
+    },
+    {
+      "canonical": "国",
+      "variants": ["國"]
+    }
+  ],
+  "tradSimpMap": {
+    "愛": "爱",
+    "國": "国",
+    "語": "语",
+    "詞": "词",
+    "書": "书",
+    "學": "学"
+  }
+}

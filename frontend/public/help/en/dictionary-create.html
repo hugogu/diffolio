@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Book - Dictionary Research Platform</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>Add Book</h1>
+            <p>Create a new dictionary project, fill in basic information, and then proceed to version management and file upload workflows.</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>Creation Steps</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>Click New Dictionary</h4>
+                        </div>
+                        <p>On the dictionary management page, click the "New Dictionary" button to start creating.</p>
+                        <div class="screenshot">
+                            <img src="../images/dictionary-create-form.png" alt="New Dictionary Button">
+                            <p class="screenshot-caption">Click the New Dictionary button</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>Fill in Basic Information</h4>
+                        </div>
+                        <p>Fill in the required information in the popup dialog. Priority should be given to ensuring accuracy of name and language.</p>
+                        <div class="form-fields">
+                            <div class="field-item">
+                                <span class="field-tag required">Required</span>
+                                <div class="field-info">
+                                    <strong>Dictionary Name</strong> - Enter the full name of the dictionary, e.g., "Modern Chinese Dictionary"
+                                </div>
+                            </div>
+                            <div class="field-item">
+                                <span class="field-tag optional">Optional</span>
+                                <div class="field-info">
+                                    <strong>Publisher</strong> - Enter the publisher name, e.g., "Commercial Press"
+                                </div>
+                            </div>
+                            <div class="field-item">
+                                <span class="field-tag required">Required</span>
+                                <div class="field-info">
+                                    <strong>Language</strong> - Select the main language of the dictionary, default is Chinese
+                                </div>
+                            </div>
+                            <div class="field-item">
+                                <span class="field-tag optional">Optional</span>
+                                <div class="field-info">
+                                    <strong>Description</strong> - Enter a brief description and characteristics of the dictionary
+                                </div>
+                            </div>
+                        </div>
+                        <div class="screenshot">
+                            <img src="../images/dictionary-create-form.png" alt="Fill Dictionary Information">
+                            <p class="screenshot-caption">Fill in basic dictionary information form</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>Create Dictionary</h4>
+                        </div>
+                        <p>After confirming the information is correct, click the "Create" button to complete dictionary creation.</p>
+                        <div class="screenshot">
+                            <img src="../images/dictionary-create-form.png" alt="Create Dictionary">
+                            <p class="screenshot-caption">Click the Create button to complete creation</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>Upload File</h4>
+                        </div>
+                        <p>After creation is complete, the system will automatically redirect to the dictionary details page where you can start uploading dictionary files.</p>
+                        <div class="screenshot">
+                            <img src="../images/dictionary-management.png" alt="Dictionary Details Page">
+                            <p class="screenshot-caption">Enter dictionary details page after creation is complete</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Field Filling Recommendations</h2>
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag required">Required</span>
+                        <div class="field-info">
+                            <strong>Dictionary Name</strong> - As the main identifier, it is recommended to use the full official name for easy retrieval and distinction.
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Publisher</strong> - Recommended to fill in for subsequent filtering and archiving.
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag required">Required</span>
+                        <div class="field-info">
+                            <strong>Language</strong> - Affects search and parsing strategies, please keep consistent with the source file language.
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">Optional</span>
+                        <div class="field-info">
+                            <strong>Description</strong> - Record scope of application and version background for team members to quickly understand.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Notes</h2>
+                <div class="tips">
+                    <div class="tip-alert">
+                        <h4>Naming Conventions</h4>
+                        <ul>
+                            <li>Use the official full dictionary name, avoid abbreviations</li>
+                            <li>If version information is included, please indicate it in the name</li>
+                            <li>Avoid using special characters and emojis</li>
+                            <li>Recommended length between 2-50 characters</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-alert">
+                        <h4>Information Completeness</h4>
+                        <ul>
+                            <li>Fill in complete publisher information whenever possible</li>
+                            <li>Description can include the target audience of the dictionary</li>
+                            <li>If it is a series dictionary, please explain in the description</li>
+                            <li>Accurately select language type</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>FAQ</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">Can the dictionary name be changed?</div>
+                        <div class="faq-answer">
+                            After dictionary creation, the name can be modified, but it is recommended to use an accurate name during creation to avoid frequent changes later.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">What languages are supported?</div>
+                        <div class="faq-answer">
+                            Currently supports Chinese, English, Japanese, Korean, and other languages. The system will provide corresponding parsing configurations based on language selection.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">Can it be deleted after creation?</div>
+                        <div class="faq-answer">
+                            Yes, it can be deleted, but if the dictionary already has version data, all versions must be deleted first before the dictionary itself can be deleted.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>Related Features</h2>
+                <div class="related-links">
+                    <a href="dictionary-overview.html" class="related-link">Dictionary Management Overview</a>
+                    <a href="dictionary-version.html" class="related-link">Version Management</a>
+                    <a href="dictionary-upload.html" class="related-link">File Upload</a>
+                    <a href="config-overview.html" class="related-link">Configuration Management</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../help.js"></script>
+</body>
+</html>

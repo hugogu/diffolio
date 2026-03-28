@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置管理概述 - 辞书研习平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>配置管理概述</h1>
+            <p>配置管理功能让您创建和管理辞书解析规则，通过自定义配置提高辞书文件解析的准确性和效率。系统提供了灵活的配置模板和强大的规则编辑器。</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>配置管理界面</h2>
+                <div class="screenshot">
+                    <img src="images/config-management.png" alt="配置管理界面">
+                    <p class="screenshot-caption">配置管理列表界面</p>
+                </div>
+                
+                <p>配置管理界面显示了所有可用的解析配置，包括系统内置配置和用户自定义配置。</p>
+            </div>
+
+            <div class="help-section">
+                <h2>主要功能特性</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>自定义规则</h3>
+                        <p>创建适合特定辞书格式的解析规则</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>配置模板</h3>
+                        <p>提供常用辞书格式的配置模板</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🧪</div>
+                        <h3>实时测试</h3>
+                        <p>即时测试配置规则的解析效果</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>效果统计</h3>
+                        <p>显示解析成功率和错误统计</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>配置类型</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🏢</div>
+                        <h3>系统内置配置</h3>
+                        <p>平台提供的标准配置，适用于常见辞书格式</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>现代汉语词典配置</li>
+                                <li>古汉语词典配置</li>
+                                <li>成语词典配置</li>
+                                <li>专业词典配置</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">👤</div>
+                        <h3>用户自定义配置</h3>
+                        <p>根据特定需求创建的个性化配置</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>基于现有配置克隆</li>
+                                <li>完全自定义创建</li>
+                                <li>克隆后独立管理</li>
+                                <li>版本历史记录</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>克隆配置</h3>
+                        <p>基于现有配置创建变体，快速适应相似格式</p>
+                        <div class="format-features">
+                            <ul>
+                                <li>继承原配置规则</li>
+                                <li>可调整特定参数</li>
+                                <li>保持配置关联</li>
+                                <li>批量克隆支持</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>配置规则类型</h2>
+                <div class="form-fields">
+                    <div class="field-item">
+                        <span class="field-tag required">必填</span>
+                        <div class="field-info">
+                            <strong>词条识别规则</strong> - 定义如何识别和提取词条名称，通常使用正则表达式
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag required">必填</span>
+                        <div class="field-info">
+                            <strong>释义提取规则</strong> - 定义如何提取释义内容，支持多行匹配
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>词性识别规则</strong> - 定义词性标注的提取模式
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>例句识别规则</strong> - 定义例句的开始和结束标识
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>拼音识别规则</strong> - 定义拼音信息的提取方式
+                        </div>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-tag optional">可选</span>
+                        <div class="field-info">
+                            <strong>扩展字段规则</strong> - 定义自定义字段的提取规则
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>配置创建流程</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>选择创建方式</h4>
+                        </div>
+                        <p>可以选择从模板创建、克隆现有配置或完全自定义创建。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>设置基本信息</h4>
+                        </div>
+                        <p>填写配置名称、描述等基本信息，便于后续管理和识别。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>配置解析规则</h4>
+                        </div>
+                        <p>使用规则编辑器设置各种字段的识别和提取规则。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>测试配置效果</h4>
+                        </div>
+                        <p>使用测试文本验证配置规则的解析效果。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">5</div>
+                            <h4>保存配置</h4>
+                        </div>
+                        <p>确认配置无误后保存，即可在辞书上传时使用。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>规则编辑器</h2>
+                <p>规则编辑器提供了强大的正则表达式编辑和测试功能：</p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">✏️</div>
+                        <h3>语法高亮</h3>
+                        <p>正则表达式语法高亮显示，便于编写和调试</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🧪</div>
+                        <h3>实时测试</h3>
+                        <p>输入测试文本，实时查看匹配结果</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>模板库</h3>
+                        <p>提供常用正则表达式模板和示例</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💡</div>
+                        <h3>智能提示</h3>
+                        <p>提供语法提示和错误检查功能</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>配置验证</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">✅</div>
+                        <h3>语法验证</h3>
+                        <p>检查正则表达式语法的正确性</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>逻辑验证</h3>
+                        <p>验证规则间的逻辑关系和兼容性</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>效果验证</h3>
+                        <p>使用样本数据测试解析效果</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h3>错误提示</h3>
+                        <p>提供详细的错误信息和修改建议</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>最佳实践</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>从模板开始</h4>
+                        <p>优先使用系统提供的配置模板，在此基础上进行调整，节省开发时间。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>充分测试</h4>
+                        <p>使用多种类型的测试文本验证配置，确保规则的通用性和准确性。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>版本管理</h4>
+                        <p>重要的配置建议创建版本备份，便于回滚和比较不同版本的效果。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>文档记录</h4>
+                        <p>为配置添加详细的描述和使用说明，便于团队成员理解和使用。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>常见问题</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">正则表达式不熟悉怎么办？</div>
+                        <div class="faq-answer">
+                            系统提供了丰富的模板和示例，可以从简单规则开始，逐步学习正则表达式语法。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">配置可以分享给其他用户吗？</div>
+                        <div class="faq-answer">
+                            当前配置仅在当前用户账号下管理。如需分享，可让其他用户基于相同模板创建相似配置。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">如何提高解析准确率？</div>
+                        <div class="faq-answer">
+                            通过不断测试和优化规则，使用更多样本数据验证，考虑边界情况的处理。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>相关功能</h2>
+                <div class="related-links">
+                    <a href="dictionary-upload.html" class="related-link">文件上传</a>
+                    <a href="dictionary-overview.html" class="related-link">辞书管理概述</a>
+                    <a href="comparison-overview.html" class="related-link">版本对比概述</a>
+                    <a href="search-overview.html" class="related-link">字头检索概述</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="help.js"></script>
+</body>
+</html>

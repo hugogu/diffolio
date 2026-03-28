@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>版本管理 - 辞书研习平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../baidu-tongji.js"></script>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>版本管理</h1>
+            <p>管理辞书多版本数据，跟踪变更历史，并快速发起版本对比分析。</p>
+        </div>
+
+        <div class="help-content">
+            <div class="help-section">
+                <h2>版本管理界面</h2>
+                <div class="screenshot">
+                    <img src="images/dictionary-management.png" alt="版本管理界面">
+                    <p class="screenshot-caption">辞书版本管理界面</p>
+                </div>
+                
+                <p>该页面集中展示版本号、创建时间、状态等关键信息。</p>
+            </div>
+
+            <div class="help-section">
+                <h2>版本状态说明</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>草稿</h3>
+                        <p>正在编辑的版本，尚未完成解析</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⏳</div>
+                        <h3>解析中</h3>
+                        <p>系统正在处理上传的文件</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">✅</div>
+                        <h3>已完成</h3>
+                        <p>解析完成，可以用于对比</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">❌</div>
+                        <h3>解析失败</h3>
+                        <p>解析过程中出现错误</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>版本操作</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h4>查看版本详情</h4>
+                        </div>
+                        <p>点击版本行可以查看该版本的详细信息，包括解析统计、错误报告等。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h4>创建对比</h4>
+                        </div>
+                        <p>选择两个版本，点击"创建对比"按钮进行版本对比分析。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h4>下载文件</h4>
+                        </div>
+                        <p>可以下载原始文件或解析后的数据文件。</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h4>删除版本</h4>
+                        </div>
+                        <p>删除不需要的版本，注意删除后无法恢复。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>版本对比</h2>
+                <p>版本对比是版本管理的核心功能，可以分析两个版本之间的差异：</p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>统计对比</h3>
+                        <p>对比词条数量、新增、删除、修改等统计数据</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>详细差异</h3>
+                        <p>查看每个词条的具体变化内容</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h3>变化趋势</h3>
+                        <p>分析辞书内容的演变趋势</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>结果查看</h3>
+                        <p>按分类和词条粒度查看对比明细</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>最佳实践</h2>
+                <div class="best-practices">
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>版本命名</h4>
+                        <p>使用清晰的版本命名规则，如"第7版"、"2023版"等，便于识别和管理。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>定期备份</h4>
+                        <p>重要版本建议创建备份，避免意外删除导致数据丢失。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>及时对比</h4>
+                        <p>新版本完成后及时与前一版本对比，发现并修正问题。</p>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <div class="practice-icon">⭐</div>
+                        <h4>记录变更</h4>
+                        <p>在版本描述中记录主要变更内容，便于后续追踪。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>常见问题</h2>
+                <div class="faq">
+                    <div class="faq-item">
+                        <div class="faq-question">可以同时上传多个版本吗？</div>
+                        <div class="faq-answer">
+                            可以，但建议等待一个版本完全处理完成后再上传下一个版本，避免系统负载过高。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">解析失败怎么办？</div>
+                        <div class="faq-answer">
+                            检查文件格式是否正确，解析配置是否合适，可以查看错误日志了解具体问题。
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">版本数量有限制吗？</div>
+                        <div class="faq-answer">
+                            根据用户套餐有不同的限制，普通用户最多10个版本，高级用户更多。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2>相关功能</h2>
+                <div class="related-links">
+                    <a href="dictionary-overview.html" class="related-link">辞书管理概述</a>
+                    <a href="dictionary-create.html" class="related-link">添加书籍</a>
+                    <a href="dictionary-upload.html" class="related-link">文件上传</a>
+                    <a href="comparison-overview.html" class="related-link">版本对比</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="help.js"></script>
+</body>
+</html>
