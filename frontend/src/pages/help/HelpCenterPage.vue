@@ -3,11 +3,11 @@
     <!-- Left Sidebar -->
     <div class="help-sidebar">
       <div class="help-sidebar-header">
-        <router-link to="/" class="back-link">
-          <el-icon><ArrowLeft /></el-icon>
-          <span>{{ $t('help.backToHome') }}</span>
-        </router-link>
         <h3>{{ $t('help.title') }}</h3>
+        <router-link to="/" class="back-link">
+          <span>{{ $t('help.backToHome') }}</span>
+          <el-icon><ArrowRight /></el-icon>
+        </router-link>
       </div>
       
       <div class="help-nav-section">
@@ -69,7 +69,7 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowRight } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -155,6 +155,9 @@ watch([() => route.path, locale], ([newPath]) => {
 .help-sidebar-header {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .help-sidebar-header h3 {
@@ -168,7 +171,6 @@ watch([() => route.path, locale], ([newPath]) => {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 12px;
   font-size: 13px;
   color: #718096;
   text-decoration: none;
