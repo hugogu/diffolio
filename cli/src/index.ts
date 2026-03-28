@@ -3,6 +3,9 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { createParseCommand } from './commands/parse.js';
+import { createQueryCommand } from './commands/query.js';
+import { createCompareCommand } from './commands/compare.js';
+import { createExportCommand } from './commands/export.js';
 
 const program = new Command();
 
@@ -18,6 +21,9 @@ program
 
 // Register commands
 program.addCommand(createParseCommand());
+program.addCommand(createQueryCommand());
+program.addCommand(createCompareCommand());
+program.addCommand(createExportCommand());
 
 // Global error handler
 program.exitOverride();
