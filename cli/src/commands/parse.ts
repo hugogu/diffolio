@@ -92,7 +92,7 @@ async function executeParse(options: ParseOptions): Promise<void> {
     const configEngine = await getConfigEngine();
     const validation = configEngine.validateConfig(config);
     
-    if (!validation.valid) {
+    if (!validation.isValid) {
       throw new CLIError(
         `Config validation failed: ${validation.errors?.join(', ')}`,
         ExitCodes.INVALID_ARGS
