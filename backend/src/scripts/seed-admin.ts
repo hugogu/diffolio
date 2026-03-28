@@ -7,7 +7,7 @@ function parseArgs(): { email: string; password: string } {
   const args = process.argv.slice(2)
   const emailIdx = args.indexOf('--email')
   const passIdx = args.indexOf('--password')
-  const email = emailIdx >= 0 ? args[emailIdx + 1] : (process.env.ADMIN_EMAIL || 'admin@localhost')
+  const email = emailIdx >= 0 ? args[emailIdx + 1] : (process.env.ADMIN_EMAIL || 'admin@localhost.com')
   const password = passIdx >= 0 ? args[passIdx + 1] : (process.env.ADMIN_PASSWORD || 'Changeme!23')
   return { email, password }
 }
@@ -37,7 +37,7 @@ async function main() {
   })
 
   console.log(`Created admin user: ${admin.email} (id: ${admin.id})`)
-  console.log('Default password: change immediately after first login!')
+  console.log(`Default password: ${password} change immediately after first login!`)
 }
 
 main()

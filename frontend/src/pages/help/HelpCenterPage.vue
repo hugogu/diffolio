@@ -4,44 +4,48 @@
     <div class="help-sidebar">
       <div class="help-sidebar-header">
         <h3>{{ $t('help.title') }}</h3>
+        <router-link to="/" class="back-link">
+          <span>{{ $t('help.backToHome') }}</span>
+          <el-icon><ArrowRight /></el-icon>
+        </router-link>
       </div>
       
       <div class="help-nav-section">
         <h4>{{ $t('help.nav.dictionaryManagement') }}</h4>
         <ul class="help-nav-list">
-          <li><a href="/help/dictionary-overview" @click.prevent="navigateTo('dictionary-overview.html', $event)" :class="{ active: currentPath === 'dictionary-overview.html' }">{{ $t('help.nav.dictionaryOverview') }}</a></li>
-          <li><a href="/help/dictionary-create" @click.prevent="navigateTo('dictionary-create.html', $event)" :class="{ active: currentPath === 'dictionary-create.html' }">{{ $t('help.nav.createDictionary') }}</a></li>
-          <li><a href="/help/dictionary-version" @click.prevent="navigateTo('dictionary-version.html', $event)" :class="{ active: currentPath === 'dictionary-version.html' }">{{ $t('help.nav.versionManagement') }}</a></li>
-          <li><a href="/help/dictionary-upload" @click.prevent="navigateTo('dictionary-upload.html', $event)" :class="{ active: currentPath === 'dictionary-upload.html' }">{{ $t('help.nav.fileUpload') }}</a></li>
+          <li><router-link to="/help/dictionary-overview" :class="{ active: currentPath === 'dictionary-overview.html' }">{{ $t('help.nav.dictionaryOverview') }}</router-link></li>
+          <li><router-link to="/help/dictionary-create" :class="{ active: currentPath === 'dictionary-create.html' }">{{ $t('help.nav.createDictionary') }}</router-link></li>
+          <li><router-link to="/help/dictionary-version" :class="{ active: currentPath === 'dictionary-version.html' }">{{ $t('help.nav.versionManagement') }}</router-link></li>
+          <li><router-link to="/help/dictionary-upload" :class="{ active: currentPath === 'dictionary-upload.html' }">{{ $t('help.nav.fileUpload') }}</router-link></li>
         </ul>
       </div>
       
       <div class="help-nav-section">
         <h4>{{ $t('help.nav.versionComparison') }}</h4>
         <ul class="help-nav-list">
-          <li><a href="/help/comparison-overview" @click.prevent="navigateTo('comparison-overview.html', $event)" :class="{ active: currentPath === 'comparison-overview.html' }">{{ $t('help.nav.comparisonOverview') }}</a></li>
-          <li><a href="/help/comparison-create" @click.prevent="navigateTo('comparison-create.html', $event)" :class="{ active: currentPath === 'comparison-create.html' }">{{ $t('help.nav.createComparison') }}</a></li>
+          <li><router-link to="/help/comparison-overview" :class="{ active: currentPath === 'comparison-overview.html' }">{{ $t('help.nav.comparisonOverview') }}</router-link></li>
+          <li><router-link to="/help/comparison-create" :class="{ active: currentPath === 'comparison-create.html' }">{{ $t('help.nav.createComparison') }}</router-link></li>
         </ul>
       </div>
       
       <div class="help-nav-section">
         <h4>{{ $t('help.nav.headwordSearch') }}</h4>
         <ul class="help-nav-list">
-          <li><a href="/help/search-overview" @click.prevent="navigateTo('search-overview.html', $event)" :class="{ active: currentPath === 'search-overview.html' }">{{ $t('help.nav.searchOverview') }}</a></li>
+          <li><router-link to="/help/search-overview" :class="{ active: currentPath === 'search-overview.html' }">{{ $t('help.nav.searchOverview') }}</router-link></li>
         </ul>
       </div>
       
       <div class="help-nav-section">
         <h4>{{ $t('help.nav.taxonomy') }}</h4>
         <ul class="help-nav-list">
-          <li><a href="/help/taxonomy-overview" @click.prevent="navigateTo('taxonomy-overview.html', $event)" :class="{ active: currentPath === 'taxonomy-overview.html' }">{{ $t('help.nav.taxonomyOverview') }}</a></li>
+          <li><router-link to="/help/taxonomy-overview" :class="{ active: currentPath === 'taxonomy-overview.html' }">{{ $t('help.nav.taxonomyOverview') }}</router-link></li>
         </ul>
       </div>
       
       <div class="help-nav-section">
         <h4>{{ $t('help.nav.config') }}</h4>
         <ul class="help-nav-list">
-          <li><a href="/help/config-overview" @click.prevent="navigateTo('config-overview.html', $event)" :class="{ active: currentPath === 'config-overview.html' }">{{ $t('help.nav.configOverview') }}</a></li>
+          <li><router-link to="/help/config-overview" :class="{ active: currentPath === 'config-overview.html' }">{{ $t('help.nav.configOverview') }}</router-link></li>
         </ul>
       </div>
     </div>
@@ -62,12 +66,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { ArrowRight } from '@element-plus/icons-vue'
 
 const route = useRoute()
-const router = useRouter()
 const { t, locale } = useI18n()
 const helpFrame = ref<HTMLIFrameElement>()
 
@@ -92,6 +96,14 @@ const pageTitles: Record<string, string> = {
   'config-overview.html': t('help.nav.configOverview')
 }
 
+const getHtmlPath = (routePath: string): string => {
+  return `${routePath}.html`
+}
+
+const getRoutePath = (htmlPath: string): string => {
+  return htmlPath.replace('.html', '')
+}
+
 const updateCurrentPage = (url: string) => {
   const path = url.replace('/help/', '')
   currentPath.value = path
@@ -110,7 +122,7 @@ const onFrameLoad = () => {
 
 // Watch route changes and locale changes
 watch([() => route.path, locale], ([newPath]) => {
-  const pathMatch = newPath.match(/\/help\/([^/]+)/)
+  const pathMatch = (newPath as string).match(/\/help\/([^/]+)/)
   const baseUrl = getHelpBaseUrl()
   if (pathMatch) {
     const htmlPath = `${pathMatch[1]}.html`
@@ -123,17 +135,6 @@ watch([() => route.path, locale], ([newPath]) => {
     updateCurrentPage(`${baseUrl}/index.html`)
   }
 }, { immediate: true })
-
-const navigateTo = (htmlPath: string, event?: Event) => {
-  if (event) {
-    event.preventDefault()
-  }
-  const baseUrl = getHelpBaseUrl()
-  const routePath = htmlPath.replace('.html', '')
-  router.push(`/help/${routePath}`)
-  currentUrl.value = `${baseUrl}/${htmlPath}`
-  updateCurrentPage(currentUrl.value)
-}
 </script>
 
 <style scoped>
@@ -154,6 +155,9 @@ const navigateTo = (htmlPath: string, event?: Event) => {
 .help-sidebar-header {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .help-sidebar-header h3 {
@@ -161,6 +165,24 @@ const navigateTo = (htmlPath: string, event?: Event) => {
   font-size: 18px;
   font-weight: 600;
   color: #1a202c;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #718096;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: #4299e1;
+}
+
+.back-link .el-icon {
+  font-size: 14px;
 }
 
 .help-nav-section {

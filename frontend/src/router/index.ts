@@ -29,6 +29,18 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/help',
+      name: 'HelpCenter',
+      component: () => import('@/pages/help/HelpCenterPage.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/help/:page',
+      name: 'HelpPage',
+      component: () => import('@/pages/help/HelpCenterPage.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/',
       component: () => import('@/components/admin/AppLayout.vue'),
       children: [
@@ -156,16 +168,6 @@ const router = createRouter({
           name: 'SubscriptionPlans',
           component: () => import('@/pages/admin/SubscriptionPlansPage.vue'),
           meta: { requiresAdmin: true },
-        },
-        {
-          path: 'help',
-          name: 'HelpCenter',
-          component: () => import('@/pages/help/HelpCenterPage.vue'),
-        },
-        {
-          path: 'help/:page',
-          name: 'HelpPage',
-          component: () => import('@/pages/help/HelpCenterPage.vue'),
         },
       ],
     },
