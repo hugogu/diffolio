@@ -111,48 +111,52 @@
           </button>
         </el-tooltip>
 
-        <!-- Collapsible user actions -->
+          <!-- Collapsible user actions -->
         <transition name="slide-down">
           <div v-show="userMenuOpen" class="sidebar-user-actions" :class="{ collapsed: sidebarCollapsed }">
             <el-tooltip :content="$t('nav.profile')" placement="right" :disabled="!sidebarCollapsed">
-              <button
+              <router-link
+                to="/profile"
                 class="sidebar-action-btn"
                 :class="{ active: route.path === '/profile' }"
-                @click="navigate('/profile')"
+                @click="userMenuOpen = false"
               >
                 <el-icon><UserFilled /></el-icon>
                 <span v-if="!sidebarCollapsed">{{ $t('nav.profile') }}</span>
-              </button>
+              </router-link>
             </el-tooltip>
             <el-tooltip :content="$t('nav.about')" placement="right" :disabled="!sidebarCollapsed">
-              <button
+              <router-link
+                to="/about"
                 class="sidebar-action-btn"
                 :class="{ active: route.path === '/about' }"
-                @click="navigate('/about')"
+                @click="userMenuOpen = false"
               >
                 <el-icon><InfoFilled /></el-icon>
                 <span v-if="!sidebarCollapsed">{{ $t('nav.about') }}</span>
-              </button>
+              </router-link>
             </el-tooltip>
             <el-tooltip :content="$t('nav.subscription')" placement="right" :disabled="!sidebarCollapsed">
-              <button
+              <router-link
+                to="/subscription"
                 class="sidebar-action-btn"
                 :class="{ active: route.path === '/subscription' }"
-                @click="navigate('/subscription')"
+                @click="userMenuOpen = false"
               >
                 <el-icon><Lightning /></el-icon>
                 <span v-if="!sidebarCollapsed">{{ $t('nav.subscription') }}</span>
-              </button>
+              </router-link>
             </el-tooltip>
             <el-tooltip :content="$t('nav.energy')" placement="right" :disabled="!sidebarCollapsed">
-              <button
+              <router-link
+                to="/energy/history"
                 class="sidebar-action-btn"
                 :class="{ active: route.path === '/energy/history' }"
-                @click="navigate('/energy/history')"
+                @click="userMenuOpen = false"
               >
                 <el-icon><Histogram /></el-icon>
                 <span v-if="!sidebarCollapsed">{{ $t('nav.energy') }}</span>
-              </button>
+              </router-link>
             </el-tooltip>
             <el-tooltip :content="$t('nav.logout')" placement="right" :disabled="!sidebarCollapsed">
               <button class="sidebar-action-btn logout" @click="handleLogout">
@@ -266,11 +270,6 @@ const tierLabel = computed(() => {
 
 function toggleDark(val: boolean) {
   settingsStore.setDark(val)
-}
-
-function navigate(path: string) {
-  router.push(path)
-  userMenuOpen.value = false
 }
 
 async function handleLogout() {
@@ -467,6 +466,7 @@ async function handleLogout() {
   text-align: left;
   transition: background 0.15s, color 0.15s;
   border-radius: 0;
+  text-decoration: none;
 }
 
 .sidebar-user-actions.collapsed .sidebar-action-btn {
