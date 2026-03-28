@@ -44,10 +44,9 @@ function detectFormat(filePath: string, format?: string): 'txt' | 'docx' | 'doc'
 }
 
 // Import parser dynamically based on format
+// Uses compiled backend modules from backend/dist/
 async function getParser(format: 'txt' | 'docx' | 'doc' | 'pdf') {
-  // These imports will resolve via @backend/* path alias after build
-  // For now, we use relative paths
-  const backendPath = '../../../backend/src/services/parser';
+  const backendPath = '../../../backend/dist/services/parser';
   
   switch (format) {
     case 'txt':
@@ -65,9 +64,9 @@ async function getParser(format: 'txt' | 'docx' | 'doc' | 'pdf') {
   }
 }
 
-// Import config engine
+// Import config engine from compiled backend
 async function getConfigEngine() {
-  const backendPath = '../../../backend/src/services/config-engine.js';
+  const backendPath = '../../../backend/dist/services/config-engine.js';
   const configEngine = await import(backendPath);
   return {
     validateConfig: configEngine.validateConfig,

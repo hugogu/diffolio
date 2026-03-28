@@ -15,15 +15,15 @@ interface CompareOptions extends GlobalOptions {
 
 // Import backend services
 async function getAligner() {
-  const aligner = await import('../../../backend/src/services/aligner.js');
+  const aligner = await import('../../../backend/dist/services/aligner.js');
   return {
-    alignEntries: aligner.alignEntries,
+    align: aligner.align,
     ChangeType: aligner.ChangeType,
   };
 }
 
 async function getDiffer() {
-  const differ = await import('../../../backend/src/services/differ.js');
+  const differ = await import('../../../backend/dist/services/differ.js');
   return {
     diffSenses: differ.diffSenses,
   };
@@ -81,7 +81,7 @@ async function executeCompare(options: CompareOptions): Promise<void> {
     console.log(chalk.blue(`\nCreated comparison: ${comparison.id}`));
 
     // Get aligner service
-    const { alignEntries } = await getAligner();
+    const { align } = await getAligner();
 
     // Get all entries from both versions
     const entriesA = await prisma.entry.findMany({
@@ -100,7 +100,7 @@ async function executeCompare(options: CompareOptions): Promise<void> {
     // Run alignment
     progress.start(entriesA.length + entriesB.length, 'Aligning entries...');
 
-    const alignmentResults = await alignEntries(entriesA, entriesB);
+    const alignmentResults = await align(dictA.id, dictB.id, prisma);
 
     progress.update(entriesA.length + entriesB.length, 'Alignment complete');
     progress.complete();
