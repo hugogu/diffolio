@@ -880,6 +880,7 @@
   },
   "help": {
     "title": "Help Center",
+    "backToHome": "Back to Home",
     "nav": {
       "helpCenter": "Help Center",
       "dictionaryManagement": "📚 Dictionary Management",

@@ -880,6 +880,7 @@
   },
   "help": {
     "title": "帮助中心",
+    "backToHome": "返回首页",
     "nav": {
       "helpCenter": "帮助中心",
       "dictionaryManagement": "📚 辞书管理",
