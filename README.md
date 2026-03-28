@@ -87,6 +87,10 @@ diffolio/
 │       ├── components/       # Shared UI components
 │       ├── stores/           # Pinia state management
 │       └── api/              # Typed API clients
+├── cli/                      # Standalone CLI tool for local use
+│   ├── src/commands/         # CLI commands (parse, query, compare, export)
+│   ├── src/lib/              # Shared utilities
+│   └── README.md             # CLI documentation
 ├── docker-compose.yml        # Service definitions
 └── docker-compose.override.yml # Development overrides (hot reload)
 ```
@@ -106,3 +110,62 @@ cd backend && DATABASE_URL=postgresql://dict:dict@localhost:5432/dictdb npx pris
 cd backend && npm run typecheck
 cd ../frontend && npm run typecheck
 ```
+
+---
+
+## CLI Tool
+
+Diffolio also provides a standalone CLI tool for local dictionary processing without requiring a web server.
+
+### Features
+
+- 🚀 **Fast local processing** - No Docker or web server needed
+- 🔄 **Code sharing** - Uses same parsing/comparison logic as web version
+- 💾 **Flexible storage** - SQLite for local development, PostgreSQL for production
+- 📊 **Rich querying** - Filter by headword, pinyin, POS, etc.
+- 📑 **Excel export** - Professional comparison reports
+
+### Quick Start
+
+```bash
+cd cli
+
+# Install dependencies
+npm install
+
+# Copy Prisma client from backend
+npm run prisma:copy
+
+# Parse a dictionary
+cd cli && npx tsx src/index.ts parse \
+  -f ../backend/samples/sample-dict.txt \
+  -c ../backend/samples/config-v1.json \
+  -d "file:./test.db" \
+  -n "v1"
+
+# Query entries
+npx tsx src/index.ts query -d "file:./test.db" -w "爱"
+
+# Compare versions
+npx tsx src/index.ts compare -a "v1" -b "v2" -d "file:./test.db"
+
+# Export to Excel
+npx tsx src/index.ts export -c "comparison-id" -o results.xlsx -d "file:./test.db"
+```
+
+### Documentation
+
+- [CLI README](cli/README.md) - Installation and command reference
+- [CLI User Guide](docs/cli/README.md) - Detailed usage guide
+- [Examples](cli/EXAMPLES.md) - Real-world usage examples
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `parse` | Parse dictionary files (txt, docx, doc, pdf) |
+| `query` | Query parsed content or comparison results |
+| `compare` | Compare two dictionary versions |
+| `export` | Export comparison results to Excel |
+
+See `cli/README.md` for detailed documentation.
