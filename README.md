@@ -20,7 +20,7 @@ Wait for `api` to print `Fastify server listening on :3000`, then:
 ```bash
 # Create the admin user (first run only)
 docker compose exec api npm run seed:admin
-# → Creates: admin / changeme123
+# → Creates: admin@localhost.com / Changeme!23
 ```
 
 Open **http://localhost:5173** and log in.
