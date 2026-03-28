@@ -1,0 +1,37 @@
+{
+  "name": "@diffolio/core",
+  "version": "1.0.0",
+  "description": "Core dictionary parsing and comparison logic shared between backend and CLI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "diff-match-patch": "^1.0.5",
+    "safe-regex": "^2.1.1",
+    "deepmerge": "^4.3.1",
+    "mammoth": "^1.7.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/diff-match-patch": "^1.0.36",
+    "@types/safe-regex": "^1.1.6",
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "dictionary",
+    "parser",
+    "comparison",
+    "diffolio"
+  ],
+  "license": "MIT"
+}

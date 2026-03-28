@@ -1,0 +1,30 @@
+{
+  "name": "@diffolio/monorepo",
+  "version": "1.0.0",
+  "description": "Diffolio monorepo - dictionary comparison platform",
+  "private": true,
+  "workspaces": [
+    "core",
+    "backend",
+    "cli"
+  ],
+  "scripts": {
+    "build:core": "cd core && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:cli": "cd cli && npm run build",
+    "build": "npm run build:core && npm run build:backend && npm run build:cli",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:cli": "cd cli && npm run dev",
+    "test": "npm run test --workspaces",
+    "install:all": "npm install && npm install --workspaces"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "dictionary",
+    "comparison",
+    "monorepo"
+  ],
+  "license": "MIT"
+}
