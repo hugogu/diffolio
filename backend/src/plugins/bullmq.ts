@@ -7,7 +7,7 @@ export interface ParseJobData {
   taskId: string
   versionId: string
   filePath: string
-  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF'
+  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
   mode?: 'full' | 'retry-single'
   errorId?: string
 }

@@ -6,13 +6,14 @@ import { notFound, badRequest, paymentRequired, extractRootCause } from '../lib/
 import { saveFile, getFileStream, fileExists, deleteFile } from '../lib/storage.js'
 import { chargeVersionParseEnergy, invalidateVersionParseCharge, InsufficientEnergyError } from '../services/subscription/energy.js'
 
-function detectFileType(filename: string, _firstBytes?: Buffer): 'TXT' | 'DOC' | 'DOCX' | 'PDF' {
+function detectFileType(filename: string, _firstBytes?: Buffer): 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX' {
   const ext = path.extname(filename).toLowerCase()
   if (ext === '.txt') return 'TXT'
   if (ext === '.doc') return 'DOC'
   if (ext === '.docx') return 'DOCX'
   if (ext === '.pdf') return 'PDF'
-  throw badRequest(`Unsupported file type: ${ext}. Supported: .txt, .doc, .docx, .pdf`)
+  if (ext === '.mdx') return 'MDX'
+  throw badRequest(`Unsupported file type: ${ext}. Supported: .txt, .doc, .docx, .pdf, .mdx`)
 }
 
 const fileRoutes: FastifyPluginAsync = async (fastify) => {

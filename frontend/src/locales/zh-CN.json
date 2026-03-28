@@ -114,7 +114,7 @@
   },
   "upload": {
     "dragFile": "拖拽或点击上传辞书文件",
-    "fileTypes": "支持 .txt / .doc / .docx / .pdf 格式",
+    "fileTypes": "支持 .txt / .doc / .docx / .pdf / .mdx 格式",
     "maxSize": "最大 {size}MB",
     "dragConfig": "拖拽或点击上传格式配置文件",
     "configTypes": "支持 .json / .yaml 格式",

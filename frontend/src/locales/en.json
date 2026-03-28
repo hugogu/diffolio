@@ -114,7 +114,7 @@
   },
   "upload": {
     "dragFile": "Drag or click to upload dictionary file",
-    "fileTypes": "Supports .txt / .doc / .docx / .pdf formats",
+    "fileTypes": "Supports .txt / .doc / .docx / .pdf / .mdx formats",
     "maxSize": "Maximum {size}MB",
     "dragConfig": "Drag or click to upload format config file",
     "configTypes": "Supports .json / .yaml formats",

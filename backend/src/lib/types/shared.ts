@@ -148,7 +148,7 @@ export interface ParseTaskDto {
   id: string
   versionId: string
   status: 'PENDING' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
-  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF'
+  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
   originalFileName: string
   totalPages?: number | null
   totalEntries?: number | null

@@ -7,6 +7,7 @@ import { parseTxt } from '../services/parser/txt.parser.js'
 import { parseDoc } from '../services/parser/doc.parser.js'
 import { parseDocx } from '../services/parser/docx.parser.js'
 import { parsePdf } from '../services/parser/pdf.parser.js'
+import { parseMdict } from '../services/parser/mdict.parser.js'
 import { FormatConfigJson } from '../lib/types/shared.js'
 import logger from '../lib/worker-logger.js'
 
@@ -70,6 +71,8 @@ async function processParseJob(job: Job<ParseJobData>) {
     gen = parseDocx(filePath, compiled) as unknown as ChunkGenerator
   } else if (fileType === 'PDF') {
     gen = parsePdf(filePath, compiled) as unknown as ChunkGenerator
+  } else if (fileType === 'MDX') {
+    gen = parseMdict(filePath, compiled) as unknown as ChunkGenerator
   } else {
     throw new Error(`Unknown file type: ${fileType}`)
   }

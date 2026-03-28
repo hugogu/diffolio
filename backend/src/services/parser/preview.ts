@@ -357,3 +357,17 @@ export async function previewParsePdf(
   const data = await pdfParse(buffer)
   return previewParseLines(data.text.split('\n'), config, maxEntries, startIndex)
 }
+
+export async function previewParseMdict(
+  filePath: string,
+  config: CompiledConfig,
+  maxEntries: number,
+  startIndex = 0
+): Promise<ParsePreviewResult> {
+  const { previewParseMdict: mdictPreview } = await import('./mdict.parser.js')
+  const { entries, errors, totalLinesScanned } = await mdictPreview(filePath, config, maxEntries, startIndex)
+  return {
+    entries: entries.map(entry => ({ sourceLines: [], entry, errors: [] })),
+    totalLinesScanned,
+  }
+}

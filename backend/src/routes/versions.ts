@@ -10,6 +10,7 @@ import {
   previewParseDocx,
   previewParseDoc,
   previewParsePdf,
+  previewParseMdict,
 } from '../services/parser/preview.js'
 
 const versionRoutes: FastifyPluginAsync = async (fastify) => {
@@ -424,6 +425,9 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
               break
             case 'PDF':
               result = await previewParsePdf(task.storedFilePath, config, cap, startIndex)
+              break
+            case 'MDX':
+              result = await previewParseMdict(task.storedFilePath, config, cap, startIndex)
               break
             default:
               throw badRequest(`Unsupported file type: ${task.fileType}`)

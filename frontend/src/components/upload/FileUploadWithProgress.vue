@@ -6,7 +6,7 @@
       :headers="{ 'X-Skip-JSON-Stringify': 'true' }"
       :with-credentials="true"
       :show-file-list="true"
-      accept=".txt,.doc,.docx,.pdf"
+      accept=".txt,.doc,.docx,.pdf,.mdx"
       :limit="1"
       :auto-upload="true"
       :on-success="handleUploadSuccess"
@@ -14,7 +14,7 @@
       :before-upload="beforeUpload"
     >
       <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-      <div class="el-upload__text">{{ t('upload.dragFile') }} <em>(.txt / .doc / .docx / .pdf)</em></div>
+      <div class="el-upload__text">{{ t('upload.dragFile') }} <em>(.txt / .doc / .docx / .pdf / .mdx)</em></div>
       <template #tip>
         <div class="el-upload__tip">{{ t('upload.maxSize', { size: maxSizeMb }) }}，{{ t('upload.fileTypes') }}</div>
       </template>
