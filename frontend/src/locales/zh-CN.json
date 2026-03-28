@@ -380,6 +380,7 @@
       "submit": "注册",
       "hasAccount": "已有账户？",
       "loginLink": "立即登录",
+      "helpCenter": "帮助中心",
       "success": "注册成功",
       "successWithEmail": "验证邮件已发送至您的邮箱，请点击邮件中的链接完成验证后登录。",
       "successEmailFailed": "账号已创建，但验证邮件发送失败。请联系管理员手动开启您的邮箱验证，或稍后在登录页重新发送验证邮件。",

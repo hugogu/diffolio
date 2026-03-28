@@ -380,6 +380,7 @@
       "submit": "Register",
       "hasAccount": "Already have an account?",
       "loginLink": "Login now",
+      "helpCenter": "Help Center",
       "success": "Registration successful",
       "successWithEmail": "A verification email has been sent to your email address. Please click the link in the email to complete verification before logging in.",
       "successEmailFailed": "Account created, but verification email failed to send. Please contact the administrator to manually enable your email verification, or resend the verification email from the login page later.",

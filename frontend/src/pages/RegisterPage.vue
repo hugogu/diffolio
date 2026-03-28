@@ -93,6 +93,10 @@
         <div class="login-link">
           {{ $t('auth.register.hasAccount') }}<router-link to="/login">{{ $t('auth.register.loginLink') }}</router-link>
         </div>
+
+        <div class="help-link">
+          <router-link to="/help">{{ $t('auth.register.helpCenter') }}</router-link>
+        </div>
       </el-form>
     </el-card>
     <AppFooter />
@@ -242,5 +246,21 @@ h2 {
   text-align: center;
   font-size: 14px;
   color: var(--color-text-secondary);
+}
+
+.help-link {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.help-link a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.help-link a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 </style>
