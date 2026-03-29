@@ -63,7 +63,8 @@
     "systemConfig": "系统配置管理",
     "parseErrors": "解析错误管理",
     "about": "关于本平台",
-    "energy": "电量记录"
+    "energy": "电量记录",
+    "conversions": "格式转换"
   },
   "home": {
     "welcome": "欢迎使用辞书研习平台",
@@ -204,6 +205,34 @@
       "PURCHASE": "购买电量",
       "UPLOAD_DEDUCTION": "上传扣费",
       "FREE_TIER_UNLOCK": "免费解锁"
+    }
+  },
+  "conversion": {
+    "title": "格式转换",
+    "subtitle": "将词典文件转换为标准文本格式",
+    "newConversion": "新建转换",
+    "inputFormat": "输入格式",
+    "outputFormat": "输出格式",
+    "uploadFile": "上传文件",
+    "dragOrClick": "拖拽文件到此处，或点击上传",
+    "fileLimit": "仅支持 .mdx 文件，最大 500MB",
+    "start": "开始转换",
+    "started": "转换任务已创建",
+    "failed": "创建转换任务失败",
+    "history": "转换历史",
+    "status": "状态",
+    "progress": "进度",
+    "fileSize": "文件大小",
+    "createdAt": "创建时间",
+    "downloadFailed": "下载失败",
+    "deleted": "已删除",
+    "confirmDelete": "确定要删除这个转换任务吗？",
+    "statusLabels": {
+      "PENDING": "等待中",
+      "RUNNING": "转换中",
+      "COMPLETED": "已完成",
+      "FAILED": "失败",
+      "EXPIRED": "已过期"
     }
   },
   "search": {

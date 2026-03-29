@@ -12,10 +12,18 @@ export class ApiError extends Error {
 
 const BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? ''
 
+function hasContentTypeHeader(headers: Record<string, string>): boolean {
+  return Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')
+}
+
+function isFormDataBody(body: RequestInit['body']): body is FormData {
+  return typeof FormData !== 'undefined' && body instanceof FormData
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { ...options.headers as Record<string, string> }
-  // Only set Content-Type if body is present and it's not already set
-  if (options.body && !headers['Content-Type']) {
+  // Let the browser set multipart boundaries for FormData bodies.
+  if (options.body && !isFormDataBody(options.body) && !hasContentTypeHeader(headers)) {
     headers['Content-Type'] = 'application/json'
   }
 

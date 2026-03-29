@@ -35,6 +35,10 @@
           <el-icon><Grid /></el-icon>
           <template #title>{{ $t('nav.taxonomy') }}</template>
         </el-menu-item>
+        <el-menu-item index="/conversions">
+          <el-icon><DocumentCopy /></el-icon>
+          <template #title>{{ $t('nav.conversions') }}</template>
+        </el-menu-item>
         <el-menu-item index="/admin/configs">
           <el-icon><Setting /></el-icon>
           <template #title>{{ $t('nav.config') }}</template>

@@ -153,6 +153,11 @@ const router = createRouter({
           component: () => import('@/pages/ChangePasswordPage.vue'),
         },
         {
+          path: 'conversions',
+          name: 'FormatConversions',
+          component: () => import('@/pages/FormatConversionPage.vue'),
+        },
+        {
           path: 'admin/configs',
           name: 'ConfigManagement',
           component: () => import('@/pages/admin/ConfigManagementPage.vue'),

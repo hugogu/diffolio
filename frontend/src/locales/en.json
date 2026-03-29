@@ -63,7 +63,8 @@
     "systemConfig": "System Config",
     "parseErrors": "Parse Errors",
     "about": "About",
-    "energy": "Energy History"
+    "energy": "Energy History",
+    "conversions": "Format Conversion"
   },
   "home": {
     "welcome": "Welcome to Dictionary Research Platform",
@@ -204,6 +205,34 @@
       "PURCHASE": "Purchase",
       "UPLOAD_DEDUCTION": "Upload Deduction",
       "FREE_TIER_UNLOCK": "Free Tier Unlock"
+    }
+  },
+  "conversion": {
+    "title": "Format Conversion",
+    "subtitle": "Convert dictionary files to standard text formats",
+    "newConversion": "New Conversion",
+    "inputFormat": "Input Format",
+    "outputFormat": "Output Format",
+    "uploadFile": "Upload File",
+    "dragOrClick": "Drag file here or click to upload",
+    "fileLimit": "Only .mdx files supported, max 500MB",
+    "start": "Start Conversion",
+    "started": "Conversion task created",
+    "failed": "Failed to create conversion task",
+    "history": "Conversion History",
+    "status": "Status",
+    "progress": "Progress",
+    "fileSize": "File Size",
+    "createdAt": "Created At",
+    "downloadFailed": "Download failed",
+    "deleted": "Deleted",
+    "confirmDelete": "Are you sure you want to delete this conversion task?",
+    "statusLabels": {
+      "PENDING": "Pending",
+      "RUNNING": "Running",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed",
+      "EXPIRED": "Expired"
     }
   },
   "search": {
