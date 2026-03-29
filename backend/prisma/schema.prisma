@@ -563,6 +563,7 @@ enum EnergyEventType {
 // 格式转换模块枚举
 enum ConversionInputFormat {
   MDX
+  EPUB
 }
 
 enum ConversionOutputFormat {

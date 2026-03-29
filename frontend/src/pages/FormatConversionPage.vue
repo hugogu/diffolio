@@ -22,7 +22,7 @@
             :limit="1"
             :on-change="handleFileChange"
             :on-remove="handleFileRemove"
-            accept=".mdx"
+            accept=".mdx,.epub"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">
@@ -42,6 +42,7 @@
             <el-form-item :label="$t('conversion.inputFormat')">
               <el-select v-model="form.inputFormat" placeholder="选择输入格式">
                 <el-option label="MDX" value="MDX" />
+                <el-option label="EPUB" value="EPUB" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -204,7 +205,7 @@ async function handleSubmit() {
   try {
     await createConversion(
       selectedFile.value,
-      form.value.inputFormat as 'MDX',
+      form.value.inputFormat as 'MDX' | 'EPUB',
       form.value.outputFormat as 'TXT' | 'DOCX'
     )
 

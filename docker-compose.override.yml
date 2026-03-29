@@ -46,6 +46,7 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ../frontend-overrides/assets/img:/app/public/overrides/img:ro
     ports:
       - "5174:5173"
     command: ["npm", "run", "dev", "--", "--host"]

@@ -2,7 +2,7 @@
 
 import { apiFetch } from './client'
 
-export type ConversionInputFormat = 'MDX'
+export type ConversionInputFormat = 'MDX' | 'EPUB'
 export type ConversionOutputFormat = 'TXT' | 'DOCX'
 export type ConversionStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'EXPIRED'
 

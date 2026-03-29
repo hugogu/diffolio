@@ -83,6 +83,7 @@
 <script setup lang="ts">
 import { DataAnalysis, Search, Grid, Download } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
+import { loadHostedImage } from '@/utils/hosted-assets'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -95,13 +96,7 @@ const wechatImg = ref('')
 
 // Try to load contact image (will fail gracefully in open-source version)
 onMounted(async () => {
-  try {
-    const module = await import('@/assets/img/Wechat.jpg')
-    wechatImg.value = module.default
-  } catch {
-    // Image not available in open-source version
-    wechatImg.value = ''
-  }
+  wechatImg.value = await loadHostedImage('Wechat.jpg')
 })
 </script>
 

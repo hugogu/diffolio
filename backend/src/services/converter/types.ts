@@ -3,13 +3,13 @@
 export interface ConvertOptions {
   inputPath: string
   outputPath: string
-  inputFormat: 'MDX'
+  inputFormat: 'MDX' | 'EPUB'
   outputFormat: 'TXT' | 'DOCX'
   onProgress?: (progress: number) => void | Promise<void>
 }
 
 export interface Converter {
-  readonly inputFormat: 'MDX'
+  readonly inputFormat: 'MDX' | 'EPUB'
   readonly outputFormat: 'TXT' | 'DOCX'
   convert(options: ConvertOptions): Promise<void>
 }

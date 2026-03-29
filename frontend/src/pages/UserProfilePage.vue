@@ -200,6 +200,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { getUserStats, type UserStats } from '@/api/auth'
 import { User, Lightning, Files, DataAnalysis } from '@element-plus/icons-vue'
+import { loadHostedImage } from '@/utils/hosted-assets'
 import { useI18n } from 'vue-i18n'
 
 // Payment QR images - these are hosted-version specific and loaded dynamically
@@ -208,20 +209,8 @@ const alipayImg = ref('')
 
 // Try to load payment images (will fail gracefully in open-source version)
 async function loadPaymentImages() {
-  try {
-    const wechatModule = await import('@/assets/img/WeChatPay.jpg')
-    wechatPayImg.value = wechatModule.default
-  } catch {
-    // Image not available in open-source version
-    wechatPayImg.value = ''
-  }
-  try {
-    const alipayModule = await import('@/assets/img/AliPay.jpg')
-    alipayImg.value = alipayModule.default
-  } catch {
-    // Image not available in open-source version
-    alipayImg.value = ''
-  }
+  wechatPayImg.value = await loadHostedImage('WeChatPay.jpg')
+  alipayImg.value = await loadHostedImage('AliPay.jpg')
 }
 
 const { t } = useI18n()

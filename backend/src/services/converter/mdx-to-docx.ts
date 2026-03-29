@@ -3,6 +3,7 @@
 import fs from 'node:fs'
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
 import { createLogger } from '../../lib/logger.js'
+import { convertHtmlToLines } from './text-utils.js'
 import { Converter, ConvertOptions } from './types.js'
 
 const logger = createLogger({ name: 'mdx-to-docx' })
@@ -13,60 +14,6 @@ async function loadMdict(): Promise<any> {
   // Handle the nested default export structure: { default: { default: MdictClass } }
   const MdictClass = mdictModule.default?.default || mdictModule.default || mdictModule
   return MdictClass
-}
-
-// Convert HTML definition to plain text lines
-// Adapted from mdict.parser.ts
-function convertHtmlToLines(html: string): string[] {
-  const { htmlToText } = require('html-to-text')
-
-  const text = htmlToText(html, {
-    wordwrap: false,
-    selectors: [
-      { selector: 'script', format: 'skip' },
-      { selector: 'style', format: 'skip' },
-      { selector: 'link', format: 'skip' },
-      { selector: 'a', format: 'skip' },
-      { selector: 'div', format: 'block' },
-      { selector: 'p', format: 'block' },
-      { selector: 'entry', format: 'block' },
-      { selector: 'hwg', format: 'block' },
-      { selector: 'def', format: 'block' },
-      { selector: 'column', format: 'block' },
-      { selector: 'span', format: 'inline' },
-      { selector: 'sup', format: 'inline' },
-      { selector: 'small', format: 'inline' },
-      { selector: 'ex', format: 'inline' },
-      { selector: 'note', format: 'inline' },
-      { selector: 'num', format: 'inline' },
-      { selector: 'ps', format: 'inline' },
-      { selector: 'pinyin', format: 'inline' },
-      {
-        selector: 'hw',
-        format: 'inline',
-        options: {
-          trailingLineBreaks: 0,
-        },
-      },
-      {
-        selector: 'pinyin',
-        format: 'inline',
-        options: {
-          leadingLineBreaks: 0,
-        },
-      },
-      { selector: 'ci', format: 'skip' },
-      { selector: 'cont', format: 'skip' },
-      { selector: 'br', format: 'inline' },
-    ],
-    preserveNewlines: true,
-  })
-
-  return text
-    .split('\n')
-    .map((line: string) => line.trim())
-    .filter((line: string) => line.length > 0)
-    .map((line: string) => line.replace(/\x00/g, ''))
 }
 
 export class MdxToDocxConverter implements Converter {

@@ -12,6 +12,11 @@ import { ensureDefaultConvertersRegistered, registry } from '../services/convert
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
 
+const INPUT_FILE_EXTENSIONS: Record<string, string> = {
+  MDX: '.mdx',
+  EPUB: '.epub',
+}
+
 function getMultipartFieldValue(fields: MultipartFields, fieldName: string): string | undefined {
   const field = fields[fieldName]
   if (!field) {
@@ -101,8 +106,12 @@ const conversionRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Validate file extension
     const ext = path.extname(data.filename).toLowerCase()
-    if (ext !== '.mdx') {
-      throw badRequest('Only .mdx files are supported')
+    const expectedExt = INPUT_FILE_EXTENSIONS[inputFormat]
+    if (!expectedExt) {
+      throw badRequest(`Unsupported input format: ${inputFormat}`)
+    }
+    if (ext !== expectedExt) {
+      throw badRequest(`Input format ${inputFormat} requires a ${expectedExt} file`)
     }
 
     // Save file first (stream to disk)
@@ -112,7 +121,7 @@ const conversionRoutes: FastifyPluginAsync = async (fastify) => {
       fs.mkdirSync(userDir, { recursive: true })
     }
 
-    const inputFileName = `${taskId}-input.mdx`
+    const inputFileName = `${taskId}-input${expectedExt}`
     const outputFileName = `${taskId}-output.${outputFormat.toLowerCase()}`
     const inputPath = path.join(userDir, inputFileName)
     const outputPath = path.join(userDir, outputFileName)

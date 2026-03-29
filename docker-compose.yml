@@ -119,6 +119,8 @@ services:
       - common_backend
     environment:
       UPLOAD_MAX_SIZE_MB: ${UPLOAD_MAX_SIZE_MB:-10}
+    volumes:
+      - ../frontend-overrides/assets/img:/usr/share/nginx/html/overrides/img:ro
     ports:
       - "${FRONTEND_PORT:-5173}:80"
     depends_on:
