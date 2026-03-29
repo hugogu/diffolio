@@ -1,8 +1,10 @@
 ARG REGISTRY_PREFIX=""
-FROM ${REGISTRY_PREFIX}node:22.22.1-alpine3.23 AS builder
+FROM ${REGISTRY_PREFIX}node:22.22.1-alpine3.23 AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
+
+FROM deps AS builder
 COPY . .
 RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build:docker
 
