@@ -42,6 +42,7 @@ model User {
   systemFormatConfigs      SystemFormatConfig[]
   systemConfigVisibilities SystemConfigVisibility[]
   userFormatConfigs        UserFormatConfig[]
+  conversionTasks         ConversionTask[]
 
   @@map("users")
 }
@@ -559,6 +560,24 @@ enum EnergyEventType {
   COMPARE_DEDUCTION
 }
 
+// 格式转换模块枚举
+enum ConversionInputFormat {
+  MDX
+}
+
+enum ConversionOutputFormat {
+  TXT
+  DOCX
+}
+
+enum ConversionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
 model UserSubscription {
   id                    String             @id @default(uuid())
   userId                String             @unique @map("user_id")
@@ -631,6 +650,30 @@ model SubscriptionPlan {
   updatedAt          DateTime         @updatedAt @map("updated_at")
 
   @@map("subscription_plans")
+}
+
+// 格式转换任务模型
+model ConversionTask {
+  id             String                 @id @default(uuid())
+  userId         String                 @map("user_id")
+  user           User                   @relation(fields: [userId], references: [id])
+  inputFormat    ConversionInputFormat  @map("input_format")
+  outputFormat   ConversionOutputFormat @map("output_format")
+  inputFilePath  String                 @map("input_file_path")
+  outputFilePath String?                @map("output_file_path")
+  status         ConversionStatus       @default(PENDING)
+  progress       Int                    @default(0)
+  errorMessage   String?                @map("error_message")
+  fileSize       BigInt                 @map("file_size")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  completedAt    DateTime?              @map("completed_at")
+  expiresAt      DateTime?              @map("expires_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("conversion_tasks")
 }
 
 model PaymentQRConfig {
