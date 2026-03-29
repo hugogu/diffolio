@@ -32,12 +32,21 @@ export interface TaxonomyJobData {
   filePath: string
 }
 
+export interface ConversionJobData {
+  taskId: string
+  inputPath: string
+  outputPath: string
+  inputFormat: string
+  outputFormat: string
+}
+
 declare module 'fastify' {
   interface FastifyInstance {
     parseQueue: Queue<ParseJobData>
     comparisonQueue: Queue<ComparisonJobData>
     exportQueue: Queue<ExportJobData>
     taxonomyQueue: Queue<TaxonomyJobData>
+    conversionQueue: Queue<ConversionJobData>
     redis: IORedis
   }
 }
@@ -51,18 +60,21 @@ const bullmqPlugin: FastifyPluginAsync = fp(async (fastify) => {
   const comparisonQueue = new Queue<ComparisonJobData>('comparison', { connection: redis })
   const exportQueue = new Queue<ExportJobData>('export', { connection: redis })
   const taxonomyQueue = new Queue<TaxonomyJobData>('taxonomy', { connection: redis })
+  const conversionQueue = new Queue<ConversionJobData>('conversion', { connection: redis })
 
   fastify.decorate('redis', redis)
   fastify.decorate('parseQueue', parseQueue)
   fastify.decorate('comparisonQueue', comparisonQueue)
   fastify.decorate('exportQueue', exportQueue)
   fastify.decorate('taxonomyQueue', taxonomyQueue)
+  fastify.decorate('conversionQueue', conversionQueue)
 
   fastify.addHook('onClose', async () => {
     await parseQueue.close()
     await comparisonQueue.close()
     await exportQueue.close()
     await taxonomyQueue.close()
+    await conversionQueue.close()
     redis.disconnect()
   })
 })
