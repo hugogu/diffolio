@@ -63,9 +63,9 @@ function convertHtmlToLines(html: string): string[] {
 
   return text
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => line.replace(/\x00/g, ''))
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0)
+    .map((line: string) => line.replace(/\x00/g, ''))
 }
 
 export class MdxToTxtConverter implements Converter {

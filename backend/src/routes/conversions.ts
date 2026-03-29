@@ -1,5 +1,5 @@
-// routes/conversions.ts
-
+import type { MultipartFields } from '@fastify/multipart'
+import type { ConversionInputFormat, ConversionOutputFormat } from '@prisma/client'
 import { FastifyPluginAsync } from 'fastify'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -11,6 +11,20 @@ import { fileExists, deleteFile } from '../lib/storage.js'
 import { ensureDefaultConvertersRegistered, registry } from '../services/converter/index.js'
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
+
+function getMultipartFieldValue(fields: MultipartFields, fieldName: string): string | undefined {
+  const field = fields[fieldName]
+  if (!field) {
+    return undefined
+  }
+
+  if (Array.isArray(field)) {
+    const firstField = field.find((part) => part.type === 'field')
+    return firstField?.type === 'field' ? String(firstField.value) : undefined
+  }
+
+  return field.type === 'field' ? String(field.value) : undefined
+}
 
 // Ensure conversion directory exists
 const CONVERSION_DIR = path.join(process.env.FILE_STORAGE_LOCAL_PATH || '/data/uploads', 'conversions')
@@ -44,7 +58,7 @@ const conversionRoutes: FastifyPluginAsync = async (fastify) => {
     ])
 
     return {
-      data: tasks.map(task => ({
+      data: tasks.map((task) => ({
         id: task.id,
         inputFormat: task.inputFormat,
         outputFormat: task.outputFormat,
@@ -73,8 +87,8 @@ const conversionRoutes: FastifyPluginAsync = async (fastify) => {
       throw badRequest('No file provided')
     }
 
-    const inputFormat = data.fields.inputFormat?.value || 'MDX'
-    const outputFormat = data.fields.outputFormat?.value || 'TXT'
+    const inputFormat = (getMultipartFieldValue(data.fields, 'inputFormat') || 'MDX') as ConversionInputFormat
+    const outputFormat = (getMultipartFieldValue(data.fields, 'outputFormat') || 'TXT') as ConversionOutputFormat
 
     // Validate format combination
     if (!registry.isSupported(inputFormat, outputFormat)) {
@@ -206,7 +220,7 @@ const conversionRoutes: FastifyPluginAsync = async (fastify) => {
       throw badRequest('Conversion not completed')
     }
 
-    if (task.status === 'EXPIRED' || (task.expiresAt && task.expiresAt < new Date())) {
+    if (task.expiresAt && task.expiresAt < new Date()) {
       throw badRequest('File has expired')
     }
 

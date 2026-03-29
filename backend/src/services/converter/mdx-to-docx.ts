@@ -1,7 +1,7 @@
 // services/converter/mdx-to-docx.ts
 
 import fs from 'node:fs'
-import { Document, Paragraph, TextRun, HeadingLevel } from 'docx'
+import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
 import { createLogger } from '../../lib/logger.js'
 import { Converter, ConvertOptions } from './types.js'
 
@@ -64,9 +64,9 @@ function convertHtmlToLines(html: string): string[] {
 
   return text
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => line.replace(/\x00/g, ''))
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0)
+    .map((line: string) => line.replace(/\x00/g, ''))
 }
 
 export class MdxToDocxConverter implements Converter {
@@ -149,7 +149,7 @@ export class MdxToDocxConverter implements Converter {
       }],
     })
 
-    const buffer = await doc.save()
+    const buffer = await Packer.toBuffer(doc)
     fs.writeFileSync(outputPath, buffer)
 
     logger.info({ processed, total }, 'MDX to DOCX conversion completed')
