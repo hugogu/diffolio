@@ -1,8 +1,10 @@
 <template>
-  <div class="user-management">
+  <div class="user-management page-shell">
     <div class="page-header">
-      <h2>{{ $t('admin.users.title') }}</h2>
-      <div class="filters">
+      <div class="page-title-group">
+        <h2 class="page-title">{{ $t('admin.users.title') }}</h2>
+      </div>
+      <div class="filters filter-toolbar">
         <el-input
           v-model="filterEmail"
           :placeholder="$t('admin.users.searchEmail')"
@@ -82,10 +84,10 @@
           <el-tag v-else type="success" size="small">{{ $t('admin.users.active') }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('common.actions')" width="120" align="center">
+      <el-table-column :label="$t('common.actions')" width="88" align="right" header-align="right">
         <template #default="{ row }">
           <el-dropdown trigger="click">
-            <el-button size="small">{{ $t('common.actions') }} <el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+            <ActionButton kind="admin" :icon="MoreFilled" :label="$t('common.actions')" :tooltip="false" />
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="openEdit(row)">{{ $t('common.edit') }}</el-dropdown-item>
@@ -137,10 +139,11 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { MoreFilled } from '@element-plus/icons-vue'
 import { listAdminUsers, adminGetUserSubscription, updateAdminUser, adminResetPassword, type AdminUser } from '@/api/admin'
 import UserEditDialog from '@/components/admin/UserEditDialog.vue'
 import SubscriptionEditDialog from '@/components/admin/SubscriptionEditDialog.vue'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const { t } = useI18n()
 
@@ -266,21 +269,6 @@ onMounted(loadUsers)
 </script>
 
 <style scoped>
-.user-management {
-  padding: 24px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0;
-}
-
 .filters {
   display: flex;
   gap: 12px;
@@ -299,5 +287,12 @@ onMounted(loadUsers)
 :deep(.danger-item:hover) {
   background-color: var(--el-color-danger-light-9);
   color: var(--el-color-danger);
+}
+
+@media (max-width: 768px) {
+  .filters :deep(.el-input),
+  .filters :deep(.el-select) {
+    width: 100% !important;
+  }
 }
 </style>

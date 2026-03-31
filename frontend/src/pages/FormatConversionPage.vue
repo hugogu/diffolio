@@ -1,12 +1,14 @@
 <template>
-  <div class="format-conversion-page">
+  <div class="format-conversion-page page-shell">
     <div class="page-header">
-      <h1>{{ $t('conversion.title') }}</h1>
-      <p class="subtitle">{{ $t('conversion.subtitle') }}</p>
+      <div class="page-title-group">
+        <h1 class="page-title">{{ $t('conversion.title') }}</h1>
+        <p class="page-subtitle">{{ $t('conversion.subtitle') }}</p>
+      </div>
     </div>
 
     <!-- Conversion Form -->
-    <el-card class="conversion-form">
+    <el-card class="conversion-form page-card">
       <template #header>
         <span>{{ $t('conversion.newConversion') }}</span>
       </template>
@@ -72,25 +74,25 @@
     </el-card>
 
     <!-- Conversion History -->
-    <el-card class="conversion-history">
+    <el-card class="conversion-history page-card">
       <template #header>
         <div class="card-header">
           <span>{{ $t('conversion.history') }}</span>
-          <el-button :icon="Refresh" circle size="small" @click="loadHistory" />
+          <ActionButton kind="user" :label="$t('common.refresh')" @click="loadHistory" />
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="tasks" stripe>
-        <el-table-column prop="inputFormat" :label="$t('conversion.inputFormat')" width="100" />
-        <el-table-column prop="outputFormat" :label="$t('conversion.outputFormat')" width="100" />
+      <el-table v-loading="loading" :data="tasks" stripe class="conversion-history-table" style="width: 100%">
+        <el-table-column prop="inputFormat" :label="$t('conversion.inputFormat')" min-width="120" />
+        <el-table-column prop="outputFormat" :label="$t('conversion.outputFormat')" min-width="120" />
 
-        <el-table-column :label="$t('conversion.fileSize')" width="120">
+        <el-table-column :label="$t('conversion.fileSize')" min-width="140">
           <template #default="{ row }">
             {{ formatFileSize(row.fileSize) }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('conversion.status')" width="120">
+        <el-table-column :label="$t('conversion.status')" min-width="120">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
@@ -98,7 +100,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('conversion.progress')" width="150">
+        <el-table-column :label="$t('conversion.progress')" min-width="180">
           <template #default="{ row }">
             <el-progress
               v-if="row.status === 'RUNNING'"
@@ -110,30 +112,24 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('conversion.createdAt')" width="180">
+        <el-table-column :label="$t('conversion.createdAt')" min-width="180">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('common.actions')" width="200" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="116" fixed="right" align="right" header-align="right">
           <template #default="{ row }">
-            <el-button
-              v-if="row.status === 'COMPLETED'"
-              size="small"
-              type="primary"
-              @click="handleDownload(row)"
-            >
-              {{ $t('common.download') }}
-            </el-button>
-
-            <el-button
-              size="small"
-              type="danger"
-              @click="handleDelete(row)"
-            >
-              {{ $t('common.delete') }}
-            </el-button>
+            <div class="table-actions is-admin">
+              <ActionButton
+                v-if="row.status === 'COMPLETED'"
+                kind="admin"
+                :icon="Download"
+                :label="$t('common.download')"
+                @click="handleDownload(row)"
+              />
+              <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('common.delete')" @click="handleDelete(row)" />
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -154,7 +150,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { UploadFilled, Refresh } from '@element-plus/icons-vue'
+import { UploadFilled, Download, Delete } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
   createConversion,
@@ -163,6 +159,7 @@ import {
   deleteConversion,
   type ConversionTask
 } from '@/api/conversions'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const { t } = useI18n()
 
@@ -322,23 +319,8 @@ onUnmounted(() => {
 
 <style scoped>
 .format-conversion-page {
-  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  margin: 0 0 8px 0;
-  font-size: 24px;
-}
-
-.subtitle {
-  color: var(--el-text-color-secondary);
-  margin: 0;
 }
 
 .conversion-form {
@@ -374,5 +356,25 @@ onUnmounted(() => {
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+.conversion-history-table :deep(.cell) {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.conversion-history :deep(.el-card__body) {
+  padding-inline: 20px;
+}
+
+@media (max-width: 768px) {
+  .format-conversion-page {
+    max-width: none;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 </style>

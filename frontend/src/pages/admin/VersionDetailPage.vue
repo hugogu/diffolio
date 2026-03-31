@@ -1,7 +1,7 @@
 <template>
-  <div v-loading="loading">
+  <div v-loading="loading" class="page-shell">
     <div class="page-header">
-      <div>
+      <div class="page-title-group">
         <el-breadcrumb>
           <el-breadcrumb-item :to="{ path: '/admin/dictionaries' }">{{ $t('admin.dictionaryList.title') }}</el-breadcrumb-item>
           <el-breadcrumb-item v-if="version?.dictionary" :to="`/admin/dictionaries/${version?.dictionary?.id}`">
@@ -9,8 +9,8 @@
           </el-breadcrumb-item>
           <el-breadcrumb-item>{{ version?.label }}</el-breadcrumb-item>
         </el-breadcrumb>
-        <h2>{{ version?.label }}</h2>
-        <p v-if="version?.publishedYear">{{ $t('admin.dictionaryDetail.publishedYear') }}：{{ version.publishedYear }}</p>
+        <h2 class="page-title">{{ version?.label }}</h2>
+        <p v-if="version?.publishedYear" class="page-subtitle">{{ $t('admin.dictionaryDetail.publishedYear') }}：{{ version.publishedYear }}</p>
       </div>
     </div>
 
@@ -113,45 +113,32 @@
               <span class="file-name">{{ activeTask.originalFileName }}</span>
               <el-tag size="small" type="info">{{ activeTask.fileType }}</el-tag>
               <el-tag size="small" :type="taskStatusType(activeTask.status)">{{ activeTask.status }}</el-tag>
-              <el-button
-                link
-                type="primary"
-                size="small"
+              <ActionButton
+                kind="admin"
+                :icon="Download"
+                :label="$t('admin.versionDetail.downloadOriginal')"
                 :href="downloadUrl"
                 target="_blank"
                 tag="a"
-              >
-                <el-icon><Download /></el-icon>
-                {{ $t('admin.versionDetail.downloadOriginal') }}
-              </el-button>
+              />
             </div>
             <div class="file-meta">
               {{ $t('admin.versionDetail.uploadedAt') }} {{ formatDate(activeTask.createdAt) }}
               <span v-if="activeTask.totalEntries">· {{ activeTask.totalEntries.toLocaleString() }} {{ $t('admin.versionDetail.entryCount') }}</span>
             </div>
             <div class="reparse-row">
-              <el-button
-                type="primary"
-                :loading="reparsing"
-                @click="handleReparse"
-              >
-                {{ $t('admin.versionDetail.reparse') }}
-              </el-button>
-              <el-button
-                v-if="activeTask.status === 'COMPLETED'"
-                type="info"
-                @click="$router.push(`/admin/versions/${route.params.versionId}/parse-debug`)"
-              >
-                {{ $t('admin.versionDetail.parseDebugPreview') }}
-              </el-button>
-              <el-button
-                type="danger"
-                :loading="deletingFile"
-                :icon="Delete"
-                @click="handleDeleteFile"
-              >
-                {{ $t('admin.versionDetail.deleteFile') }}
-              </el-button>
+              <div class="table-actions is-admin">
+                <ActionButton kind="admin" type="primary" :icon="RefreshRight" :label="$t('admin.versionDetail.reparse')" :loading="reparsing" @click="handleReparse" />
+                <ActionButton
+                  v-if="activeTask.status === 'COMPLETED'"
+                  kind="admin"
+                  type="info"
+                  :icon="View"
+                  :label="$t('admin.versionDetail.parseDebugPreview')"
+                  @click="$router.push(`/admin/versions/${route.params.versionId}/parse-debug`)"
+                />
+                <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('admin.versionDetail.deleteFile')" :loading="deletingFile" @click="handleDeleteFile" />
+              </div>
             </div>
             <el-divider style="margin: 12px 0" />
             <el-alert
@@ -189,12 +176,13 @@ import { useRoute } from 'vue-router'
 import { getVersion, reparseVersion, deleteVersionFile, versionFileDownloadUrl } from '@/api/dictionaries'
 import { getParseTask } from '@/api/parse-tasks'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Document, Download, Delete } from '@element-plus/icons-vue'
+import { Document, Download, Delete, RefreshRight, View } from '@element-plus/icons-vue'
 import ConfigUpload from '@/components/admin/ConfigUpload.vue'
 import FileUploadWithProgress from '@/components/upload/FileUploadWithProgress.vue'
 import { useConfigsStore } from '@/stores/configs'
 import type { ParseTask } from '@/api/parse-tasks'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const route = useRoute()
 const { t } = useI18n()

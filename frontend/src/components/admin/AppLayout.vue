@@ -1,175 +1,185 @@
 <template>
   <el-container class="app-layout">
+    <div
+      v-if="isMobile && mobileSidebarOpen"
+      class="mobile-sidebar-mask"
+      @click="mobileSidebarOpen = false"
+    />
+
     <!-- Sidebar -->
-    <el-aside :width="sidebarCollapsed ? '64px' : '260px'" class="sidebar">
-      <!-- Logo at top -->
-      <div class="logo">
-        <el-icon><Document /></el-icon>
-        <span v-if="!sidebarCollapsed">{{ $t('app.name') }}</span>
-      </div>
-
-      <!-- Main menu (regular user functions) -->
-      <el-menu
-        :default-active="route.path"
-        :collapse="sidebarCollapsed"
-        router
-        class="sidebar-menu"
-      >
-        <el-menu-item index="/home">
-          <el-icon><HomeFilled /></el-icon>
-          <template #title>{{ $t('nav.home') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/dictionaries">
-          <el-icon><Files /></el-icon>
-          <template #title>{{ $t('nav.dictionaries') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/comparisons">
-          <el-icon><DataAnalysis /></el-icon>
-          <template #title>{{ $t('nav.comparisons') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/search">
-          <el-icon><Search /></el-icon>
-          <template #title>{{ $t('nav.search') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/taxonomy">
-          <el-icon><Grid /></el-icon>
-          <template #title>{{ $t('nav.taxonomy') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/conversions">
-          <el-icon><DocumentCopy /></el-icon>
-          <template #title>{{ $t('nav.conversions') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/configs">
-          <el-icon><Setting /></el-icon>
-          <template #title>{{ $t('nav.config') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/help">
-          <el-icon><QuestionFilled /></el-icon>
-          <template #title>{{ $t('nav.help') }}</template>
-        </el-menu-item>
-      </el-menu>
-
-      <!-- Spacer to push admin menu down -->
-      <div class="sidebar-spacer"></div>
-
-      <!-- Admin menu (admin-only functions) -->
-      <el-menu
-        v-if="authStore.user?.role === 'ADMIN'"
-        :default-active="route.path"
-        :collapse="sidebarCollapsed"
-        router
-        class="sidebar-menu admin-menu"
-      >
-        <div class="nav-divider" :class="{ collapsed: sidebarCollapsed }">
-          <span v-if="!sidebarCollapsed" class="nav-divider-label">{{ $t('nav.admin') }}</span>
+    <el-aside :width="asideWidth" class="sidebar-shell">
+      <div class="sidebar" :class="{ mobile: isMobile, open: mobileSidebarOpen }">
+        <!-- Logo at top -->
+        <div class="logo">
+          <el-icon><Document /></el-icon>
+          <span v-if="!menuCollapsed">{{ $t('app.name') }}</span>
         </div>
-        <el-menu-item index="/admin/users">
-          <el-icon><UserFilled /></el-icon>
-          <template #title>{{ $t('nav.users') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/watermark-verify">
-          <el-icon><View /></el-icon>
-          <template #title>{{ $t('nav.watermark') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/file-management">
-          <el-icon><DocumentCopy /></el-icon>
-          <template #title>{{ $t('nav.files') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/subscription-plans">
-          <el-icon><CoffeeCup /></el-icon>
-          <template #title>{{ $t('nav.subscription') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/system-configs">
-          <el-icon><SetUp /></el-icon>
-          <template #title>{{ $t('nav.systemConfig') }}</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/parse-errors">
-          <el-icon><Warning /></el-icon>
-          <template #title>{{ $t('nav.parseErrors') }}</template>
-        </el-menu-item>
-      </el-menu>
 
-      <!-- User panel at bottom -->
-      <div class="sidebar-user">
-        <!-- User info block — click to toggle menu -->
-        <el-tooltip
-          :content="authStore.user?.email"
-          placement="right"
-          :disabled="!sidebarCollapsed"
+        <!-- Main menu (regular user functions) -->
+        <el-menu
+          :default-active="route.path"
+          :collapse="menuCollapsed"
+          router
+          class="sidebar-menu"
+          @select="handleMenuSelect"
         >
-          <button
-            class="sidebar-user-info"
-            :class="{ collapsed: sidebarCollapsed, open: userMenuOpen }"
-            @click="userMenuOpen = !userMenuOpen"
+          <el-menu-item index="/home">
+            <el-icon><HomeFilled /></el-icon>
+            <template #title>{{ $t('nav.home') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/dictionaries">
+            <el-icon><Files /></el-icon>
+            <template #title>{{ $t('nav.dictionaries') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/comparisons">
+            <el-icon><DataAnalysis /></el-icon>
+            <template #title>{{ $t('nav.comparisons') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/search">
+            <el-icon><Search /></el-icon>
+            <template #title>{{ $t('nav.search') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/taxonomy">
+            <el-icon><Grid /></el-icon>
+            <template #title>{{ $t('nav.taxonomy') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/conversions">
+            <el-icon><DocumentCopy /></el-icon>
+            <template #title>{{ $t('nav.conversions') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/configs">
+            <el-icon><Setting /></el-icon>
+            <template #title>{{ $t('nav.config') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/help">
+            <el-icon><QuestionFilled /></el-icon>
+            <template #title>{{ $t('nav.help') }}</template>
+          </el-menu-item>
+        </el-menu>
+
+        <!-- Spacer to push admin menu down -->
+        <div class="sidebar-spacer"></div>
+
+        <!-- Admin menu (admin-only functions) -->
+        <el-menu
+          v-if="authStore.user?.role === 'ADMIN'"
+          :default-active="route.path"
+          :collapse="menuCollapsed"
+          router
+          class="sidebar-menu admin-menu"
+          @select="handleMenuSelect"
+        >
+          <div class="nav-divider" :class="{ collapsed: menuCollapsed }">
+            <span v-if="!menuCollapsed" class="nav-divider-label">{{ $t('nav.admin') }}</span>
+          </div>
+          <el-menu-item index="/admin/users">
+            <el-icon><UserFilled /></el-icon>
+            <template #title>{{ $t('nav.users') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/watermark-verify">
+            <el-icon><View /></el-icon>
+            <template #title>{{ $t('nav.watermark') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/file-management">
+            <el-icon><DocumentCopy /></el-icon>
+            <template #title>{{ $t('nav.files') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/subscription-plans">
+            <el-icon><CoffeeCup /></el-icon>
+            <template #title>{{ $t('nav.subscription') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/system-configs">
+            <el-icon><SetUp /></el-icon>
+            <template #title>{{ $t('nav.systemConfig') }}</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/parse-errors">
+            <el-icon><Warning /></el-icon>
+            <template #title>{{ $t('nav.parseErrors') }}</template>
+          </el-menu-item>
+        </el-menu>
+
+        <!-- User panel at bottom -->
+        <div class="sidebar-user">
+          <!-- User info block — click to toggle menu -->
+          <el-tooltip
+            :content="authStore.user?.email"
+            placement="right"
+            :disabled="!menuCollapsed"
           >
-            <div class="user-avatar">
-              <el-icon><User /></el-icon>
-            </div>
-            <div v-if="!sidebarCollapsed" class="user-meta">
-              <span class="user-email">{{ authStore.user?.email }}</span>
-              <span class="user-tier">{{ tierLabel }}</span>
-            </div>
-            <el-icon v-if="!sidebarCollapsed" class="chevron-icon" :class="{ open: userMenuOpen }">
-              <ArrowUp />
-            </el-icon>
-          </button>
-        </el-tooltip>
+            <button
+              class="sidebar-user-info"
+              :class="{ collapsed: menuCollapsed, open: userMenuOpen }"
+              @click="userMenuOpen = !userMenuOpen"
+            >
+              <div class="user-avatar">
+                <el-icon><User /></el-icon>
+              </div>
+              <div v-if="!menuCollapsed" class="user-meta">
+                <span class="user-email">{{ authStore.user?.email }}</span>
+                <span class="user-tier">{{ tierLabel }}</span>
+              </div>
+              <el-icon v-if="!menuCollapsed" class="chevron-icon" :class="{ open: userMenuOpen }">
+                <ArrowUp />
+              </el-icon>
+            </button>
+          </el-tooltip>
 
           <!-- Collapsible user actions -->
-        <transition name="slide-down">
-          <div v-show="userMenuOpen" class="sidebar-user-actions" :class="{ collapsed: sidebarCollapsed }">
-            <el-tooltip :content="$t('nav.profile')" placement="right" :disabled="!sidebarCollapsed">
-              <router-link
-                to="/profile"
-                class="sidebar-action-btn"
-                :class="{ active: route.path === '/profile' }"
-                @click="userMenuOpen = false"
-              >
-                <el-icon><UserFilled /></el-icon>
-                <span v-if="!sidebarCollapsed">{{ $t('nav.profile') }}</span>
-              </router-link>
-            </el-tooltip>
-            <el-tooltip :content="$t('nav.about')" placement="right" :disabled="!sidebarCollapsed">
-              <router-link
-                to="/about"
-                class="sidebar-action-btn"
-                :class="{ active: route.path === '/about' }"
-                @click="userMenuOpen = false"
-              >
-                <el-icon><InfoFilled /></el-icon>
-                <span v-if="!sidebarCollapsed">{{ $t('nav.about') }}</span>
-              </router-link>
-            </el-tooltip>
-            <el-tooltip :content="$t('nav.subscription')" placement="right" :disabled="!sidebarCollapsed">
-              <router-link
-                to="/subscription"
-                class="sidebar-action-btn"
-                :class="{ active: route.path === '/subscription' }"
-                @click="userMenuOpen = false"
-              >
-                <el-icon><Lightning /></el-icon>
-                <span v-if="!sidebarCollapsed">{{ $t('nav.subscription') }}</span>
-              </router-link>
-            </el-tooltip>
-            <el-tooltip :content="$t('nav.energy')" placement="right" :disabled="!sidebarCollapsed">
-              <router-link
-                to="/energy/history"
-                class="sidebar-action-btn"
-                :class="{ active: route.path === '/energy/history' }"
-                @click="userMenuOpen = false"
-              >
-                <el-icon><Histogram /></el-icon>
-                <span v-if="!sidebarCollapsed">{{ $t('nav.energy') }}</span>
-              </router-link>
-            </el-tooltip>
-            <el-tooltip :content="$t('nav.logout')" placement="right" :disabled="!sidebarCollapsed">
-              <button class="sidebar-action-btn logout" @click="handleLogout">
-                <el-icon><SwitchButton /></el-icon>
-                <span v-if="!sidebarCollapsed">{{ $t('nav.logout') }}</span>
-              </button>
-            </el-tooltip>
-          </div>
-        </transition>
+          <transition name="slide-down">
+            <div v-show="userMenuOpen" class="sidebar-user-actions" :class="{ collapsed: menuCollapsed }">
+              <el-tooltip :content="$t('nav.profile')" placement="right" :disabled="!menuCollapsed">
+                <router-link
+                  to="/profile"
+                  class="sidebar-action-btn"
+                  :class="{ active: route.path === '/profile' }"
+                  @click="handleAuxNavigation"
+                >
+                  <el-icon><UserFilled /></el-icon>
+                  <span v-if="!menuCollapsed">{{ $t('nav.profile') }}</span>
+                </router-link>
+              </el-tooltip>
+              <el-tooltip :content="$t('nav.about')" placement="right" :disabled="!menuCollapsed">
+                <router-link
+                  to="/about"
+                  class="sidebar-action-btn"
+                  :class="{ active: route.path === '/about' }"
+                  @click="handleAuxNavigation"
+                >
+                  <el-icon><InfoFilled /></el-icon>
+                  <span v-if="!menuCollapsed">{{ $t('nav.about') }}</span>
+                </router-link>
+              </el-tooltip>
+              <el-tooltip :content="$t('nav.subscription')" placement="right" :disabled="!menuCollapsed">
+                <router-link
+                  to="/subscription"
+                  class="sidebar-action-btn"
+                  :class="{ active: route.path === '/subscription' }"
+                  @click="handleAuxNavigation"
+                >
+                  <el-icon><Lightning /></el-icon>
+                  <span v-if="!menuCollapsed">{{ $t('nav.subscription') }}</span>
+                </router-link>
+              </el-tooltip>
+              <el-tooltip :content="$t('nav.energy')" placement="right" :disabled="!menuCollapsed">
+                <router-link
+                  to="/energy/history"
+                  class="sidebar-action-btn"
+                  :class="{ active: route.path === '/energy/history' }"
+                  @click="handleAuxNavigation"
+                >
+                  <el-icon><Histogram /></el-icon>
+                  <span v-if="!menuCollapsed">{{ $t('nav.energy') }}</span>
+                </router-link>
+              </el-tooltip>
+              <el-tooltip :content="$t('nav.logout')" placement="right" :disabled="!menuCollapsed">
+                <button class="sidebar-action-btn logout" @click="handleLogout">
+                  <el-icon><SwitchButton /></el-icon>
+                  <span v-if="!menuCollapsed">{{ $t('nav.logout') }}</span>
+                </button>
+              </el-tooltip>
+            </div>
+          </transition>
+        </div>
       </div>
     </el-aside>
 
@@ -178,8 +188,8 @@
       <!-- Header -->
       <el-header class="app-header">
         <div class="header-left">
-          <el-button text @click="sidebarCollapsed = !sidebarCollapsed">
-            <el-icon><Expand v-if="sidebarCollapsed" /><Fold v-else /></el-icon>
+          <el-button text class="nav-toggle-btn" @click="toggleNavigation">
+            <el-icon><Expand v-if="menuCollapsed || !mobileSidebarOpen" /><Fold v-else /></el-icon>
           </el-button>
         </div>
         <div class="header-right">
@@ -222,7 +232,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -250,10 +260,24 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     subscriptionStore.fetchSubscription().catch(() => {/* non-critical */})
   }
+
+  mediaQuery = window.matchMedia('(max-width: 900px)')
+  syncMobileState(mediaQuery)
+  mediaQuery.addEventListener('change', syncMobileState)
+})
+
+onUnmounted(() => {
+  mediaQuery?.removeEventListener('change', syncMobileState)
 })
 
 const sidebarCollapsed = ref(false)
 const userMenuOpen = ref(false)
+const isMobile = ref(false)
+const mobileSidebarOpen = ref(false)
+let mediaQuery: MediaQueryList | null = null
+
+const menuCollapsed = computed(() => !isMobile.value && sidebarCollapsed.value)
+const asideWidth = computed(() => (isMobile.value ? '0px' : sidebarCollapsed.value ? '64px' : '260px'))
 
 const isDark = computed({
   get: () => settingsStore.darkMode,
@@ -272,8 +296,43 @@ const tierLabel = computed(() => {
   return tier ? t(TIER_LABELS[tier] ?? 'subscription.tier.REGULAR') : t('subscription.tier.REGULAR')
 })
 
+watch(() => route.path, () => {
+  userMenuOpen.value = false
+  mobileSidebarOpen.value = false
+})
+
 function toggleDark(val: boolean) {
   settingsStore.setDark(val)
+}
+
+function syncMobileState(event: MediaQueryList | MediaQueryListEvent) {
+  isMobile.value = event.matches
+  if (event.matches) {
+    sidebarCollapsed.value = false
+  } else {
+    mobileSidebarOpen.value = false
+  }
+}
+
+function toggleNavigation() {
+  if (isMobile.value) {
+    mobileSidebarOpen.value = !mobileSidebarOpen.value
+    return
+  }
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
+
+function handleMenuSelect() {
+  if (isMobile.value) {
+    mobileSidebarOpen.value = false
+  }
+}
+
+function handleAuxNavigation() {
+  userMenuOpen.value = false
+  if (isMobile.value) {
+    mobileSidebarOpen.value = false
+  }
 }
 
 async function handleLogout() {
@@ -288,12 +347,37 @@ async function handleLogout() {
   height: 100vh;
 }
 
+.sidebar-shell {
+  position: relative;
+  z-index: 20;
+}
+
 .sidebar {
   background: var(--el-bg-color);
   border-right: 1px solid var(--color-border);
-  transition: width 0.3s;
+  transition: width 0.3s, transform 0.3s ease;
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+.sidebar.mobile {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(82vw, 300px);
+  transform: translateX(-100%);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+}
+
+.sidebar.mobile.open {
+  transform: translateX(0);
+}
+
+.mobile-sidebar-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.32);
+  z-index: 19;
 }
 
 .sidebar-menu {
@@ -518,12 +602,14 @@ async function handleLogout() {
   justify-content: space-between;
   border-bottom: 1px solid var(--color-border);
   background: var(--el-bg-color);
+  padding: 0 16px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 :deep(.el-main) {
@@ -537,5 +623,26 @@ async function handleLogout() {
   padding: 20px;
   flex: 1;
   overflow-y: auto;
+}
+
+.nav-toggle-btn {
+  font-size: 18px;
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    min-height: 60px;
+    height: auto;
+    padding: 10px 12px;
+  }
+
+  .header-right {
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .main-content {
+    padding: 14px;
+  }
 }
 </style>

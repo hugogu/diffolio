@@ -1,12 +1,16 @@
 <template>
-  <div>
+  <div class="page-shell">
     <div class="page-header">
-      <h2>{{ $t('comparisons.title') }}</h2>
-      <el-button type="primary" :icon="Plus" @click="newCompDialogVisible = true">{{ $t('comparisons.newComparison') }}</el-button>
+      <div class="page-title-group">
+        <h2 class="page-title">{{ $t('comparisons.title') }}</h2>
+      </div>
+      <div class="page-actions">
+        <ActionButton kind="user" type="primary" :label="$t('comparisons.newComparison')" @click="newCompDialogVisible = true" />
+      </div>
     </div>
 
     <!-- History table -->
-    <el-card>
+    <el-card class="page-card">
       <el-table
         :data="comparisonsStore.comparisons"
         v-loading="comparisonsStore.comparisonsLoading"
@@ -41,11 +45,9 @@
         <el-table-column :label="$t('comparisons.createdAt')" width="160">
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column :label="$t('comparisons.actions')" width="100" fixed="right">
+        <el-table-column :label="$t('comparisons.actions')" width="100" fixed="right" align="right" header-align="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" link @click="$router.push(`/comparisons/${row.id}`)">
-              {{ $t('comparisons.view') }}
-            </el-button>
+            <ActionButton kind="user" type="primary" :label="$t('comparisons.view')" @click="$router.push(`/comparisons/${row.id}`)" />
           </template>
         </el-table-column>
       </el-table>
@@ -108,8 +110,8 @@ import { useRouter } from 'vue-router'
 import { useComparisonsStore } from '@/stores/comparisons'
 import { getDictionaries, getVersions, type Dictionary, type DictionaryVersion } from '@/api/dictionaries'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const router = useRouter()
 const comparisonsStore = useComparisonsStore()

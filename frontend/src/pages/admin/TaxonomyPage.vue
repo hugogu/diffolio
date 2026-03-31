@@ -1,11 +1,15 @@
 <template>
-  <div class="taxonomy-page">
+  <div class="taxonomy-page page-shell">
     <div class="page-header">
-      <h2>{{ $t('admin.taxonomy.title') }}</h2>
-      <el-button type="primary" @click="openUploadDialog">{{ $t('admin.taxonomy.upload') }}</el-button>
+      <div class="page-title-group">
+        <h2 class="page-title">{{ $t('admin.taxonomy.title') }}</h2>
+      </div>
+      <div class="page-actions">
+        <ActionButton kind="admin" type="primary" :icon="Upload" :label="$t('admin.taxonomy.upload')" @click="openUploadDialog" />
+      </div>
     </div>
 
-    <el-table :data="store.sources" v-loading="store.sourcesLoading" style="width: 100%">
+      <el-table :data="store.sources" v-loading="store.sourcesLoading" style="width: 100%">
       <el-table-column prop="name" :label="$t('admin.taxonomy.name')" />
       <el-table-column :label="$t('admin.taxonomy.status')" width="140">
         <template #default="{ row }">
@@ -16,15 +20,17 @@
       <el-table-column :label="$t('admin.taxonomy.createdAt')" width="200">
         <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('comparisons.actions')" width="260">
+      <el-table-column :label="$t('comparisons.actions')" width="144" align="right" header-align="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openEditor(row.id)" :disabled="row.status !== 'ACTIVE'">{{ $t('admin.taxonomy.edit') }}</el-button>
-          <el-button size="small" @click="reimport(row.id)" :disabled="row.status === 'IMPORTING'">{{ $t('admin.taxonomy.reimport') }}</el-button>
+          <div class="table-actions is-admin">
+          <ActionButton kind="admin" :icon="Edit" :label="$t('admin.taxonomy.edit')" :disabled="row.status !== 'ACTIVE'" @click="openEditor(row.id)" />
+          <ActionButton kind="admin" :icon="RefreshRight" :label="$t('admin.taxonomy.reimport')" :disabled="row.status === 'IMPORTING'" @click="reimport(row.id)" />
           <el-popconfirm :title="$t('common.confirmDelete')" @confirm="remove(row.id)">
             <template #reference>
-              <el-button size="small" type="danger">{{ $t('admin.taxonomy.delete') }}</el-button>
+              <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('admin.taxonomy.delete')" />
             </template>
           </el-popconfirm>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -100,13 +106,14 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { UploadFilled, Upload, Edit, Delete, RefreshRight } from '@element-plus/icons-vue'
 import { useTaxonomyStore } from '@/stores/taxonomy'
 import { createTaxonomySource } from '@/api/taxonomy'
 import { getSampleConfigs, type SampleConfig } from '@/api/dictionaries'
 import JsonEditor from '@/components/common/JsonEditor.vue'
 import type { UploadFile, UploadInstance } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const store = useTaxonomyStore()
 const router = useRouter()

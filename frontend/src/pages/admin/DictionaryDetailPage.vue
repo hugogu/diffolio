@@ -1,20 +1,20 @@
 <template>
-  <div v-loading="loading">
+  <div v-loading="loading" class="page-shell">
     <div class="page-header">
-      <div>
+      <div class="page-title-group">
         <el-breadcrumb>
           <el-breadcrumb-item :to="{ path: '/admin/dictionaries' }">{{ $t('admin.dictionaryList.title') }}</el-breadcrumb-item>
           <el-breadcrumb-item>{{ dict?.name }}</el-breadcrumb-item>
         </el-breadcrumb>
-        <h2>{{ dict?.name }}</h2>
-        <p>{{ [dict?.publisher, dict?.language].filter(Boolean).join(' · ') }}</p>
+        <h2 class="page-title">{{ dict?.name }}</h2>
+        <p class="page-subtitle">{{ [dict?.publisher, dict?.language].filter(Boolean).join(' · ') }}</p>
       </div>
-      <el-button type="primary" :icon="Plus" @click="versionDialogVisible = true">
-        {{ $t('admin.dictionaryDetail.addVersion') }}
-      </el-button>
+      <div class="page-actions">
+        <ActionButton kind="admin" type="primary" :icon="Plus" :label="$t('admin.dictionaryDetail.addVersion')" @click="versionDialogVisible = true" />
+      </div>
     </div>
 
-    <el-card>
+    <el-card class="page-card">
       <template #header>{{ $t('admin.dictionaryDetail.versionList') }}</template>
       <el-table :data="dict?.versions ?? []" stripe>
         <el-table-column prop="label" :label="$t('admin.dictionaryDetail.versionLabel')" min-width="120">
@@ -37,11 +37,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="notes" :label="$t('admin.dictionaryDetail.notes')" />
-        <el-table-column :label="$t('comparisons.actions')" width="100" fixed="right">
+        <el-table-column :label="$t('comparisons.actions')" width="72" fixed="right" align="right" header-align="right">
           <template #default="{ row }">
-            <el-button text size="small" @click="router.push(`/admin/versions/${row.id}`)">
-              {{ $t('admin.dictionaryDetail.details') }}
-            </el-button>
+            <div class="table-actions is-admin">
+              <ActionButton kind="admin" :icon="View" :label="$t('admin.dictionaryDetail.details')" @click="router.push(`/admin/versions/${row.id}`)" />
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -72,10 +72,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDictionariesStore } from '@/stores/dictionaries'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -129,11 +130,5 @@ async function handleCreateVersion() {
 </script>
 
 <style scoped>
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
 .link { color: var(--color-primary); text-decoration: none; }
 </style>

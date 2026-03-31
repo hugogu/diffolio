@@ -1,10 +1,14 @@
 <template>
-  <div>
+  <div class="page-shell">
     <div class="page-header">
-      <h2>{{ $t('admin.configManagement.title') }}</h2>
-      <el-button type="primary" :icon="Plus" @click="openCreateDialog">{{ $t('admin.configManagement.newConfig') }}</el-button>
+      <div class="page-title-group">
+        <h2 class="page-title">{{ $t('admin.configManagement.title') }}</h2>
+        <p class="page-desc">{{ $t('admin.configManagement.description') }}</p>
+      </div>
+      <div class="page-actions">
+        <ActionButton kind="admin" type="primary" :icon="Plus" :label="$t('admin.configManagement.newConfig')" @click="openCreateDialog" />
+      </div>
     </div>
-    <p class="page-desc">{{ $t('admin.configManagement.description') }}</p>
 
     <el-tabs v-model="activeTab">
       <!-- User Configs Tab -->
@@ -28,10 +32,12 @@
           <el-table-column :label="$t('common.updatedAt')" width="150">
             <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
           </el-table-column>
-          <el-table-column :label="$t('comparisons.actions')" width="160" fixed="right">
+          <el-table-column :label="$t('comparisons.actions')" width="96" fixed="right" align="right" header-align="right">
             <template #default="{ row }">
-              <el-button size="small" @click="openEditDialog(row.id)">{{ $t('admin.systemConfigs.edit') }}</el-button>
-              <el-button size="small" type="danger" @click="handleDelete(row.id, row.name)">{{ $t('admin.systemConfigs.delete') }}</el-button>
+              <div class="table-actions is-admin">
+                <ActionButton kind="admin" :icon="Edit" :label="$t('admin.systemConfigs.edit')" @click="openEditDialog(row.id)" />
+                <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('admin.systemConfigs.delete')" @click="handleDelete(row.id, row.name)" />
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -57,9 +63,11 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="$t('comparisons.actions')" width="160" fixed="right">
+          <el-table-column :label="$t('comparisons.actions')" width="72" fixed="right" align="right" header-align="right">
             <template #default="{ row }">
-              <el-button link type="primary" size="small" @click="openViewDialog(row.id)">{{ $t('admin.configManagement.view') }}</el-button>
+              <div class="table-actions is-admin">
+                <ActionButton kind="admin" :icon="View" :label="$t('admin.configManagement.view')" @click="openViewDialog(row.id)" />
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -114,12 +122,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, View } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useConfigsStore } from '@/stores/configs'
 import { getUserConfig, getSystemConfig, type SystemConfigDetail } from '@/api/configs'
 import JsonEditor from '@/components/common/JsonEditor.vue'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const configsStore = useConfigsStore()
 const { t } = useI18n()

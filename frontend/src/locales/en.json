@@ -15,6 +15,7 @@
     "previous": "Previous",
     "copy": "Copy",
     "download": "Download",
+    "refresh": "Refresh",
     "upload": "Upload",
     "success": "Success",
     "error": "Error",
@@ -41,6 +42,8 @@
     "copyFailed": "Copy failed, please manually select and copy text",
     "versions": "Dictionary Versions",
     "loadMore": "Load More"
+    ,"expand": "Expand"
+    ,"collapse": "Collapse"
   },
   "nav": {
     "home": "Home",

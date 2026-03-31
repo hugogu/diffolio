@@ -1,12 +1,16 @@
 <template>
-  <div class="file-management-page">
-    <h1>{{ $t('admin.fileManagement.title') }}</h1>
+  <div class="file-management-page page-shell">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1 class="page-title">{{ $t('admin.fileManagement.title') }}</h1>
+      </div>
+    </div>
     
     <el-tabs v-model="activeTab">
       <!-- File Management Tab -->
       <el-tab-pane :label="$t('admin.fileManagement.files')" name="files">
         <!-- Filters -->
-        <div class="filter-bar">
+        <div class="filter-bar filter-toolbar">
           <el-select
             v-model="filters.userId"
             :placeholder="$t('admin.fileManagement.selectUser')"
@@ -50,23 +54,28 @@
         </div>
 
         <!-- Action buttons -->
-        <div class="action-bar" style="margin: 15px 0">
-          <el-button
-            type="primary"
-            :disabled="selectedFiles.length === 0"
-            @click="handleDownloadSelected"
-          >
-            <el-icon><Download /></el-icon>
-            {{ $t('admin.fileManagement.downloadSelected') }} ({{ selectedFiles.length }})
-          </el-button>
-          <el-button
-            type="danger"
-            :disabled="selectedFiles.length === 0"
-            @click="handleDeleteSelected"
-          >
-            <el-icon><Delete /></el-icon>
-            {{ $t('admin.fileManagement.deleteSelected') }}
-          </el-button>
+        <div class="action-bar action-toolbar">
+          <span class="selection-summary muted-text compact-text">
+            {{ selectedFiles.length > 0 ? `${selectedFiles.length} ${$t('common.selected')}` : $t('common.actions') }}
+          </span>
+          <div class="table-actions is-admin">
+            <ActionButton
+              kind="admin"
+              type="primary"
+              :icon="Download"
+              :label="$t('admin.fileManagement.downloadSelected')"
+              :disabled="selectedFiles.length === 0"
+              @click="handleDownloadSelected"
+            />
+            <ActionButton
+              kind="admin"
+              type="danger"
+              :icon="Delete"
+              :label="$t('admin.fileManagement.deleteSelected')"
+              :disabled="selectedFiles.length === 0"
+              @click="handleDeleteSelected"
+            />
+          </div>
         </div>
 
         <!-- File list table -->
@@ -116,6 +125,7 @@ import type { FileItem, UserFileStats, UserOption, FileFilters, SortParams } fro
 import { listFiles, getFileUsers, getFileStats, deleteFiles, getFileDownloadUrl } from '@/api/admin-files'
 import { formatFileSize, formatDate } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const { t } = useI18n()
 
@@ -335,22 +345,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.file-management-page {
-  padding: 20px;
-}
-
 .filter-bar {
   margin-bottom: 15px;
-  display: flex;
-  align-items: center;
 }
 
 .action-bar {
   display: flex;
   gap: 10px;
+  margin: 15px 0;
 }
 
 :deep(.el-button [class*="el-icon"]) {
   margin-right: 4px;
+}
+
+@media (max-width: 768px) {
+  .filter-bar :deep(.el-select),
+  .filter-bar :deep(.el-input) {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
 }
 </style>

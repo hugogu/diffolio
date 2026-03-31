@@ -13,7 +13,7 @@
           @keyup.enter="handleSearch"
         >
           <template #append>
-            <el-button :loading="loading" :icon="Search" @click="handleSearch">{{ $t('search.searchBtn') }}</el-button>
+            <ActionButton kind="user" type="primary" :label="$t('search.searchBtn')" :loading="loading" @click="handleSearch" />
           </template>
         </el-input>
         <el-radio-group v-model="searchScope" size="small" @change="handleFilterChange">
@@ -116,7 +116,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import {
   searchHeadword,
@@ -127,6 +126,7 @@ import {
 } from '@/api/search'
 import HeadwordTimeline from '@/components/search/HeadwordTimeline.vue'
 import TaxonomyFilterPanel from '@/components/taxonomy/TaxonomyFilterPanel.vue'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const query = ref('')
 const loading = ref(false)
@@ -306,5 +306,34 @@ function onTaxonomyFilterChange(filter: { taxonomySourceId: string | null; taxon
   justify-content: center;
   margin-top: 20px;
   padding-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .search-page {
+    height: auto;
+    min-height: 0;
+  }
+
+  .body-row {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .taxonomy-sidebar {
+    width: 100%;
+  }
+
+  .results-col {
+    overflow: visible;
+  }
+
+  .search-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-item {
+    flex-wrap: wrap;
+  }
 }
 </style>

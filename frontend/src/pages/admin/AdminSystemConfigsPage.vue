@@ -1,8 +1,12 @@
 <template>
-  <div>
+  <div class="page-shell">
     <div class="page-header">
-      <h2>{{ $t('admin.systemConfigs.title') }}</h2>
-      <el-button type="primary" :icon="Plus" @click="openCreateDialog">{{ $t('admin.systemConfigs.newConfig') }}</el-button>
+      <div class="page-title-group">
+        <h2 class="page-title">{{ $t('admin.systemConfigs.title') }}</h2>
+      </div>
+      <div class="page-actions">
+        <ActionButton kind="admin" type="primary" :icon="Plus" :label="$t('admin.systemConfigs.newConfig')" @click="openCreateDialog" />
+      </div>
     </div>
 
     <div class="toolbar">
@@ -33,11 +37,13 @@
       <el-table-column :label="$t('common.email')" width="150" show-overflow-tooltip>
         <template #default="{ row }">{{ row.createdBy?.email }}</template>
       </el-table-column>
-      <el-table-column :label="$t('comparisons.actions')" width="280" fixed="right">
+      <el-table-column :label="$t('comparisons.actions')" width="156" fixed="right" align="right" header-align="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openEditDialog(row.id)">{{ $t('admin.systemConfigs.edit') }}</el-button>
-          <el-button size="small" type="warning" @click="openVisibilityDialog(row.id)">{{ $t('admin.systemConfigs.visibility') }}</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row.id, row.name)">{{ $t('admin.systemConfigs.delete') }}</el-button>
+          <div class="table-actions is-admin">
+            <ActionButton kind="admin" :icon="Edit" :label="$t('admin.systemConfigs.edit')" @click="openEditDialog(row.id)" />
+            <ActionButton kind="admin" type="warning" :icon="Setting" :label="$t('admin.systemConfigs.visibility')" @click="openVisibilityDialog(row.id)" />
+            <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('admin.systemConfigs.delete')" @click="handleDelete(row.id, row.name)" />
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -127,7 +133,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Setting } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import {
   listAdminSystemConfigs,
@@ -140,6 +146,7 @@ import {
 } from '@/api/configs'
 import JsonEditor from '@/components/common/JsonEditor.vue'
 import { useI18n } from 'vue-i18n'
+import ActionButton from '@/components/common/ActionButton.vue'
 
 const { t } = useI18n()
 
