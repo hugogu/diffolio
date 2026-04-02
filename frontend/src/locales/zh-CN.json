@@ -14,6 +14,7 @@
     "next": "下一步",
     "previous": "上一步",
     "copy": "复制",
+    "clear": "清空",
     "download": "下载",
     "refresh": "刷新",
     "upload": "上传",
@@ -358,7 +359,9 @@
     "selectTaxonomy": "选择分类（可多选）",
     "noResults": "无匹配结果",
     "loading": "加载中…",
-    "selectEntry": "从左侧列表选择一个条目查看详情",
+    "selectEntry": "从左侧列表选择一个或多个条目查看详情",
+    "selectedCount": "已选 {count} 个词条",
+    "multiSelectHint": "点击左侧词条可继续多选，右侧会同时展示多个详情",
     "entryStatus": {
       "added": "新增",
       "deleted": "删除",

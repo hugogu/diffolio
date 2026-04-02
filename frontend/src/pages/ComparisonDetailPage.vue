@@ -157,11 +157,18 @@
               v-for="a in alignments"
               :key="a.id"
               class="entry-item"
-              :class="{ 'entry-item--active': selectedAlignment?.id === a.id }"
-              @click="selectAlignment(a)"
+              :class="{ 'entry-item--active': isAlignmentSelected(a.id) }"
+              @click="toggleAlignmentSelection(a)"
             >
               <div class="entry-top">
-                <span class="entry-hw">{{ entryHeadword(a) }}</span>
+                <div class="entry-primary">
+                  <el-checkbox
+                    :model-value="isAlignmentSelected(a.id)"
+                    @click.stop
+                    @change="toggleAlignmentSelection(a)"
+                  />
+                  <span class="entry-hw">{{ entryHeadword(a) }}</span>
+                </div>
                 <el-tag :type="changeTagType(a)" size="small" class="entry-tag">{{ changeLabel(a) }}</el-tag>
                 <el-button
                   v-if="a.locked"
@@ -202,16 +209,33 @@
 
         <!-- Right: detail panel -->
         <div class="detail-pane">
+          <template v-if="selectedAlignments.length > 0">
+            <div class="detail-toolbar">
+              <div class="detail-toolbar-copy">
+                <span class="detail-toolbar-count">{{ $t('comparisonDetail.selectedCount', { count: selectedAlignments.length }) }}</span>
+                <span class="detail-toolbar-hint">{{ $t('comparisonDetail.multiSelectHint') }}</span>
+              </div>
+              <el-button size="small" text @click="clearSelectedAlignments">{{ $t('common.clear') }}</el-button>
+            </div>
+
+            <div class="detail-stack">
+              <section
+                v-for="alignment in selectedAlignments"
+                :key="alignment.id"
+                class="detail-card"
+              >
+                <EntryDetailPanel
+                  :alignment="alignment"
+                  :label-a="versionLabelA"
+                  :label-b="versionLabelB"
+                />
+              </section>
+            </div>
+          </template>
           <el-empty
-            v-if="!selectedAlignment"
+            v-else
             :description="$t('comparisonDetail.selectEntry')"
             style="margin-top: 80px"
-          />
-          <EntryDetailPanel
-            v-else
-            :alignment="selectedAlignment"
-            :label-a="versionLabelA"
-            :label-b="versionLabelB"
           />
         </div>
       </div>
@@ -245,7 +269,7 @@ const loading = ref(false)
 const listLoading = ref(false)
 const comparison = ref(store.current)
 const alignments = ref(store.alignments)
-const selectedAlignment = ref<EntryAlignment | null>(null)
+const selectedAlignmentIds = ref<string[]>([])
 
 const senseChangeTypeFilter = ref<string[]>([])
 const searchHeadword = ref('')
@@ -256,6 +280,12 @@ const total = ref(0)
 const taxonomyFilter = ref<{ taxonomySourceId: string | null; taxonomyNodeIds: string[] }>({
   taxonomySourceId: null,
   taxonomyNodeIds: [],
+})
+const selectedAlignments = computed(() => {
+  const alignmentMap = new Map(alignments.value.map((alignment) => [alignment.id, alignment]))
+  return selectedAlignmentIds.value
+    .map((id) => alignmentMap.get(id))
+    .filter((alignment): alignment is EntryAlignment => Boolean(alignment))
 })
 
 const activeTaxonomySources = computed(() => taxonomyStore.sources.filter((s) => s.status === 'ACTIVE'))
@@ -328,12 +358,8 @@ async function loadAlignments() {
     // Batch updates to reduce re-renders
     alignments.value = store.alignments
     total.value = result.total
-    
-    // Clear selection without triggering immediate re-render of detail panel
-    if (selectedAlignment.value) {
-      selectedAlignment.value = null
-      await nextTick()
-    }
+    const idsOnPage = new Set(alignments.value.map((alignment) => alignment.id))
+    selectedAlignmentIds.value = selectedAlignmentIds.value.filter((id) => idsOnPage.has(id))
   } finally {
     listLoading.value = false
   }
@@ -363,8 +389,20 @@ async function onPageChange(page: number) {
   await loadAlignments()
 }
 
-function selectAlignment(a: EntryAlignment) {
-  selectedAlignment.value = a
+function isAlignmentSelected(id: string): boolean {
+  return selectedAlignmentIds.value.includes(id)
+}
+
+function toggleAlignmentSelection(a: EntryAlignment) {
+  if (isAlignmentSelected(a.id)) {
+    selectedAlignmentIds.value = selectedAlignmentIds.value.filter((id) => id !== a.id)
+    return
+  }
+  selectedAlignmentIds.value = [...selectedAlignmentIds.value, a.id]
+}
+
+function clearSelectedAlignments() {
+  selectedAlignmentIds.value = []
 }
 
 // ── Entry list helpers ────────────────────────────────────────────────────────
@@ -656,6 +694,15 @@ async function handleSingleUnlock(a: EntryAlignment) {
   padding-left: 11px;
 }
 .entry-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.entry-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.entry-primary :deep(.el-checkbox) {
+  margin-right: 0;
+}
 .lock-icon-sm { color: var(--el-color-info); font-size: 12px; flex-shrink: 0; }
 .entry-hw { font-weight: bold; font-size: 15px; word-break: break-all; }
 .entry-tag { flex-shrink: 0; }
@@ -673,5 +720,51 @@ async function handleSingleUnlock(a: EntryAlignment) {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.detail-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: color-mix(in srgb, var(--el-bg-color) 92%, white);
+  backdrop-filter: blur(8px);
+}
+.detail-toolbar-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.detail-toolbar-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.detail-toolbar-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.detail-card {
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  background: var(--el-bg-color);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+.detail-card :deep(.entry-header) {
+  position: static;
 }
 </style>
