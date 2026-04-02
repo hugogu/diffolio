@@ -71,7 +71,7 @@ function syncScroll(e: Event) {
   width: 100%;
   border: 1px solid var(--el-border-color);
   border-radius: 4px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: var(--app-font-family-mono);
   font-size: 12px;
   line-height: 1.5;
   background: var(--el-fill-color-light);

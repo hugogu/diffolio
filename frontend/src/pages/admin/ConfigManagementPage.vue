@@ -296,7 +296,7 @@ async function handleClone() {
 .validation-error {
   font-size: 12px;
   color: var(--el-color-danger);
-  font-family: monospace;
+  font-family: var(--app-font-family-mono);
   padding: 2px 0;
 }
 .view-description {

@@ -46,8 +46,8 @@ function compositeKey(hw: string, phonetic: string | null | undefined): string {
  *   4. Unmatched A entries → DELETED
  *   5. Unmatched B entries → ADDED
  *
- * Entries are queried in document order (lineNumber asc, createdAt asc) so that
- * first-match selection is deterministic and follows source ordering.
+ * Entries are queried in document order (pageNumber/lineNumber/entrySequence)
+ * so that first-match selection is deterministic and follows source ordering.
  */
 export async function align(
   versionAId: string,
@@ -65,7 +65,13 @@ export async function align(
     }),
   ])
 
-  const ORDER = [{ lineNumber: 'asc' as const }, { createdAt: 'asc' as const }]
+  const ORDER = [
+    { pageNumber: 'asc' as const },
+    { lineNumber: 'asc' as const },
+    { entrySequence: 'asc' as const },
+    { createdAt: 'asc' as const },
+    { id: 'asc' as const },
+  ]
   const [entriesA, entriesB] = await Promise.all([
     db.entry.findMany({ where: { versionId: versionAId }, orderBy: ORDER }),
     db.entry.findMany({ where: { versionId: versionBId }, orderBy: ORDER }),

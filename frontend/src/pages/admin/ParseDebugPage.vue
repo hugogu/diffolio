@@ -97,7 +97,7 @@
 
             <div v-if="currentEntry.entry.senses.length > 0">
               <div v-for="(sense, si) in currentEntry.entry.senses" :key="si" class="sense-item">
-                <el-tag size="small" type="primary" style="margin-right: 4px; font-family: monospace">
+                <el-tag size="small" type="primary" style="margin-right: 4px; font-family: var(--app-font-family-mono)">
                   {{ sense.rawNumber || '#' }}
                 </el-tag>
                 <el-tag v-if="sense.register" size="small" type="warning" style="margin-right: 4px">{{ sense.register }}</el-tag>
@@ -297,7 +297,7 @@ function downloadRejected() {
 }
 
 .source-lines {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: var(--app-font-family-mono);
   font-size: 13px;
   background: var(--el-fill-color-light);
   padding: 12px;
@@ -337,7 +337,7 @@ function downloadRejected() {
   font-size: 12px;
   color: var(--el-color-warning);
   margin-top: 4px;
-  font-family: monospace;
+  font-family: var(--app-font-family-mono);
 }
 
 .cross-ref-row {

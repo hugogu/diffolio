@@ -326,7 +326,7 @@ onMounted(async () => {
   font-weight: 600;
   color: #1a1a1a;
   word-break: break-all;
-  font-family: monospace;
+  font-family: var(--app-font-family-mono);
 }
 
 /* ─── Payment QR methods ─── */

@@ -216,7 +216,16 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
           where,
           skip,
           take: size,
-          orderBy: { createdAt: 'asc' },
+          orderBy: [
+            { entryA: { pageNumber: 'asc' } },
+            { entryA: { lineNumber: 'asc' } },
+            { entryA: { entrySequence: 'asc' } },
+            { entryB: { pageNumber: 'asc' } },
+            { entryB: { lineNumber: 'asc' } },
+            { entryB: { entrySequence: 'asc' } },
+            { createdAt: 'asc' },
+            { id: 'asc' },
+          ],
           include: {
             entryA: entryInclude,
             entryB: entryInclude,

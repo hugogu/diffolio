@@ -31,7 +31,7 @@ const bgStyle = computed(() => {
 
   // SVG tile: 340×130, text rotated -35°, two lines
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="130">
-  <g transform="rotate(-35 170 65)" fill="rgba(0,0,0,0.11)" font-family="monospace" font-size="11">
+  <g transform="rotate(-35 170 65)" fill="rgba(0,0,0,0.11)" font-family="ui-monospace, 'SFMono-Regular', 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', Consolas, 'Liberation Mono', Menlo, Monaco, monospace" font-size="11">
     <text x="170" y="55"  text-anchor="middle">${line1}</text>
     <text x="170" y="72" text-anchor="middle">${line2}</text>
   </g>

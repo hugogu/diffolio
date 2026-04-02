@@ -342,6 +342,8 @@
     "buyTopup": "Buy Quick Charge Pack",
     "resetNextMonth": "Energy will reset on the 1st of next month",
     "searchPlaceholder": "Search entries...",
+    "searchHeadword": "Search headword",
+    "searchText": "Search definitions or examples",
     "searchScope": {
       "entry": "Entry",
       "definition": "Definition"

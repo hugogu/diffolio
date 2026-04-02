@@ -342,6 +342,8 @@
     "buyTopup": "购买快充包",
     "resetNextMonth": "电量将于下月1日重置",
     "searchPlaceholder": "词条检索…",
+    "searchHeadword": "检索词头",
+    "searchText": "检索释义或例句",
     "searchScope": {
       "entry": "词条",
       "definition": "释义"

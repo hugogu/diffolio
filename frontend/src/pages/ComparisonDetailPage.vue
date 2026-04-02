@@ -191,8 +191,10 @@
               v-model:current-page="currentPage"
               :page-size="pageSize"
               :total="total"
+              :pager-count="5"
               layout="total, prev, pager, next"
               size="small"
+              class="list-pagination"
               @current-change="onPageChange"
             />
           </div>
@@ -604,6 +606,32 @@ async function handleSingleUnlock(a: EntryAlignment) {
   padding: 8px 12px;
   border-top: 1px solid var(--el-border-color-lighter);
   background: var(--el-fill-color-lighter);
+}
+
+.list-footer :deep(.list-pagination) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  row-gap: 8px;
+  width: 100%;
+}
+
+.list-footer :deep(.list-pagination .el-pagination__total) {
+  flex: 0 0 100%;
+  margin-right: 0;
+}
+
+.list-footer :deep(.list-pagination .btn-prev),
+.list-footer :deep(.list-pagination .btn-next),
+.list-footer :deep(.list-pagination .el-pager) {
+  margin-top: 0;
+}
+
+.list-footer :deep(.list-pagination .el-pager) {
+  display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 .list-empty { padding: 24px 0; }
 .list-loading {

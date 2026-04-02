@@ -1,5 +1,10 @@
 /* Light/dark theme CSS custom properties */
 :root {
+  --app-font-family-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --app-font-family-mono: ui-monospace, "SFMono-Regular", "SF Mono", "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", Consolas, "Liberation Mono", Menlo, Monaco, monospace;
+  --el-font-family: var(--app-font-family-sans);
+  --vxe-ui-font-family: var(--app-font-family-sans);
+
   --color-bg: #ffffff;
   --color-bg-secondary: #f5f7fa;
   --color-text: #303133;
@@ -40,6 +45,36 @@ html.dark,
   --diff-deleted-text: #f97583;
   --diff-modified-bg: #3a3a1a;
   --diff-modified-text: #e3c56e;
+}
+
+html {
+  font-family: var(--app-font-family-sans);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-synthesis: none;
+}
+
+body,
+#app {
+  font-family: var(--app-font-family-sans);
+  color: var(--el-text-color-primary);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--app-font-family-mono);
 }
 
 /* Diff highlighting classes */

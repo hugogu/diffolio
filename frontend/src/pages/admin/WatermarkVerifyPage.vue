@@ -16,7 +16,7 @@
         type="textarea"
         :rows="4"
         :placeholder="$t('admin.watermark.inputPlaceholder')"
-        style="font-family: monospace; margin-bottom: 12px"
+        style="font-family: var(--app-font-family-mono); margin-bottom: 12px"
       />
       <el-button type="primary" :loading="loading" @click="lookup">{{ $t('admin.watermark.identifyUser') }}</el-button>
       <el-button @click="clear">{{ $t('admin.watermark.clear') }}</el-button>
