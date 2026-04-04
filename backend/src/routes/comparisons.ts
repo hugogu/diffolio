@@ -4,6 +4,11 @@ import { assertComparisonOwner, assertVersionOwner } from '../lib/ownership.js'
 import { notFound, badRequest, extractRootCause } from '../lib/errors.js'
 import { chargeComparisonEnergy } from '../services/subscription/energy.js'
 
+type TagResponse = {
+  id: string
+  name: string
+}
+
 const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/comparisons', { preHandler: authGuard() }, async (request) => {
     try {
@@ -97,6 +102,7 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
         q?: string            // full-text search in rawDefinition
         taxonomySourceId?: string
         taxonomyNodeId?: string
+        tagIds?: string
       }
 
       const pageNum = Math.max(1, parseInt(query.page || '1', 10))
@@ -104,6 +110,7 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
       const skip = (pageNum - 1) * size
 
       const where: Record<string, unknown> = { comparisonId: id }
+      const selectedTagIds = query.tagIds?.split(',').map((value) => value.trim()).filter(Boolean) ?? []
 
       // Filter by change types
       if (query.changeType) {
@@ -188,6 +195,34 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
       }
       if (extra.length > 0) where.AND = extra
 
+      if (selectedTagIds.length > 0) {
+        const tagFilter = {
+          OR: [
+            {
+              entryA: {
+                tagAssignments: {
+                  some: {
+                    tagId: { in: selectedTagIds },
+                    tag: { userId: user.id },
+                  },
+                },
+              },
+            },
+            {
+              entryB: {
+                tagAssignments: {
+                  some: {
+                    tagId: { in: selectedTagIds },
+                    tag: { userId: user.id },
+                  },
+                },
+              },
+            },
+          ],
+        }
+        where.AND = [...(((where.AND as object[] | undefined) ?? [])), tagFilter]
+      }
+
       // Filter by sense change types: entry must have at least one senseDiff with matching changeType
       if (query.senseChangeType) {
         const types = query.senseChangeType.split(',').map((s) => s.trim()).filter(Boolean)
@@ -234,6 +269,41 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
         }),
       ])
 
+      const entryIdsOnPage = Array.from(
+        new Set(
+          alignments.flatMap((alignment) => [alignment.entryAId, alignment.entryBId].filter((value): value is string => Boolean(value)))
+        )
+      )
+      const tagAssignments = entryIdsOnPage.length
+        ? await fastify.db.entryTagAssignment.findMany({
+            where: {
+              entryId: { in: entryIdsOnPage },
+              tag: { userId: user.id },
+            },
+            select: {
+              entryId: true,
+              tag: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+            orderBy: {
+              tag: {
+                name: 'asc',
+              },
+            },
+          })
+        : []
+
+      const tagsByEntryId = new Map<string, TagResponse[]>()
+      for (const assignment of tagAssignments) {
+        const current = tagsByEntryId.get(assignment.entryId) ?? []
+        current.push({ id: assignment.tag.id, name: assignment.tag.name })
+        tagsByEntryId.set(assignment.entryId, current)
+      }
+
       // Update lastAccessedAt on the comparison's dictionaries (best-effort, non-blocking)
       const comparison = await fastify.db.comparison.findUnique({
         where: { id },
@@ -274,6 +344,14 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
       const ENTRY_PUBLIC_FIELDS = ['id', 'rawHeadword', 'normalizedHeadword', 'phonetic']
 
       const itemsWithLock = alignments.map((a) => {
+        const seenTags = new Set<string>()
+        const tags = [a.entryAId, a.entryBId]
+          .flatMap((entryId) => (entryId ? tagsByEntryId.get(entryId) ?? [] : []))
+          .filter((tag) => {
+            if (seenTags.has(tag.id)) return false
+            seenTags.add(tag.id)
+            return true
+          })
         const headword =
           (a.entryA as { normalizedHeadword?: string } | null)?.normalizedHeadword ??
           (a.entryB as { normalizedHeadword?: string } | null)?.normalizedHeadword
@@ -287,6 +365,7 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
           }
           return {
             ...a,
+            tags,
             locked: false,
             entryA: withCrossRefs(a.entryA as Record<string, unknown> | null),
             entryB: withCrossRefs(a.entryB as Record<string, unknown> | null),
@@ -301,6 +380,7 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
 
         return {
           ...a,
+          tags,
           locked: true,
           entryA: stripEntry(a.entryA as Record<string, unknown> | null),
           entryB: stripEntry(a.entryB as Record<string, unknown> | null),

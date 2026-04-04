@@ -18,6 +18,23 @@ export async function assertVersionOwner(db: DB, versionId: string, userId: stri
   if (version.dictionary.userId !== userId) throw forbidden()
 }
 
+export async function assertEntryOwner(db: DB, entryId: string, userId: string): Promise<void> {
+  const entry = await db.entry.findUnique({
+    where: { id: entryId },
+    select: {
+      version: {
+        select: {
+          dictionary: {
+            select: { userId: true },
+          },
+        },
+      },
+    },
+  })
+  if (!entry) throw notFound('Entry', entryId)
+  if (entry.version.dictionary.userId !== userId) throw forbidden()
+}
+
 export async function assertComparisonOwner(db: DB, comparisonId: string, userId: string): Promise<void> {
   const comparison = await db.comparison.findUnique({
     where: { id: comparisonId },

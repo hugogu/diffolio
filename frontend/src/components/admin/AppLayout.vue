@@ -43,6 +43,10 @@
             <el-icon><Grid /></el-icon>
             <template #title>{{ $t('nav.taxonomy') }}</template>
           </el-menu-item>
+          <el-menu-item index="/admin/tags">
+            <el-icon><PriceTag /></el-icon>
+            <template #title>{{ $t('nav.tags') }}</template>
+          </el-menu-item>
           <el-menu-item index="/conversions">
             <el-icon><DocumentCopy /></el-icon>
             <template #title>{{ $t('nav.conversions') }}</template>
@@ -241,7 +245,7 @@ import { useSubscriptionStore } from '@/stores/subscription'
 import {
   Document, Files, DataAnalysis, Search, Expand, Fold,
   User, UserFilled, SwitchButton, Moon, Sunny, Grid, View, CoffeeCup,
-  Lightning, Histogram, ArrowUp, InfoFilled, HomeFilled, DocumentCopy, Warning, Setting, SetUp, QuestionFilled
+  Lightning, Histogram, ArrowUp, InfoFilled, HomeFilled, DocumentCopy, Warning, Setting, SetUp, QuestionFilled, PriceTag
 } from '@element-plus/icons-vue'
 import EnergyIndicator from '@/components/subscription/EnergyIndicator.vue'
 import RenewalReminderModal from '@/components/subscription/RenewalReminderModal.vue'

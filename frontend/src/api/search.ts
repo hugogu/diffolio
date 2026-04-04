@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { TagSummary } from './tags'
 
 export interface HeadwordTimelineEntry {
   dictionaryId: string
@@ -14,6 +15,7 @@ export interface HeadwordTimelineEntry {
     phonetic?: string | null
     pageNumber?: number | null
     crossReferences?: string[] | null
+    tags: TagSummary[]
     senses: Array<{
       id: string
       rawNumber: string
@@ -59,6 +61,7 @@ export interface SearchParams {
   pageSize?: number
   taxonomySourceId?: string
   taxonomyNodeId?: string
+  tagIds?: string[]
 }
 
 export async function searchHeadword(params: SearchParams): Promise<PaginatedSearchResult> {
@@ -72,6 +75,7 @@ export async function searchHeadword(params: SearchParams): Promise<PaginatedSea
   if (params.pageSize) urlParams.set('pageSize', String(params.pageSize))
   if (params.taxonomySourceId) urlParams.set('taxonomySourceId', params.taxonomySourceId)
   if (params.taxonomyNodeId) urlParams.set('taxonomyNodeId', params.taxonomyNodeId)
+  if (params.tagIds?.length) urlParams.set('tagIds', params.tagIds.join(','))
   return apiFetch<PaginatedSearchResult>(`/api/v1/search/headword?${urlParams}`)
 }
 

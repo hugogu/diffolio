@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { TagSummary } from './tags'
 
 export interface Comparison {
   id: string
@@ -42,6 +43,7 @@ export interface EntryAlignment {
   comparisonId: string
   changeType: 'MATCHED' | 'ADDED' | 'DELETED' | 'MATCHED_VARIANT'
   alignScore?: number | null
+  tags: TagSummary[]
   entryA?: Record<string, unknown> | null
   entryB?: Record<string, unknown> | null
   senseDiffs?: Record<string, unknown>[]
@@ -78,6 +80,7 @@ export async function getAlignments(
     q?: string
     taxonomySourceId?: string
     taxonomyNodeId?: string
+    tagIds?: string[]
   } = {}
 ): Promise<PaginatedAlignments> {
   const params = new URLSearchParams()
@@ -89,6 +92,7 @@ export async function getAlignments(
   if (options.q) params.set('q', options.q)
   if (options.taxonomySourceId) params.set('taxonomySourceId', options.taxonomySourceId)
   if (options.taxonomyNodeId) params.set('taxonomyNodeId', options.taxonomyNodeId)
+  if (options.tagIds?.length) params.set('tagIds', options.tagIds.join(','))
   return apiFetch<PaginatedAlignments>(`/api/v1/comparisons/${id}/alignments?${params}`)
 }
 

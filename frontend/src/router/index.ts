@@ -99,6 +99,11 @@ const router = createRouter({
           component: () => import('@/pages/admin/TaxonomyPage.vue'),
         },
         {
+          path: 'admin/tags',
+          name: 'TagManagement',
+          component: () => import('@/pages/admin/TagManagementPage.vue'),
+        },
+        {
           path: 'admin/taxonomy/:sourceId/edit',
           name: 'TaxonomyEdit',
           component: () => import('@/pages/admin/TaxonomyEditPage.vue'),

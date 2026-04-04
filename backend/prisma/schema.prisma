@@ -39,6 +39,7 @@ model User {
   energyBalance           EnergyBalance?
   energyEvents            EnergyEvent[]
   wordUnlocks             WordUnlock[]
+  entryTags               EntryTag[]
   systemFormatConfigs      SystemFormatConfig[]
   systemConfigVisibilities SystemConfigVisibility[]
   userFormatConfigs        UserFormatConfig[]
@@ -199,6 +200,39 @@ model UserFormatConfig {
 }
 
 // ─────────────────────────────────────────────
+// Entry Tags (010-entry-tagging)
+// ─────────────────────────────────────────────
+
+model EntryTag {
+  id             String               @id @default(uuid())
+  userId         String               @map("user_id")
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  normalizedName String               @map("normalized_name")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  assignments    EntryTagAssignment[]
+
+  @@unique([userId, normalizedName])
+  @@index([userId, name])
+  @@map("entry_tags")
+}
+
+model EntryTagAssignment {
+  id        String   @id @default(uuid())
+  tagId     String   @map("tag_id")
+  tag       EntryTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  entryId   String   @map("entry_id")
+  entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([tagId, entryId])
+  @@index([entryId])
+  @@index([tagId])
+  @@map("entry_tag_assignments")
+}
+
+// ─────────────────────────────────────────────
 // Parse Tasks
 // ─────────────────────────────────────────────
 
@@ -297,6 +331,7 @@ model Entry {
   senses             Sense[]
   alignmentsAsA      EntryAlignment[]  @relation("AlignEntryA")
   alignmentsAsB      EntryAlignment[]  @relation("AlignEntryB")
+  tagAssignments     EntryTagAssignment[]
 
   @@index([versionId, normalizedHeadword])
   @@map("entries")

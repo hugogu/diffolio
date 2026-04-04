@@ -46,6 +46,22 @@
             <span class="cross-ref-label">另见：</span>
             <span>{{ item.entry.crossReferences!.join('；') }}</span>
           </div>
+
+          <div class="entry-tags">
+            <EntryTagEditor
+              :tags="item.entry.tags"
+              :available-tags="tagsStore.tagOptions"
+              :loading="isUpdating(item.entry.id) || tagsStore.loading"
+              :label="$t('tags.label')"
+              :empty-text="$t('tags.empty')"
+              :add-button-text="$t('tags.addButton')"
+              :placeholder="$t('tags.selectOrCreate')"
+              :helper-text="$t('tags.helper')"
+              @add-existing="handleAddExisting(item.entry.id, $event)"
+              @create="handleCreate(item.entry.id, $event)"
+              @remove="handleRemove(item.entry.id, $event.id)"
+            />
+          </div>
         </el-card>
       </el-timeline-item>
     </el-timeline>
@@ -53,9 +69,53 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { HeadwordTimelineEntry } from '@/api/search'
+import { useTagsStore } from '@/stores/tags'
+import { useI18n } from 'vue-i18n'
+import EntryTagEditor from '@/components/tags/EntryTagEditor.vue'
 
 defineProps<{ entries: HeadwordTimelineEntry[] }>()
+const emit = defineEmits<{
+  (event: 'tags-updated', payload: { entryId: string; tags: HeadwordTimelineEntry['entry']['tags'] }): void
+}>()
+
+const { t } = useI18n()
+const tagsStore = useTagsStore()
+const updatingEntryIds = ref<string[]>([])
+
+if (!tagsStore.tags.length) {
+  tagsStore.loadTags().catch(() => undefined)
+}
+
+function isUpdating(entryId: string) {
+  return updatingEntryIds.value.includes(entryId)
+}
+
+async function withEntryUpdate(entryId: string, action: () => Promise<{ tags: HeadwordTimelineEntry['entry']['tags'] }>) {
+  updatingEntryIds.value = [...updatingEntryIds.value, entryId]
+  try {
+    const result = await action()
+    emit('tags-updated', { entryId, tags: result.tags })
+  } catch {
+    ElMessage.error(t('tags.messages.saveError'))
+  } finally {
+    updatingEntryIds.value = updatingEntryIds.value.filter((id) => id !== entryId)
+  }
+}
+
+function handleAddExisting(entryId: string, tagId: string) {
+  return withEntryUpdate(entryId, () => tagsStore.addTagToEntry(entryId, { tagId }))
+}
+
+function handleCreate(entryId: string, name: string) {
+  return withEntryUpdate(entryId, () => tagsStore.addTagToEntry(entryId, { name }))
+}
+
+function handleRemove(entryId: string, tagId: string) {
+  return withEntryUpdate(entryId, () => tagsStore.removeTagFromEntry(entryId, tagId))
+}
 </script>
 
 <style scoped>
@@ -137,5 +197,11 @@ defineProps<{ entries: HeadwordTimelineEntry[] }>()
 .cross-ref-label {
   font-weight: 600;
   margin-right: 2px;
+}
+
+.entry-tags {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 </style>

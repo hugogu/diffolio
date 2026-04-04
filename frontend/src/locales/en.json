@@ -60,6 +60,7 @@
     "login": "Login",
     "register": "Register",
     "search": "Entry Search",
+    "tags": "Tag Management",
     "config": "Config Management",
     "users": "User Management",
     "watermark": "Watermark Verify",
@@ -257,7 +258,9 @@
     "startsWith": "Starts With",
     "noResults": "No matching entries found",
     "resultsSummary": "{total} results, page {page}/{totalPages}",
-    "emptyHint": "Enter a search term or select a category to search"
+    "emptyHint": "Enter a search term, choose tags, or select a category to search",
+    "tags": "Tags",
+    "allTags": "All Tags"
   },
   "subscription": {
     "freeTier": "Trial User",
@@ -357,6 +360,7 @@
     },
     "taxonomy": "Taxonomy",
     "selectTaxonomy": "Select categories (multiple)",
+    "tagFilter": "Filter by tags",
     "noResults": "No matching results",
     "loading": "Loading...",
     "selectEntry": "Select one or more entries from the list to view details",
@@ -394,6 +398,16 @@
       "unlockFailed": "Unlock failed. Please try again later",
       "loadFailed": "Failed to load comparison results",
       "allUnlocked": "All entries in this dictionary are already unlocked"
+    }
+  },
+  "tags": {
+    "label": "Tags",
+    "empty": "No tags yet",
+    "addButton": "Add tag",
+    "selectOrCreate": "Select an existing tag or type a new one",
+    "helper": "Press Enter to create a new tag",
+    "messages": {
+      "saveError": "Failed to save tags. Please try again."
     }
   },
   "auth": {
@@ -512,6 +526,22 @@
     }
   },
   "admin": {
+    "tagManagement": {
+      "title": "Tag Management",
+      "description": "Review all active tags and rename them from one place.",
+      "searchPlaceholder": "Search tags...",
+      "usageCount": "Usage Count",
+      "rename": "Rename",
+      "renameTitle": "Rename Tag",
+      "renameField": "New label",
+      "renamePlaceholder": "Enter a new tag label",
+      "renameSuccess": "Tag updated",
+      "renameError": "Failed to update tag",
+      "empty": "No active tags yet",
+      "validation": {
+        "required": "Please enter a tag name"
+      }
+    },
     "systemConfigs": {
       "title": "System Config Management",
       "newConfig": "New System Config",

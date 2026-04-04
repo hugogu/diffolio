@@ -37,6 +37,7 @@ import systemConfigRoutes from './routes/system-configs.js'
 import userConfigRoutes from './routes/user-configs.js'
 import adminSystemConfigRoutes from './routes/admin/system-configs.js'
 import conversionRoutes from './routes/conversions.js'
+import tagRoutes from './routes/tags.js'
 
 // Environment check
 const isDev = process.env.NODE_ENV !== 'production'
@@ -248,6 +249,7 @@ export async function buildApp(jwtSecret?: string): Promise<FastifyInstance> {
   await fastify.register(systemConfigRoutes, { prefix: '/api/v1' })
   await fastify.register(userConfigRoutes, { prefix: '/api/v1' })
   await fastify.register(adminSystemConfigRoutes, { prefix: '/api/v1' })
+  await fastify.register(tagRoutes, { prefix: '/api/v1' })
   await fastify.register(conversionRoutes, { prefix: '/api/v1/conversions' })
 
   return fastify

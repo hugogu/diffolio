@@ -64,6 +64,29 @@
             <el-radio-button value="startsWith">{{ $t('search.startsWith') }}</el-radio-button>
           </el-radio-group>
         </div>
+
+        <div class="filter-item filter-item--tags">
+          <span class="filter-label">{{ $t('search.tags') }}：</span>
+          <el-select
+            v-model="selectedTagIds"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            filterable
+            :loading="tagsStore.loading"
+            :placeholder="$t('search.allTags')"
+            style="min-width: 220px"
+            @change="handleFilterChange"
+          >
+            <el-option
+              v-for="tag in tagsStore.tags"
+              :key="tag.id"
+              :label="tag.name"
+              :value="tag.id"
+            />
+          </el-select>
+        </div>
       </div>
     </el-card>
 
@@ -89,7 +112,7 @@
           <div class="result-summary">
             {{ $t('search.resultsSummary', { total: result.total, page: result.page, totalPages: result.totalPages }) }}
           </div>
-          <HeadwordTimeline :entries="result.items" />
+          <HeadwordTimeline :entries="result.items" @tags-updated="handleTagsUpdated" />
           <div class="pagination-row">
             <el-pagination
               v-model:current-page="currentPage"
@@ -120,17 +143,18 @@ import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import {
   searchHeadword,
   listSearchVersions,
-  type HeadwordTimelineEntry,
   type PaginatedSearchResult,
   type SearchVersionInfo,
 } from '@/api/search'
 import HeadwordTimeline from '@/components/search/HeadwordTimeline.vue'
 import TaxonomyFilterPanel from '@/components/taxonomy/TaxonomyFilterPanel.vue'
 import ActionButton from '@/components/common/ActionButton.vue'
+import { useTagsStore } from '@/stores/tags'
 
 const query = ref('')
 const loading = ref(false)
 const searched = ref(false)
+const tagsStore = useTagsStore()
 
 const result = ref<PaginatedSearchResult>({ items: [], total: 0, page: 1, pageSize: 20, totalPages: 0 })
 const currentPage = ref(1)
@@ -141,6 +165,7 @@ const filterVersionId = ref<string | undefined>(undefined)
 const filterHeadwordType = ref<'all' | 'single' | 'compound'>('all')
 const filterMatchMode = ref<'contains' | 'startsWith'>('contains')
 const searchScope = ref<'entry' | 'definition'>('entry')
+const selectedTagIds = ref<string[]>([])
 
 // Taxonomy filter state
 const taxonomyFilter = ref<{ taxonomySourceId: string | null; taxonomyNodeId: string | null }>({
@@ -163,11 +188,17 @@ const groupedVersions = computed(() => {
 })
 
 onMounted(async () => {
-  allVersions.value = await listSearchVersions().catch(() => [])
+  const [versions] = await Promise.all([
+    listSearchVersions().catch(() => []),
+    tagsStore.loadTags().catch(() => []),
+  ])
+  allVersions.value = versions
 })
 
 async function doSearch(page = 1) {
-  if (!query.value.trim() && !filterVersionId.value && !taxonomyFilter.value.taxonomyNodeId) return
+  if (!query.value.trim() && !filterVersionId.value && !taxonomyFilter.value.taxonomyNodeId && selectedTagIds.value.length === 0) {
+    return
+  }
   loading.value = true
   searched.value = false
   try {
@@ -181,6 +212,7 @@ async function doSearch(page = 1) {
       pageSize: pageSize.value,
       taxonomySourceId: taxonomyFilter.value.taxonomySourceId ?? undefined,
       taxonomyNodeId: taxonomyFilter.value.taxonomyNodeId ?? undefined,
+      tagIds: selectedTagIds.value,
     })
     currentPage.value = result.value.page
     searched.value = true
@@ -214,6 +246,23 @@ function onTaxonomyFilterChange(filter: { taxonomySourceId: string | null; taxon
   taxonomyFilter.value = filter
   currentPage.value = 1
   doSearch(1)
+}
+
+function handleTagsUpdated(payload: { entryId: string; tags: PaginatedSearchResult['items'][number]['entry']['tags'] }) {
+  result.value = {
+    ...result.value,
+    items: result.value.items.map((item) =>
+      item.entry.id === payload.entryId
+        ? {
+            ...item,
+            entry: {
+              ...item.entry,
+              tags: payload.tags,
+            },
+          }
+        : item
+    ),
+  }
 }
 </script>
 

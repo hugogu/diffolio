@@ -147,6 +147,26 @@
             style="width: 220px"
             @change="onFilterChange"
           />
+
+          <el-select
+            v-model="selectedTagIds"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            filterable
+            clearable
+            :loading="tagsStore.loading"
+            :placeholder="$t('comparisonDetail.tagFilter')"
+            style="width: 180px"
+            @change="onFilterChange"
+          >
+            <el-option
+              v-for="tag in tagsStore.tags"
+              :key="tag.id"
+              :label="tag.name"
+              :value="tag.id"
+            />
+          </el-select>
         </div>
 
         <div class="filter-bar-options">
@@ -193,6 +213,21 @@
               </div>
               <div v-if="!a.locked && entryPreview(a)" class="entry-preview">{{ entryPreview(a) }}</div>
               <div v-else-if="a.locked" class="entry-preview entry-preview--locked">{{ $t('comparisonDetail.locked') }}</div>
+              <div class="entry-tags" @click.stop>
+                <EntryTagEditor
+                  :tags="a.tags"
+                  :available-tags="tagsStore.tagOptions"
+                  :loading="isTagMutationLoading(a.id) || tagsStore.loading"
+                  :label="$t('tags.label')"
+                  :empty-text="$t('tags.empty')"
+                  :add-button-text="$t('tags.addButton')"
+                  :placeholder="$t('tags.selectOrCreate')"
+                  :helper-text="$t('tags.helper')"
+                  @add-existing="handleAddAlignmentTag(a.id, { tagId: $event })"
+                  @create="handleAddAlignmentTag(a.id, { name: $event })"
+                  @remove="handleRemoveAlignmentTag(a.id, $event.id)"
+                />
+              </div>
             </div>
 
             <div v-if="alignments.length === 0 && !listLoading" class="list-empty">
@@ -273,12 +308,15 @@ import { getDictionaryUnlockStats } from '@/api/subscription'
 import type { EntryAlignment } from '@/api/comparisons'
 import type { TaxonomyNodeTree } from '@/api/taxonomy'
 import { useI18n } from 'vue-i18n'
+import EntryTagEditor from '@/components/tags/EntryTagEditor.vue'
+import { useTagsStore } from '@/stores/tags'
 
 const { t } = useI18n()
 const route = useRoute()
 const store = useComparisonsStore()
 const taxonomyStore = useTaxonomyStore()
 const subscriptionStore = useSubscriptionStore()
+const tagsStore = useTagsStore()
 
 const loading = ref(false)
 const listLoading = ref(false)
@@ -289,6 +327,7 @@ const selectedAlignmentIds = ref<string[]>([])
 const senseChangeTypeFilter = ref<string[]>([])
 const searchHeadword = ref('')
 const searchText = ref('')
+const selectedTagIds = ref<string[]>([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
@@ -325,6 +364,7 @@ const taxonomyTreeData = computed(() => {
   const sourceId = taxonomyFilter.value.taxonomySourceId
   return sourceId ? taxonomyStore.treeBySourceId[sourceId] ?? [] : []
 })
+const taggingAlignmentIds = ref<string[]>([])
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -371,6 +411,9 @@ onMounted(async () => {
   if (!taxonomyStore.sources.length) {
     taxonomyStore.fetchSources()
   }
+  if (!tagsStore.tags.length) {
+    tagsStore.loadTags().catch(() => undefined)
+  }
 })
 
 // Watch for taxonomy source changes to load tree
@@ -404,6 +447,7 @@ async function loadAlignments() {
       taxonomyNodeId: taxonomyFilter.value.taxonomyNodeIds.length > 0
         ? taxonomyFilter.value.taxonomyNodeIds.join(',')
         : undefined,
+      tagIds: selectedTagIds.value,
     })
     
     // Batch updates to reduce re-renders
@@ -454,6 +498,39 @@ function toggleAlignmentSelection(a: EntryAlignment) {
 
 function clearSelectedAlignments() {
   selectedAlignmentIds.value = []
+}
+
+function isTagMutationLoading(alignmentId: string) {
+  return taggingAlignmentIds.value.includes(alignmentId)
+}
+
+async function runAlignmentTagMutation(
+  alignmentId: string,
+  action: () => Promise<{ tags: EntryAlignment['tags'] }>
+) {
+  taggingAlignmentIds.value = [...taggingAlignmentIds.value, alignmentId]
+  try {
+    const result = await action()
+    alignments.value = alignments.value.map((alignment) =>
+      alignment.id === alignmentId ? { ...alignment, tags: result.tags } : alignment
+    )
+  } catch {
+    ElMessage.error(t('tags.messages.saveError'))
+  } finally {
+    taggingAlignmentIds.value = taggingAlignmentIds.value.filter((id) => id !== alignmentId)
+  }
+}
+
+function handleAddAlignmentTag(alignmentId: string, payload: { tagId?: string; name?: string }) {
+  return runAlignmentTagMutation(alignmentId, () =>
+    tagsStore.addTagToAlignment(route.params.id as string, alignmentId, payload)
+  )
+}
+
+function handleRemoveAlignmentTag(alignmentId: string, tagId: string) {
+  return runAlignmentTagMutation(alignmentId, () =>
+    tagsStore.removeTagFromAlignment(route.params.id as string, alignmentId, tagId)
+  )
 }
 
 // ── Entry list helpers ────────────────────────────────────────────────────────
@@ -786,6 +863,9 @@ async function handleSingleUnlock(a: EntryAlignment) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.entry-tags {
+  margin-top: 8px;
 }
 
 /* Right pane */

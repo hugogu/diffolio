@@ -3,6 +3,11 @@ import { Prisma } from '@prisma/client'
 import { authGuard, requireSessionUser } from '../lib/auth-guard.js'
 import { badRequest } from '../lib/errors.js'
 
+type TagResponse = {
+  id: string
+  name: string
+}
+
 const searchRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/search/versions — flat list of session user's versions for filter dropdown
   fastify.get('/search/versions', { preHandler: authGuard() }, async (request) => {
@@ -39,6 +44,7 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
       pageSize = '20',
       taxonomySourceId,
       taxonomyNodeId,
+      tagIds,
     } = request.query as {
       q?: string
       versionId?: string
@@ -49,11 +55,15 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
       pageSize?: string
       taxonomySourceId?: string
       taxonomyNodeId?: string
+      tagIds?: string
     }
 
     // Require at least a query, a version filter, or a taxonomy filter
     const hasTaxonomyFilter = taxonomySourceId && taxonomyNodeId
-    if (!q?.trim() && !versionId && !hasTaxonomyFilter) return { items: [], total: 0, page: 1, pageSize: 20, totalPages: 0 }
+    const selectedTagIds = tagIds?.split(',').map((value) => value.trim()).filter(Boolean) ?? []
+    if (!q?.trim() && !versionId && !hasTaxonomyFilter && selectedTagIds.length === 0) {
+      return { items: [], total: 0, page: 1, pageSize: 20, totalPages: 0 }
+    }
 
     const pageNum = Math.max(1, parseInt(page) || 1)
     const pageSizeNum = Math.min(100, Math.max(1, parseInt(pageSize) || 20))
@@ -120,6 +130,17 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
       andClauses.push({ normalizedHeadword: { in: headwords } })
     }
 
+    if (selectedTagIds.length > 0) {
+      andClauses.push({
+        tagAssignments: {
+          some: {
+            tagId: { in: selectedTagIds },
+            tag: { userId: user.id },
+          },
+        },
+      })
+    }
+
     const where: Prisma.EntryWhereInput = andClauses.length > 0 ? { AND: andClauses } : {}
 
     const [total, entries] = await Promise.all([
@@ -133,6 +154,22 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
           },
           version: {
             include: { dictionary: { select: { id: true, name: true } } },
+          },
+          tagAssignments: {
+            where: { tag: { userId: user.id } },
+            select: {
+              tag: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+            orderBy: {
+              tag: {
+                name: 'asc',
+              },
+            },
           },
         },
         orderBy: [{ version: { publishedYear: 'asc' } }, { normalizedHeadword: 'asc' }],
@@ -156,6 +193,10 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
         pageNumber: entry.pageNumber,
         lineNumber: entry.lineNumber,
         crossReferences: (entry.metadata as { crossReferences?: string[] } | null)?.crossReferences ?? null,
+        tags: entry.tagAssignments.map(({ tag }): TagResponse => ({
+          id: tag.id,
+          name: tag.name,
+        })),
         senses: entry.senses.map((s) => ({
           id: s.id,
           rawNumber: s.rawNumber,

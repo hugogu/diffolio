@@ -52,6 +52,7 @@ export const useComparisonsStore = defineStore('comparisons', () => {
       q?: string
       taxonomySourceId?: string
       taxonomyNodeId?: string
+      tagIds?: string[]
     } = {}
   ) {
     const result = await getAlignments(id, filters)
