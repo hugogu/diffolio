@@ -45,7 +45,7 @@
               </td>
             </tr>
             <!-- POS sub-row -->
-            <tr v-if="pair.posA || pair.posB" class="pos-row">
+            <tr v-if="showPosDiff && (pair.posA || pair.posB)" class="pos-row">
               <td class="pos-cell">
                 <span class="pos-label">{{ t('diff.pos') }}：</span>
                 <el-tag v-if="pair.posA" type="success" size="small" :class="pair.posChanged ? 'pos-tag-del' : ''">{{ pair.posA }}</el-tag>
@@ -62,7 +62,7 @@
               </td>
             </tr>
             <!-- Register sub-row -->
-            <tr v-if="pair.registerA || pair.registerB" class="reg-row">
+            <tr v-if="showRegisterDiff && (pair.registerA || pair.registerB)" class="reg-row">
               <td class="pos-cell">
                 <span class="pos-label">{{ t('diff.register') }}：</span>
                 <el-tag v-if="pair.registerA" type="warning" size="small" :class="pair.registerChanged ? 'pos-tag-del' : ''">{{ pair.registerA }}</el-tag>
@@ -79,7 +79,7 @@
               </td>
             </tr>
             <!-- Etymology sub-row -->
-            <tr v-if="pair.etymologyA || pair.etymologyB" class="etym-row">
+            <tr v-if="showEtymology && (pair.etymologyA || pair.etymologyB)" class="etym-row">
               <td class="pos-cell">
                 <span class="pos-label">{{ t('diff.etymology') }}：</span>
                 <span v-if="pair.etymologyA" class="etym-val" v-html="pair.etymologyDiffA" />
@@ -101,7 +101,7 @@
     </div>
 
     <!-- Example comparison -->
-    <div v-if="exampleRows.length > 0" class="section">
+    <div v-if="showExamples && filteredExampleRows.length > 0" class="section">
       <div class="section-title">{{ t('diff.examples') }}</div>
       <table class="diff-table">
         <colgroup>
@@ -117,7 +117,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, i) in exampleRows" :key="i" :class="exRowClass(row)">
+          <tr v-for="(row, i) in filteredExampleRows" :key="i" :class="exRowClass(row)">
             <td class="ex-cell"><span v-if="row.textA" v-html="row.htmlA" /></td>
             <td class="badge-col">
               <el-tag v-if="!row.textA" type="success" size="small">{{ t('diff.added') }}</el-tag>
@@ -145,6 +145,11 @@ const props = defineProps<{
   alignment: EntryAlignment
   labelA?: string
   labelB?: string
+  showExamples?: boolean
+  showRegisterDiff?: boolean
+  showPosDiff?: boolean
+  showEtymology?: boolean
+  onlyNonMatched?: boolean
 }>()
 
 const dmp = new DiffMatchPatch()
@@ -257,7 +262,13 @@ interface SensePair {
   etymologyDiffB: string
 }
 
-const sensePairs = computed<SensePair[]>(() => {
+const showExamples = computed(() => props.showExamples !== false)
+const showRegisterDiff = computed(() => props.showRegisterDiff !== false)
+const showPosDiff = computed(() => props.showPosDiff !== false)
+const showEtymology = computed(() => props.showEtymology !== false)
+const onlyNonMatched = computed(() => props.onlyNonMatched === true)
+
+const rawSensePairs = computed<SensePair[]>(() => {
   const senseDiffs = (props.alignment.senseDiffs ?? []) as Rec[]
   const sensesA = ((entryA.value?.senses ?? []) as Rec[])
   const sensesB = ((entryB.value?.senses ?? []) as Rec[])
@@ -335,6 +346,19 @@ const sensePairs = computed<SensePair[]>(() => {
   })
 })
 
+function pairHasVisibleDifference(pair: SensePair): boolean {
+  if (pair.changeType !== 'MATCHED') return true
+  if (showPosDiff.value && pair.posChanged) return true
+  if (showRegisterDiff.value && pair.registerChanged) return true
+  if (showEtymology.value && pair.etymologyChanged) return true
+  return false
+}
+
+const sensePairs = computed(() => {
+  if (!onlyNonMatched.value) return rawSensePairs.value
+  return rawSensePairs.value.filter(pairHasVisibleDifference)
+})
+
 function pairRowClass(ct: string): string {
   if (ct === 'ADDED') return 'row-added'
   if (ct === 'DELETED') return 'row-deleted'
@@ -406,6 +430,11 @@ const exampleRows = computed<ExRow[]>(() => {
     if (!usedB.has(i)) result.push({ textA: null, textB: exB[i], changed: false, htmlA: '', htmlB: esc(exB[i]) })
   }
   return result
+})
+
+const filteredExampleRows = computed(() => {
+  if (!onlyNonMatched.value) return exampleRows.value
+  return exampleRows.value.filter((row) => !row.textA || !row.textB || row.changed)
 })
 
 function exRowClass(row: ExRow): string {

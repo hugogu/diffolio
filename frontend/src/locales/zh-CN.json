@@ -362,6 +362,13 @@
     "selectEntry": "从左侧列表选择一个或多个条目查看详情",
     "selectedCount": "已选 {count} 个词条",
     "multiSelectHint": "点击左侧词条可继续多选，右侧会同时展示多个详情",
+    "displayOptions": {
+      "showExamples": "显示例句",
+      "showRegisterDiff": "显示使用域对比",
+      "showPosDiff": "显示词性对比",
+      "showEtymology": "显示词源",
+      "onlyNonMatched": "只展示非匹配结果项"
+    },
     "entryStatus": {
       "added": "新增",
       "deleted": "删除",

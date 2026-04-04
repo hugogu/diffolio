@@ -362,6 +362,13 @@
     "selectEntry": "Select one or more entries from the list to view details",
     "selectedCount": "{count} entries selected",
     "multiSelectHint": "Keep clicking entries on the left to compare multiple headwords on the same page",
+    "displayOptions": {
+      "showExamples": "Show examples",
+      "showRegisterDiff": "Show usage-domain diff",
+      "showPosDiff": "Show POS diff",
+      "showEtymology": "Show etymology",
+      "onlyNonMatched": "Only show non-matching items"
+    },
     "entryStatus": {
       "added": "Added",
       "deleted": "Deleted",

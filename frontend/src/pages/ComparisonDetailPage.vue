@@ -78,74 +78,84 @@
     <template v-if="comparison?.status === 'COMPLETED'">
       <!-- Filter bar: search + sense change types + taxonomy inline -->
       <div class="filter-bar">
-        <el-input
-          v-model="searchHeadword"
-          :placeholder="$t('comparisonDetail.searchHeadword')"
-          clearable
-          style="width: 140px"
-          @input="onSearchInput"
-          @clear="onSearch"
-        >
-          <template #prefix><el-icon><Search /></el-icon></template>
-        </el-input>
-        <el-input
-          v-model="searchText"
-          :placeholder="$t('comparisonDetail.searchText')"
-          clearable
-          style="width: 180px"
-          @input="onSearchInput"
-          @clear="onSearch"
-        >
-          <template #prefix><el-icon><Search /></el-icon></template>
-        </el-input>
-        
-        <!-- 义项变更类型多选 -->
-        <el-select
-          v-model="senseChangeTypeFilter"
-          multiple
-          collapse-tags
-          collapse-tags-tooltip
-          :placeholder="$t('comparisonDetail.senseChangeTypes')"
-          style="width: 180px"
-          @change="onFilterChange"
-        >
-          <el-option :label="$t('comparisonDetail.senseChange.definition')" value="DEFINITION_CHANGED" />
-          <el-option :label="$t('comparisonDetail.senseChange.pos')" value="POS_CHANGED" />
-          <el-option :label="$t('comparisonDetail.senseChange.example')" value="EXAMPLE_CHANGED" />
-        </el-select>
-        
-        <el-divider direction="vertical" style="margin: 0 4px" />
-        
-        <!-- 分类筛选 inline -->
-        <el-select
-          v-model="taxonomyFilter.taxonomySourceId"
-          :placeholder="$t('comparisonDetail.taxonomy')"
-          clearable
-          style="width: 140px"
-          @change="onTaxonomySourceChange"
-        >
-          <el-option
-            v-for="s in activeTaxonomySources"
-            :key="s.id"
-            :label="s.name"
-            :value="s.id"
+        <div class="filter-bar-main">
+          <el-input
+            v-model="searchHeadword"
+            :placeholder="$t('comparisonDetail.searchHeadword')"
+            clearable
+            style="width: 140px"
+            @input="onSearchInput"
+            @clear="onSearch"
+          >
+            <template #prefix><el-icon><Search /></el-icon></template>
+          </el-input>
+          <el-input
+            v-model="searchText"
+            :placeholder="$t('comparisonDetail.searchText')"
+            clearable
+            style="width: 180px"
+            @input="onSearchInput"
+            @clear="onSearch"
+          >
+            <template #prefix><el-icon><Search /></el-icon></template>
+          </el-input>
+          
+          <!-- 义项变更类型多选 -->
+          <el-select
+            v-model="senseChangeTypeFilter"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            :placeholder="$t('comparisonDetail.senseChangeTypes')"
+            style="width: 180px"
+            @change="onFilterChange"
+          >
+            <el-option :label="$t('comparisonDetail.senseChange.definition')" value="DEFINITION_CHANGED" />
+            <el-option :label="$t('comparisonDetail.senseChange.pos')" value="POS_CHANGED" />
+            <el-option :label="$t('comparisonDetail.senseChange.example')" value="EXAMPLE_CHANGED" />
+          </el-select>
+          
+          <el-divider direction="vertical" style="margin: 0 4px" />
+          
+          <!-- 分类筛选 inline -->
+          <el-select
+            v-model="taxonomyFilter.taxonomySourceId"
+            :placeholder="$t('comparisonDetail.taxonomy')"
+            clearable
+            style="width: 140px"
+            @change="onTaxonomySourceChange"
+          >
+            <el-option
+              v-for="s in activeTaxonomySources"
+              :key="s.id"
+              :label="s.name"
+              :value="s.id"
+            />
+          </el-select>
+          <el-tree-select
+            v-if="taxonomyFilter.taxonomySourceId"
+            v-model="taxonomyFilter.taxonomyNodeIds"
+            :data="taxonomyTreeData"
+            :props="{ label: 'label', value: 'id', children: 'children' }"
+            :placeholder="$t('comparisonDetail.selectTaxonomy')"
+            multiple
+            check-strictly
+            check-on-click-node
+            clearable
+            collapse-tags
+            collapse-tags-tooltip
+            style="width: 220px"
+            @change="onFilterChange"
           />
-        </el-select>
-        <el-tree-select
-          v-if="taxonomyFilter.taxonomySourceId"
-          v-model="taxonomyFilter.taxonomyNodeIds"
-          :data="taxonomyTreeData"
-          :props="{ label: 'label', value: 'id', children: 'children' }"
-          :placeholder="$t('comparisonDetail.selectTaxonomy')"
-          multiple
-          check-strictly
-          check-on-click-node
-          clearable
-          collapse-tags
-          collapse-tags-tooltip
-          style="width: 220px"
-          @change="onFilterChange"
-        />
+        </div>
+
+        <div class="filter-bar-options">
+          <el-checkbox v-model="displayOptions.showExamples">{{ $t('comparisonDetail.displayOptions.showExamples') }}</el-checkbox>
+          <el-checkbox v-model="displayOptions.showRegisterDiff">{{ $t('comparisonDetail.displayOptions.showRegisterDiff') }}</el-checkbox>
+          <el-checkbox v-model="displayOptions.showPosDiff">{{ $t('comparisonDetail.displayOptions.showPosDiff') }}</el-checkbox>
+          <el-checkbox v-model="displayOptions.showEtymology">{{ $t('comparisonDetail.displayOptions.showEtymology') }}</el-checkbox>
+          <el-checkbox v-model="displayOptions.onlyNonMatched">{{ $t('comparisonDetail.displayOptions.onlyNonMatched') }}</el-checkbox>
+        </div>
       </div>
 
       <!-- Split view -->
@@ -228,6 +238,11 @@
                   :alignment="alignment"
                   :label-a="versionLabelA"
                   :label-b="versionLabelB"
+                  :show-examples="displayOptions.showExamples"
+                  :show-register-diff="displayOptions.showRegisterDiff"
+                  :show-pos-diff="displayOptions.showPosDiff"
+                  :show-etymology="displayOptions.showEtymology"
+                  :only-non-matched="displayOptions.onlyNonMatched"
                 />
               </section>
             </div>
@@ -281,6 +296,23 @@ const taxonomyFilter = ref<{ taxonomySourceId: string | null; taxonomyNodeIds: s
   taxonomySourceId: null,
   taxonomyNodeIds: [],
 })
+type ComparisonDisplayOptions = {
+  showExamples: boolean
+  showRegisterDiff: boolean
+  showPosDiff: boolean
+  showEtymology: boolean
+  onlyNonMatched: boolean
+}
+
+const COMPARISON_DISPLAY_OPTIONS_KEY = 'comparison-detail-display-options'
+const defaultDisplayOptions: ComparisonDisplayOptions = {
+  showExamples: true,
+  showRegisterDiff: true,
+  showPosDiff: true,
+  showEtymology: true,
+  onlyNonMatched: false,
+}
+const displayOptions = ref<ComparisonDisplayOptions>({ ...defaultDisplayOptions })
 const selectedAlignments = computed(() => {
   const alignmentMap = new Map(alignments.value.map((alignment) => [alignment.id, alignment]))
   return selectedAlignmentIds.value
@@ -295,6 +327,20 @@ const taxonomyTreeData = computed(() => {
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+if (typeof window !== 'undefined') {
+  try {
+    const saved = window.localStorage.getItem(COMPARISON_DISPLAY_OPTIONS_KEY)
+    if (saved) {
+      displayOptions.value = {
+        ...defaultDisplayOptions,
+        ...(JSON.parse(saved) as Partial<ComparisonDisplayOptions>),
+      }
+    }
+  } catch {
+    displayOptions.value = { ...defaultDisplayOptions }
+  }
+}
 
 const versionLabelA = computed(() => {
   const va = comparison.value?.versionA
@@ -334,6 +380,11 @@ watch(() => taxonomyFilter.value.taxonomySourceId, (newId) => {
   }
   taxonomyFilter.value.taxonomyNodeIds = []
 })
+
+watch(displayOptions, (value) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(COMPARISON_DISPLAY_OPTIONS_KEY, JSON.stringify(value))
+}, { deep: true })
 
 async function loadAlignments() {
   listLoading.value = true
@@ -607,6 +658,28 @@ async function handleSingleUnlock(a: EntryAlignment) {
   flex-wrap: wrap;
   margin-bottom: 12px;
   padding: 8px 0;
+}
+
+.filter-bar-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.filter-bar-options {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-bar-options :deep(.el-checkbox) {
+  margin-right: 0;
+  white-space: nowrap;
 }
 
 /* Ensure consistent height for all filter inputs */
