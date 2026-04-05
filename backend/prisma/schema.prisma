@@ -19,19 +19,19 @@ model User {
   emailVerified           Boolean   @default(false) @map("email_verified")
   verificationToken       String?   @map("verification_token")
   verificationTokenExpiry DateTime? @map("verification_token_expiry")
-  passwordHash String @map("password_hash")
+  passwordHash            String    @map("password_hash")
   role                    UserRole  @default(REGULAR)
   exportEnabled           Boolean   @default(false) @map("export_enabled")
   maxVersions             Int       @default(2) @map("max_versions")
   maxBooks                Int       @default(1) @map("max_books")
   canEditBuiltinConfigs   Boolean   @default(false) @map("can_edit_builtin_configs")
-  watermarkEnabled        Boolean   @default(true)  @map("watermark_enabled")
+  watermarkEnabled        Boolean   @default(true) @map("watermark_enabled")
   disabled                Boolean   @default(false) @map("disabled")
   agreedToTerms           Boolean   @default(false) @map("agreed_to_terms")
   termsAgreedAt           DateTime? @map("terms_agreed_at")
   lastLoginAt             DateTime? @map("last_login_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
 
   dictionaries            Dictionary[]
   taxonomySources         TaxonomySource[]
@@ -43,7 +43,12 @@ model User {
   systemFormatConfigs      SystemFormatConfig[]
   systemConfigVisibilities SystemConfigVisibility[]
   userFormatConfigs        UserFormatConfig[]
-  conversionTasks         ConversionTask[]
+  conversionTasks          ConversionTask[]
+  configProfilesOwned      ConfigProfile[]          @relation("ConfigProfileOwner")
+  configProfilesCreated    ConfigProfile[]          @relation("ConfigProfileCreator")
+  configVersionsCreated    ConfigVersion[]          @relation("ConfigVersionCreator")
+  versionFileReferences    VersionFileReference[]   @relation("VersionFileReferenceUploader")
+  parseArtifactReferences  ParseArtifactReference[] @relation("ParseArtifactReferenceUser")
 
   @@map("users")
 }
@@ -63,44 +68,45 @@ model SystemSetting {
   @@map("system_settings")
 }
 
-
 // ─────────────────────────────────────────────
 // Dictionary & Versions
 // ─────────────────────────────────────────────
 
 model Dictionary {
-  id             String              @id @default(uuid())
-  name           String              @unique
+  id             String    @id @default(uuid())
+  name           String    @unique
   publisher      String
-  language       String              @default("zh")
-  encodingScheme String @map("encoding_scheme")
+  language       String    @default("zh")
+  encodingScheme String    @map("encoding_scheme")
   description    String?
-  userId         String?             @map("user_id")
-  user           User?               @relation(fields: [userId], references: [id])
-  lastAccessedAt DateTime?           @map("last_accessed_at")
-  deletedAt      DateTime?           @map("deleted_at")
-  createdAt DateTime            @default(now()) @map("created_at")
-  updatedAt DateTime            @updatedAt @map("updated_at")
+  userId         String?   @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id])
+  lastAccessedAt DateTime? @map("last_accessed_at")
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  versions       DictionaryVersion[]
-  wordUnlocks    WordUnlock[]
+  versions    DictionaryVersion[]
+  wordUnlocks WordUnlock[]
 
   @@map("dictionaries")
 }
 
 model DictionaryVersion {
-  id            String       @id @default(uuid())
-  dictionaryId String @map("dictionary_id")
-  dictionary    Dictionary   @relation(fields: [dictionaryId], references: [id])
+  id            String     @id @default(uuid())
+  dictionaryId  String     @map("dictionary_id")
+  dictionary    Dictionary @relation(fields: [dictionaryId], references: [id])
   label         String
-  publishedYear Int? @map("published_year")
+  publishedYear Int?       @map("published_year")
   notes         String?
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
-  formatConfig  FormatConfig?
-  parseTasks    ParseTask[]
-  entries       Entry[]
+  formatConfig            FormatConfig?
+  parseTasks              ParseTask[]
+  entries                 Entry[]
+  fileReferences          VersionFileReference[]
+  parseArtifactReferences ParseArtifactReference[]
 
   comparisonsAsA Comparison[] @relation("CompVersionA")
   comparisonsAsB Comparison[] @relation("CompVersionB")
@@ -115,17 +121,23 @@ model DictionaryVersion {
 
 model FormatConfig {
   id               String            @id @default(uuid())
-  versionId String            @unique @map("version_id")
+  versionId        String            @unique @map("version_id")
   version          DictionaryVersion @relation(fields: [versionId], references: [id])
-  parentConfigId String? @map("parent_config_id")
+  parentConfigId   String?           @map("parent_config_id")
   name             String
-  configJson Json @map("config_json")
+  configJson       Json              @map("config_json")
   validationStatus ConfigStatus      @default(PENDING) @map("validation_status")
-  validationReport Json? @map("validation_report")
+  validationReport Json?             @map("validation_report")
   sourceConfigId   String?           @map("source_config_id")
   sourceConfigType ConfigSourceType? @map("source_config_type")
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
+  configProfileId  String?           @map("config_profile_id")
+  configVersionId  String?           @map("config_version_id")
+  contentHash      String?           @map("content_hash")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  configProfile ConfigProfile? @relation(fields: [configProfileId], references: [id])
+  configVersion ConfigVersion? @relation(fields: [configVersionId], references: [id])
 
   @@map("format_configs")
 }
@@ -144,6 +156,235 @@ enum ConfigVisibility {
 enum ConfigSourceType {
   SYSTEM
   USER
+}
+
+enum ConfigOwnerType {
+  SYSTEM
+  USER
+}
+
+enum ParseArtifactStatus {
+  BUILDING
+  READY
+  FAILED
+}
+
+enum MigrationKind {
+  FILES
+  CONFIGS
+  ARTIFACTS
+  LINKS
+}
+
+enum MigrationStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ─────────────────────────────────────────────
+// Shared Storage & Versioned Configs (009-shared-storage-dedup)
+// ─────────────────────────────────────────────
+
+model SharedFileAsset {
+  id                String   @id @default(uuid())
+  contentHash       String   @unique @map("content_hash")
+  hashAlgorithm     String   @map("hash_algorithm")
+  fileType          FileType @map("file_type")
+  originalExtension String   @map("original_extension")
+  storagePath       String   @map("storage_path")
+  fileSize          BigInt   @map("file_size")
+  createdByTaskId   String?  @map("created_by_task_id")
+  firstSeenAt       DateTime @default(now()) @map("first_seen_at")
+  lastReferencedAt  DateTime @default(now()) @map("last_referenced_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  versionReferences VersionFileReference[]
+  parseTasks        ParseTask[]
+  parseArtifacts    SharedParseArtifact[]
+
+  @@index([fileType, lastReferencedAt])
+  @@map("shared_file_assets")
+}
+
+model VersionFileReference {
+  id                String    @id @default(uuid())
+  versionId         String    @map("version_id")
+  sharedFileAssetId String    @map("shared_file_asset_id")
+  originalFileName  String    @map("original_file_name")
+  uploadedByUserId  String    @map("uploaded_by_user_id")
+  isActive          Boolean   @default(true) @map("is_active")
+  detachedAt        DateTime? @map("detached_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  version         DictionaryVersion @relation(fields: [versionId], references: [id])
+  sharedFileAsset SharedFileAsset   @relation(fields: [sharedFileAssetId], references: [id])
+  uploadedByUser  User              @relation("VersionFileReferenceUploader", fields: [uploadedByUserId], references: [id])
+
+  @@index([versionId, isActive])
+  @@index([sharedFileAssetId, isActive])
+  @@index([uploadedByUserId])
+  @@map("version_file_references")
+}
+
+model ConfigProfile {
+  id          String            @id @default(uuid())
+  ownerType   ConfigOwnerType   @map("owner_type")
+  ownerUserId String?           @map("owner_user_id")
+  name        String
+  description String?
+  visibility  ConfigVisibility?
+  createdBy   String            @map("created_by")
+  archivedAt  DateTime?         @map("archived_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  ownerUser     User?           @relation("ConfigProfileOwner", fields: [ownerUserId], references: [id])
+  createdByUser User            @relation("ConfigProfileCreator", fields: [createdBy], references: [id])
+  versions      ConfigVersion[]
+  formatConfigs FormatConfig[]
+
+  @@index([ownerType, ownerUserId])
+  @@map("config_profiles")
+}
+
+model ConfigVersion {
+  id               String       @id @default(uuid())
+  profileId        String       @map("profile_id")
+  versionNumber    Int          @map("version_number")
+  configJson       Json         @map("config_json")
+  validationStatus ConfigStatus @map("validation_status")
+  validationReport Json?        @map("validation_report")
+  contentHash      String       @map("content_hash")
+  isCurrent        Boolean      @default(false) @map("is_current")
+  createdBy        String       @map("created_by")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  profile        ConfigProfile         @relation(fields: [profileId], references: [id])
+  createdByUser  User                  @relation("ConfigVersionCreator", fields: [createdBy], references: [id])
+  parseArtifacts SharedParseArtifact[]
+  formatConfigs  FormatConfig[]
+
+  @@unique([profileId, versionNumber])
+  @@index([profileId, isCurrent])
+  @@index([contentHash])
+  @@map("config_versions")
+}
+
+model SharedParseArtifact {
+  id                String              @id @default(uuid())
+  sharedFileAssetId String              @map("shared_file_asset_id")
+  configVersionId   String              @map("config_version_id")
+  parserFingerprint String              @map("parser_fingerprint")
+  status            ParseArtifactStatus
+  totalEntries      Int                 @default(0) @map("total_entries")
+  failedEntries     Int                 @default(0) @map("failed_entries")
+  builtFromTaskId   String?             @map("built_from_task_id")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  completedAt       DateTime?           @map("completed_at")
+
+  sharedFileAsset SharedFileAsset          @relation(fields: [sharedFileAssetId], references: [id])
+  configVersion   ConfigVersion            @relation(fields: [configVersionId], references: [id])
+  parseTasks      ParseTask[]
+  references      ParseArtifactReference[]
+  artifactEntries ArtifactEntry[]
+
+  @@unique([sharedFileAssetId, configVersionId, parserFingerprint])
+  @@map("shared_parse_artifacts")
+}
+
+model ParseArtifactReference {
+  id              String    @id @default(uuid())
+  parseArtifactId String    @map("parse_artifact_id")
+  versionId       String    @map("version_id")
+  parseTaskId     String?   @map("parse_task_id")
+  userId          String    @map("user_id")
+  isActive        Boolean   @default(true) @map("is_active")
+  detachedAt      DateTime? @map("detached_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  parseArtifact SharedParseArtifact @relation(fields: [parseArtifactId], references: [id])
+  version       DictionaryVersion   @relation(fields: [versionId], references: [id])
+  parseTask     ParseTask?          @relation(fields: [parseTaskId], references: [id])
+  user          User                @relation("ParseArtifactReferenceUser", fields: [userId], references: [id])
+
+  @@index([versionId, isActive])
+  @@index([parseArtifactId, isActive])
+  @@index([userId, isActive])
+  @@map("parse_artifact_references")
+}
+
+model ArtifactEntry {
+  id                 String   @id @default(uuid())
+  parseArtifactId    String   @map("parse_artifact_id")
+  rawHeadword        String   @map("raw_headword")
+  normalizedHeadword String   @map("normalized_headword")
+  entrySequence      Int?     @map("entry_sequence")
+  phonetic           String?
+  pageNumber         Int?     @map("page_number")
+  lineNumber         Int?     @map("line_number")
+  metadata           Json?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  parseArtifact SharedParseArtifact @relation(fields: [parseArtifactId], references: [id])
+  senses        ArtifactSense[]
+
+  @@index([parseArtifactId, normalizedHeadword])
+  @@map("artifact_entries")
+}
+
+model ArtifactSense {
+  id               String   @id @default(uuid())
+  artifactEntryId  String   @map("artifact_entry_id")
+  rawNumber        String   @map("raw_number")
+  normalizedNumber String   @map("normalized_number")
+  definition       String
+  rawDefinition    String   @map("raw_definition")
+  phonetic         String?
+  grammaticalCat   String?  @map("grammatical_cat")
+  register         String?
+  etymology        String?
+  position         Int
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  artifactEntry ArtifactEntry     @relation(fields: [artifactEntryId], references: [id])
+  examples      ArtifactExample[]
+
+  @@index([artifactEntryId])
+  @@map("artifact_senses")
+}
+
+model ArtifactExample {
+  id              String   @id @default(uuid())
+  artifactSenseId String   @map("artifact_sense_id")
+  rawText         String   @map("raw_text")
+  normalizedText  String   @map("normalized_text")
+  position        Int
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  artifactSense ArtifactSense @relation(fields: [artifactSenseId], references: [id])
+
+  @@index([artifactSenseId])
+  @@map("artifact_examples")
+}
+
+model MigrationBatch {
+  id             String          @id @default(uuid())
+  kind           MigrationKind
+  status         MigrationStatus
+  cursor         Json?
+  processedCount Int             @default(0) @map("processed_count")
+  errorCount     Int             @default(0) @map("error_count")
+  notes          Json?
+  startedAt      DateTime?       @map("started_at")
+  completedAt    DateTime?       @map("completed_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@map("migration_batches")
 }
 
 // ─────────────────────────────────────────────
@@ -238,25 +479,32 @@ model EntryTagAssignment {
 
 model ParseTask {
   id                String            @id @default(uuid())
-  versionId String @map("version_id")
+  versionId         String            @map("version_id")
   version           DictionaryVersion @relation(fields: [versionId], references: [id])
-  bullmqJobId String?           @unique @map("bullmq_job_id")
+  bullmqJobId       String?           @unique @map("bullmq_job_id")
   status            TaskStatus        @default(PENDING)
-  fileType FileType @map("file_type")
-  originalFileName String @map("original_file_name")
-  storedFilePath String @map("stored_file_path")
-  totalPages Int? @map("total_pages")
-  totalEntries Int? @map("total_entries")
-  processedPages Int               @default(0) @map("processed_pages")
-  processedEntries Int               @default(0) @map("processed_entries")
-  failedEntries Int               @default(0) @map("failed_entries")
-  checkpointOffset Int               @default(0) @map("checkpoint_offset")
-  startedAt DateTime? @map("started_at")
-  completedAt DateTime? @map("completed_at")
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
+  fileType          FileType          @map("file_type")
+  originalFileName  String            @map("original_file_name")
+  storedFilePath    String            @map("stored_file_path")
+  totalPages        Int?              @map("total_pages")
+  totalEntries      Int?              @map("total_entries")
+  processedPages    Int               @default(0) @map("processed_pages")
+  processedEntries  Int               @default(0) @map("processed_entries")
+  failedEntries     Int               @default(0) @map("failed_entries")
+  checkpointOffset  Int               @default(0) @map("checkpoint_offset")
+  sharedFileAssetId String?           @map("shared_file_asset_id")
+  parseArtifactId   String?           @map("parse_artifact_id")
+  contentHash       String?           @map("content_hash")
+  cacheHit          Boolean           @default(false) @map("cache_hit")
+  startedAt         DateTime?         @map("started_at")
+  completedAt       DateTime?         @map("completed_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
 
-  errors            ParseError[]
+  errors             ParseError[]
+  sharedFileAsset    SharedFileAsset?         @relation(fields: [sharedFileAssetId], references: [id])
+  parseArtifact      SharedParseArtifact?     @relation(fields: [parseArtifactId], references: [id])
+  artifactReferences ParseArtifactReference[]
 
   @@map("parse_tasks")
 }
@@ -284,20 +532,20 @@ enum FileType {
 
 model ParseError {
   id            String      @id @default(uuid())
-  taskId String @map("task_id")
+  taskId        String      @map("task_id")
   task          ParseTask   @relation(fields: [taskId], references: [id])
-  pageNumber Int? @map("page_number")
-  lineNumber Int? @map("line_number")
-  rawText String @map("raw_text")
-  fieldName String @map("field_name")
-  errorCode String @map("error_code")
-  errorDetail String @map("error_detail")
+  pageNumber    Int?        @map("page_number")
+  lineNumber    Int?        @map("line_number")
+  rawText       String      @map("raw_text")
+  fieldName     String      @map("field_name")
+  errorCode     String      @map("error_code")
+  errorDetail   String      @map("error_detail")
   status        ErrorStatus @default(PENDING)
-  correctedText String? @map("corrected_text")
-  correctedBy String? @map("corrected_by")
-  correctedAt DateTime? @map("corrected_at")
-  retriedAt DateTime? @map("retried_at")
-  createdAt DateTime    @default(now()) @map("created_at")
+  correctedText String?     @map("corrected_text")
+  correctedBy   String?     @map("corrected_by")
+  correctedAt   DateTime?   @map("corrected_at")
+  retriedAt     DateTime?   @map("retried_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
 
   @@map("parse_errors")
 }
@@ -315,18 +563,18 @@ enum ErrorStatus {
 
 model Entry {
   id                 String            @id @default(uuid())
-  versionId String @map("version_id")
+  versionId          String            @map("version_id")
   version            DictionaryVersion @relation(fields: [versionId], references: [id])
-  taskId String? @map("task_id")
-  rawHeadword String @map("raw_headword")
-  normalizedHeadword String @map("normalized_headword")
+  taskId             String?           @map("task_id")
+  rawHeadword        String            @map("raw_headword")
+  normalizedHeadword String            @map("normalized_headword")
   entrySequence      Int?              @map("entry_sequence")
   phonetic           String?
-  pageNumber Int? @map("page_number")
-  lineNumber Int? @map("line_number")
+  pageNumber         Int?              @map("page_number")
+  lineNumber         Int?              @map("line_number")
   metadata           Json?
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
 
   senses             Sense[]
   alignmentsAsA      EntryAlignment[]  @relation("AlignEntryA")
@@ -339,20 +587,20 @@ model Entry {
 
 model Sense {
   id               String   @id @default(uuid())
-  entryId String @map("entry_id")
+  entryId          String   @map("entry_id")
   entry            Entry    @relation(fields: [entryId], references: [id])
-  rawNumber String @map("raw_number")
-  normalizedNumber String @map("normalized_number")
+  rawNumber        String   @map("raw_number")
+  normalizedNumber String   @map("normalized_number")
   definition       String
-  rawDefinition String @map("raw_definition")
+  rawDefinition    String   @map("raw_definition")
   phonetic         String?
-  grammaticalCat String? @map("grammatical_cat")
+  grammaticalCat   String?  @map("grammatical_cat")
   register         String?
   etymology        String?
   position         Int
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
-  examples         Example[]
+  examples Example[]
 
   @@index([entryId])
   @@map("senses")
@@ -360,12 +608,12 @@ model Sense {
 
 model Example {
   id             String   @id @default(uuid())
-  senseId String @map("sense_id")
+  senseId        String   @map("sense_id")
   sense          Sense    @relation(fields: [senseId], references: [id])
-  rawText String @map("raw_text")
-  normalizedText String @map("normalized_text")
+  rawText        String   @map("raw_text")
+  normalizedText String   @map("normalized_text")
   position       Int
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@index([senseId])
   @@map("examples")
@@ -377,22 +625,22 @@ model Example {
 
 model Comparison {
   id           String            @id @default(uuid())
-  versionAId String @map("version_a_id")
-  versionBId String @map("version_b_id")
+  versionAId   String            @map("version_a_id")
+  versionBId   String            @map("version_b_id")
   versionA     DictionaryVersion @relation("CompVersionA", fields: [versionAId], references: [id])
   versionB     DictionaryVersion @relation("CompVersionB", fields: [versionBId], references: [id])
   status       CompStatus        @default(PENDING)
-  totalA       Int? @map("total_a")
-  totalB       Int? @map("total_b")
+  totalA       Int?              @map("total_a")
+  totalB       Int?              @map("total_b")
   matched      Int?
-  addedInB Int? @map("added_in_b")
-  deletedFromA Int? @map("deleted_from_a")
-  bullmqJobId String? @map("bullmq_job_id")
-  createdAt DateTime          @default(now()) @map("created_at")
-  completedAt DateTime? @map("completed_at")
+  addedInB     Int?              @map("added_in_b")
+  deletedFromA Int?              @map("deleted_from_a")
+  bullmqJobId  String?           @map("bullmq_job_id")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  completedAt  DateTime?         @map("completed_at")
 
-  alignments   EntryAlignment[]
-  exports      ExportJob[]
+  alignments EntryAlignment[]
+  exports    ExportJob[]
 
   @@unique([versionAId, versionBId])
   @@map("comparisons")
@@ -406,18 +654,18 @@ enum CompStatus {
 }
 
 model EntryAlignment {
-  id           String         @id @default(uuid())
-  comparisonId String @map("comparison_id")
-  comparison   Comparison     @relation(fields: [comparisonId], references: [id])
-  entryAId String? @map("entry_a_id")
-  entryBId String? @map("entry_b_id")
-  entryA       Entry?         @relation("AlignEntryA", fields: [entryAId], references: [id])
-  entryB       Entry?         @relation("AlignEntryB", fields: [entryBId], references: [id])
-  changeType ChangeType @map("change_type")
-  alignScore Float? @map("align_score")
-  createdAt DateTime       @default(now()) @map("created_at")
+  id           String     @id @default(uuid())
+  comparisonId String     @map("comparison_id")
+  comparison   Comparison @relation(fields: [comparisonId], references: [id])
+  entryAId     String?    @map("entry_a_id")
+  entryBId     String?    @map("entry_b_id")
+  entryA       Entry?     @relation("AlignEntryA", fields: [entryAId], references: [id])
+  entryB       Entry?     @relation("AlignEntryB", fields: [entryBId], references: [id])
+  changeType   ChangeType @map("change_type")
+  alignScore   Float?     @map("align_score")
+  createdAt    DateTime   @default(now()) @map("created_at")
 
-  senseDiffs   SenseDiff[]
+  senseDiffs SenseDiff[]
 
   @@index([comparisonId, changeType])
   @@index([entryAId])
@@ -434,13 +682,13 @@ enum ChangeType {
 
 model SenseDiff {
   id          String          @id @default(uuid())
-  alignmentId String @map("alignment_id")
+  alignmentId String          @map("alignment_id")
   alignment   EntryAlignment  @relation(fields: [alignmentId], references: [id])
-  senseAId String? @map("sense_a_id")
-  senseBId String? @map("sense_b_id")
-  changeType SenseChangeType @map("change_type")
-  diffSummary Json? @map("diff_summary")
-  createdAt DateTime        @default(now()) @map("created_at")
+  senseAId    String?         @map("sense_a_id")
+  senseBId    String?         @map("sense_b_id")
+  changeType  SenseChangeType @map("change_type")
+  diffSummary Json?           @map("diff_summary")
+  createdAt   DateTime        @default(now()) @map("created_at")
 
   @@index([alignmentId])
   @@map("sense_diffs")
@@ -463,19 +711,19 @@ enum SenseChangeType {
 // ─────────────────────────────────────────────
 
 model ExportJob {
-  id           String       @id @default(uuid())
-  comparisonId String @map("comparison_id")
-  comparison   Comparison   @relation(fields: [comparisonId], references: [id])
-  format       ExportFormat @default(EXCEL)
-  status       TaskStatus   @default(PENDING)
-  bullmqJobId String? @map("bullmq_job_id")
-  orderBy String? @map("order_by")
-  taxonomySourceId String? @map("taxonomy_source_id")
-  downloadPath String? @map("download_path")
-  downloadUrl String? @map("download_url")
-  expiresAt DateTime? @map("expires_at")
-  createdAt DateTime     @default(now()) @map("created_at")
-  completedAt DateTime? @map("completed_at")
+  id               String       @id @default(uuid())
+  comparisonId     String       @map("comparison_id")
+  comparison       Comparison   @relation(fields: [comparisonId], references: [id])
+  format           ExportFormat @default(EXCEL)
+  status           TaskStatus   @default(PENDING)
+  bullmqJobId      String?      @map("bullmq_job_id")
+  orderBy          String?      @map("order_by")
+  taxonomySourceId String?      @map("taxonomy_source_id")
+  downloadPath     String?      @map("download_path")
+  downloadUrl      String?      @map("download_url")
+  expiresAt        DateTime?    @map("expires_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  completedAt      DateTime?    @map("completed_at")
 
   @@map("export_jobs")
 }
@@ -499,52 +747,52 @@ model TaxonomySource {
   id             String               @id @default(uuid())
   name           String
   description    String?
-  sourceFilePath String? @map("source_file_path")
-  configJson Json @map("config_json")
+  sourceFilePath String?              @map("source_file_path")
+  configJson     Json                 @map("config_json")
   status         TaxonomySourceStatus @default(PENDING)
-  totalEntries Int? @map("total_entries")
+  totalEntries   Int?                 @map("total_entries")
   userId         String?              @map("user_id")
   user           User?                @relation(fields: [userId], references: [id])
-  createdAt DateTime             @default(now()) @map("created_at")
-  updatedAt DateTime             @updatedAt @map("updated_at")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
 
-  importTasks    TaxonomyImportTask[]
-  nodes          TaxonomyNode[]
+  importTasks TaxonomyImportTask[]
+  nodes       TaxonomyNode[]
 
   @@map("taxonomy_sources")
 }
 
 model TaxonomyImportTask {
-  id               String               @id @default(uuid())
-  taxonomySourceId String @map("taxonomy_source_id")
-  source           TaxonomySource       @relation(fields: [taxonomySourceId], references: [id], onDelete: Cascade)
-  status           TaskStatus           @default(PENDING)
-  processedLines Int                  @default(0) @map("processed_lines")
-  failedLines Int                  @default(0) @map("failed_lines")
-  checkpointOffset Int                  @default(0) @map("checkpoint_offset")
-  errorLog Json? @map("error_log")
-  startedAt DateTime? @map("started_at")
-  completedAt DateTime? @map("completed_at")
-  createdAt DateTime             @default(now()) @map("created_at")
+  id               String         @id @default(uuid())
+  taxonomySourceId String         @map("taxonomy_source_id")
+  source           TaxonomySource @relation(fields: [taxonomySourceId], references: [id], onDelete: Cascade)
+  status           TaskStatus     @default(PENDING)
+  processedLines   Int            @default(0) @map("processed_lines")
+  failedLines      Int            @default(0) @map("failed_lines")
+  checkpointOffset Int            @default(0) @map("checkpoint_offset")
+  errorLog         Json?          @map("error_log")
+  startedAt        DateTime?      @map("started_at")
+  completedAt      DateTime?      @map("completed_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
 
   @@map("taxonomy_import_tasks")
 }
 
 model TaxonomyNode {
   id               String         @id @default(uuid())
-  taxonomySourceId String @map("taxonomy_source_id")
+  taxonomySourceId String         @map("taxonomy_source_id")
   source           TaxonomySource @relation(fields: [taxonomySourceId], references: [id], onDelete: Cascade)
-  parentId String? @map("parent_id")
+  parentId         String?        @map("parent_id")
   parent           TaxonomyNode?  @relation("NodeChildren", fields: [parentId], references: [id])
   children         TaxonomyNode[] @relation("NodeChildren")
   level            Int
   label            String
-  sequencePosition Int @map("sequence_position")
+  sequencePosition Int            @map("sequence_position")
   path             String
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
-  entries          TaxonomyEntry[]
+  entries TaxonomyEntry[]
 
   @@unique([taxonomySourceId, path])
   @@index([taxonomySourceId, level])
@@ -554,13 +802,13 @@ model TaxonomyNode {
 
 model TaxonomyEntry {
   id                 String       @id @default(uuid())
-  nodeId String @map("node_id")
+  nodeId             String       @map("node_id")
   node               TaxonomyNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  taxonomySourceId String @map("taxonomy_source_id")
+  taxonomySourceId   String       @map("taxonomy_source_id")
   headword           String
-  normalizedHeadword String @map("normalized_headword")
-  sequencePosition Int @map("sequence_position")
-  createdAt DateTime     @default(now()) @map("created_at")
+  normalizedHeadword String       @map("normalized_headword")
+  sequencePosition   Int          @map("sequence_position")
+  createdAt          DateTime     @default(now()) @map("created_at")
 
   @@index([taxonomySourceId, normalizedHeadword])
   @@index([nodeId, sequencePosition])
@@ -615,18 +863,18 @@ enum ConversionStatus {
 }
 
 model UserSubscription {
-  id                    String             @id @default(uuid())
-  userId                String             @unique @map("user_id")
-  user                  User               @relation(fields: [userId], references: [id])
-  tier                  SubscriptionTier
-  status                SubscriptionStatus @default(ACTIVE)
-  expiresAt             DateTime           @map("expires_at")
-  monthlyEnergyAlloc    Int                @map("monthly_energy_alloc")
-  slotCount             Int                @map("slot_count")
-  gracePeriodStartedAt  DateTime?          @map("grace_period_started_at")
-  warningEmailSentAt    DateTime?          @map("warning_email_sent_at")
-  createdAt             DateTime           @default(now()) @map("created_at")
-  updatedAt             DateTime           @updatedAt @map("updated_at")
+  id                   String             @id @default(uuid())
+  userId               String             @unique @map("user_id")
+  user                 User               @relation(fields: [userId], references: [id])
+  tier                 SubscriptionTier
+  status               SubscriptionStatus @default(ACTIVE)
+  expiresAt            DateTime           @map("expires_at")
+  monthlyEnergyAlloc   Int                @map("monthly_energy_alloc")
+  slotCount            Int                @map("slot_count")
+  gracePeriodStartedAt DateTime?          @map("grace_period_started_at")
+  warningEmailSentAt   DateTime?          @map("warning_email_sent_at")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
 
   @@map("user_subscriptions")
 }

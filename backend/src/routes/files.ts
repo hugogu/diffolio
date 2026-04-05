@@ -1,10 +1,78 @@
 import { FastifyPluginAsync } from 'fastify'
 import path from 'node:path'
+import { PrismaClient } from '@prisma/client'
+import type { JobType } from 'bullmq'
 import { authGuard, requireSessionUser } from '../lib/auth-guard.js'
 import { assertVersionOwner } from '../lib/ownership.js'
 import { notFound, badRequest, paymentRequired, extractRootCause } from '../lib/errors.js'
-import { saveFile, getFileStream, fileExists, deleteFile } from '../lib/storage.js'
+import {
+  getFileStream,
+  fileExists,
+  discardStagedUpload,
+  promoteStagedSharedUpload,
+  stageSharedUpload,
+} from '../lib/storage.js'
 import { chargeVersionParseEnergy, invalidateVersionParseCharge, InsufficientEnergyError } from '../services/subscription/energy.js'
+import {
+  bindSharedFileToVersion,
+  detachActiveVersionFileReference,
+  ensureSharedFileAsset,
+  getActiveVersionFileContext,
+} from '../services/uploads/shared-file-assets.js'
+import { detachActiveParseArtifactReference } from '../services/parse-artifacts/persistence.js'
+
+async function cancelInflightParseJobs(
+  parseQueue: {
+    getJobs: (
+      statuses?: JobType | JobType[],
+      start?: number,
+      end?: number,
+      asc?: boolean
+    ) => Promise<Array<{ data: { versionId?: string }; remove: () => Promise<unknown> }>>
+  },
+  versionId: string
+) {
+  const inflightJobs = await parseQueue.getJobs(['waiting', 'active', 'delayed', 'prioritized'])
+  for (const inflightJob of inflightJobs) {
+    if (inflightJob.data.versionId === versionId) {
+      await inflightJob.remove().catch(() => { /* already gone */ })
+    }
+  }
+}
+
+async function clearVersionDerivedData(
+  db: PrismaClient,
+  versionId: string
+) {
+  const v = versionId
+  await db.$executeRaw`
+    DELETE FROM sense_diffs sd
+    USING entry_alignments ea, comparisons c
+    WHERE sd."alignment_id" = ea.id
+      AND ea."comparison_id" = c.id
+      AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
+  await db.$executeRaw`
+    DELETE FROM entry_alignments ea
+    USING comparisons c
+    WHERE ea."comparison_id" = c.id
+      AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
+  await db.$executeRaw`
+    DELETE FROM export_jobs ej
+    USING comparisons c
+    WHERE ej."comparison_id" = c.id
+      AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
+  await db.$executeRaw`
+    DELETE FROM comparisons WHERE "version_a_id" = ${v} OR "version_b_id" = ${v}`
+  await db.$executeRaw`
+    DELETE FROM examples ex
+    USING senses s, entries e
+    WHERE ex."sense_id" = s.id AND s."entry_id" = e.id AND e."version_id" = ${v}`
+  await db.$executeRaw`
+    DELETE FROM senses s
+    USING entries e
+    WHERE s."entry_id" = e.id AND e."version_id" = ${v}`
+  await db.$executeRaw`DELETE FROM entries WHERE "version_id" = ${v}`
+}
 
 function detectFileType(filename: string, _firstBytes?: Buffer): 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX' {
   const ext = path.extname(filename).toLowerCase()
@@ -32,12 +100,8 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
           include: { formatConfig: true },
         })
         if (!version) throw notFound('DictionaryVersion', versionId)
-
-        // Detect re-upload: check if there's already any parse task for this version
-        const existingTasks = await fastify.db.parseTask.findMany({
-          where: { versionId },
-        })
-        const isReupload = existingTasks.length > 0
+        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        const isReupload = Boolean(activeFileContext)
 
         const data = await request.file()
         if (!data) throw badRequest('No file provided')
@@ -56,59 +120,16 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
           }
         }
 
-        // On re-upload: cancel in-flight jobs, delete old physical files, clear parsed data.
+        // On re-upload: cancel in-flight jobs, detach old references, and clear parsed data.
         if (isReupload) {
-          // Cancel any pending/active parse jobs to avoid FK races or concurrent writes.
-          const inflightJobs = await fastify.parseQueue.getJobs(['waiting', 'active', 'delayed', 'prioritized'])
-          for (const inflightJob of inflightJobs) {
-            if (inflightJob.data.versionId === versionId) {
-              await inflightJob.remove().catch(() => { /* already gone */ })
-            }
-          }
+          await cancelInflightParseJobs(fastify.parseQueue, versionId)
           await fastify.db.parseTask.updateMany({
             where: { versionId, status: { in: ['RUNNING', 'PENDING'] } },
             data: { status: 'FAILED' },
           })
-
-          // Delete old physical files to avoid disk accumulation.
-          for (const task of existingTasks) {
-            deleteFile(task.storedFilePath)
-          }
-
-          // Clear parsed entries (they'll be replaced by new parse).
-          const db = fastify.db
-          const v = versionId
-          await db.$executeRaw`
-            DELETE FROM sense_diffs sd
-            USING entry_alignments ea, comparisons c
-            WHERE sd."alignment_id" = ea.id
-              AND ea."comparison_id" = c.id
-              AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-          await db.$executeRaw`
-            DELETE FROM entry_alignments ea
-            USING comparisons c
-            WHERE ea."comparison_id" = c.id
-              AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-          await db.$executeRaw`
-            DELETE FROM export_jobs ej
-            USING comparisons c
-            WHERE ej."comparison_id" = c.id
-              AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-          await db.$executeRaw`
-            DELETE FROM comparisons WHERE "version_a_id" = ${v} OR "version_b_id" = ${v}`
-          await db.$executeRaw`
-            DELETE FROM examples ex
-            USING senses s, entries e
-            WHERE ex."sense_id" = s.id AND s."entry_id" = e.id AND e."version_id" = ${v}`
-          await db.$executeRaw`
-            DELETE FROM senses s
-            USING entries e
-            WHERE s."entry_id" = e.id AND e."version_id" = ${v}`
-          await db.$executeRaw`DELETE FROM entries WHERE "version_id" = ${v}`
-
-          // Delete ParseError records first (FK constraint), then ParseTask records.
-          await db.parseError.deleteMany({ where: { task: { versionId } } })
-          await db.parseTask.deleteMany({ where: { versionId } })
+          await clearVersionDerivedData(fastify.db, versionId)
+          await detachActiveParseArtifactReference(fastify.db, versionId)
+          await detachActiveVersionFileReference(fastify.db, versionId)
 
           // Invalidate old energy charge so we can charge again for the new file.
           await invalidateVersionParseCharge(
@@ -133,41 +154,85 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
           throw err
         }
 
-        const timestamp = Date.now()
-        const safeFilename = `${versionId}_${timestamp}_${path.basename(data.filename)}`
+        let stagedUpload: Awaited<ReturnType<typeof stageSharedUpload>> | null = null
 
-        const storedFilePath = await saveFile(data.file, safeFilename)
+        try {
+          stagedUpload = await stageSharedUpload(data.file, data.filename)
+          const promotedUpload = await promoteStagedSharedUpload(stagedUpload)
 
-        const task = await fastify.db.parseTask.create({
-          data: {
-            versionId,
-            status: 'PENDING',
-            fileType,
-            originalFileName: data.filename,
-            storedFilePath,
-          },
-        })
+          const { sharedFileAsset, task } = await fastify.db.$transaction(async (tx) => {
+            const asset = await ensureSharedFileAsset(tx, {
+              contentHash: stagedUpload!.contentHash,
+              fileType,
+              originalExtension: stagedUpload!.originalExtension,
+              storagePath: promotedUpload.storagePath,
+              fileSize: stagedUpload!.fileSize,
+            })
 
-        // Enqueue BullMQ job
-        const job = await fastify.parseQueue.add(
-          'parse',
-          {
-            taskId: task.id,
-            versionId,
-            filePath: storedFilePath,
-            fileType,
-            mode: 'full',
-          },
-          { jobId: task.id }
-        )
+            await bindSharedFileToVersion(tx, {
+              versionId,
+              sharedFileAssetId: asset.id,
+              originalFileName: data.filename,
+              uploadedByUserId: user.id,
+            })
 
-        // Save bullmqJobId
-        await fastify.db.parseTask.update({
-          where: { id: task.id },
-          data: { bullmqJobId: job.id },
-        })
+            const parseTask = await tx.parseTask.create({
+              data: {
+                versionId,
+                status: 'PENDING',
+                fileType,
+                originalFileName: data.filename,
+                storedFilePath: asset.storagePath,
+                sharedFileAssetId: asset.id,
+                contentHash: asset.contentHash,
+                cacheHit: false,
+              },
+            })
 
-        reply.status(202).send({ ...task, isReupload })
+            if (!promotedUpload.reusedExistingAsset && !asset.createdByTaskId) {
+              await tx.sharedFileAsset.update({
+                where: { id: asset.id },
+                data: { createdByTaskId: parseTask.id },
+              })
+            }
+
+            return { sharedFileAsset: asset, task: parseTask }
+          })
+
+          // Enqueue BullMQ job
+          const job = await fastify.parseQueue.add(
+            'parse',
+            {
+              taskId: task.id,
+              versionId,
+              filePath: sharedFileAsset.storagePath,
+              fileType,
+              mode: 'full',
+            },
+            { jobId: task.id }
+          )
+
+          // Save bullmqJobId
+          const updatedTask = await fastify.db.parseTask.update({
+            where: { id: task.id },
+            data: { bullmqJobId: job.id },
+          })
+
+          reply.status(202).send({
+            ...updatedTask,
+            taskId: updatedTask.id,
+            sharedFileAssetId: sharedFileAsset.id,
+            contentHash: sharedFileAsset.contentHash,
+            reusedFromExistingAsset: promotedUpload.reusedExistingAsset,
+            cacheHit: false,
+            isReupload,
+          })
+        } catch (error) {
+          if (stagedUpload) {
+            discardStagedUpload(stagedUpload.tempFilePath)
+          }
+          throw error
+        }
       } catch (error) {
         throw error
       }
@@ -187,62 +252,19 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
         const version = await fastify.db.dictionaryVersion.findUnique({ where: { id: versionId } })
         if (!version) throw notFound('DictionaryVersion', versionId)
 
-        const tasks = await fastify.db.parseTask.findMany({ where: { versionId } })
-        if (tasks.length === 0) throw notFound('UploadedFile', versionId)
+        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        if (!activeFileContext) throw notFound('UploadedFile', versionId)
 
         // Cancel any in-flight jobs first.
-        const inflightJobs = await fastify.parseQueue.getJobs(['waiting', 'active', 'delayed', 'prioritized'])
-        for (const inflightJob of inflightJobs) {
-          if (inflightJob.data.versionId === versionId) {
-            await inflightJob.remove().catch(() => { /* already gone */ })
-          }
-        }
+        await cancelInflightParseJobs(fastify.parseQueue, versionId)
         await fastify.db.parseTask.updateMany({
           where: { versionId, status: { in: ['RUNNING', 'PENDING'] } },
           data: { status: 'FAILED' },
         })
 
-        // Delete physical files.
-        for (const task of tasks) {
-          deleteFile(task.storedFilePath)
-        }
-
-        // Clear all parsed data.
-        const db = fastify.db
-        const v = versionId
-        await db.$executeRaw`
-          DELETE FROM sense_diffs sd
-          USING entry_alignments ea, comparisons c
-          WHERE sd."alignment_id" = ea.id
-            AND ea."comparison_id" = c.id
-            AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-        await db.$executeRaw`
-          DELETE FROM entry_alignments ea
-          USING comparisons c
-          WHERE ea."comparison_id" = c.id
-            AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-        await db.$executeRaw`
-          DELETE FROM export_jobs ej
-          USING comparisons c
-          WHERE ej."comparison_id" = c.id
-            AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-        await db.$executeRaw`
-          DELETE FROM comparisons WHERE "version_a_id" = ${v} OR "version_b_id" = ${v}`
-        await db.$executeRaw`
-          DELETE FROM examples ex
-          USING senses s, entries e
-          WHERE ex."sense_id" = s.id AND s."entry_id" = e.id AND e."version_id" = ${v}`
-        await db.$executeRaw`
-          DELETE FROM senses s
-          USING entries e
-          WHERE s."entry_id" = e.id AND e."version_id" = ${v}`
-        await db.$executeRaw`DELETE FROM entries WHERE "version_id" = ${v}`
-
-        // Delete ParseError records first (FK constraint).
-        await db.parseError.deleteMany({ where: { task: { versionId } } })
-
-        // Delete ParseTask records.
-        await db.parseTask.deleteMany({ where: { versionId } })
+        await clearVersionDerivedData(fastify.db, versionId)
+        await detachActiveParseArtifactReference(fastify.db, versionId)
+        await detachActiveVersionFileReference(fastify.db, versionId)
 
         // Invalidate energy charge so user can upload again.
         await invalidateVersionParseCharge(
@@ -268,15 +290,17 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
         const { versionId } = request.params as { versionId: string }
         await assertVersionOwner(fastify.db, versionId, user.id)
 
-        const task = await fastify.db.parseTask.findFirst({
-          where: { versionId, status: { in: ['COMPLETED', 'RUNNING', 'PENDING', 'FAILED'] } },
-          orderBy: { createdAt: 'desc' },
-        })
-        if (!task) throw notFound('UploadedFile', versionId)
-        if (!fileExists(task.storedFilePath)) throw notFound('StoredFile', task.storedFilePath)
+        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        if (!activeFileContext) throw notFound('UploadedFile', versionId)
+        if (!fileExists(activeFileContext.sharedFileAsset.storagePath)) {
+          throw notFound('StoredFile', activeFileContext.sharedFileAsset.storagePath)
+        }
 
-        const stream = getFileStream(task.storedFilePath)
-        reply.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(task.originalFileName)}`)
+        const stream = getFileStream(activeFileContext.sharedFileAsset.storagePath)
+        reply.header(
+          'Content-Disposition',
+          `attachment; filename*=UTF-8''${encodeURIComponent(activeFileContext.reference.originalFileName)}`
+        )
         reply.header('Content-Type', 'application/octet-stream')
         return reply.send(stream)
       } catch (error) {

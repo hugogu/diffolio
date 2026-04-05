@@ -5,6 +5,7 @@ import { assertSystemConfigVisible, assertUserConfigOwner } from '../lib/config-
 import { notFound, unprocessable, badRequest, extractRootCause } from '../lib/errors.js'
 import { validateConfig, resolveInheritance, compileConfig } from '../services/config-engine.js'
 import { FormatConfigJson } from '../lib/types/shared.js'
+import { getActiveVersionFileContext } from '../services/uploads/shared-file-assets.js'
 import {
   previewParseTxt,
   previewParseDocx,
@@ -12,6 +13,40 @@ import {
   previewParsePdf,
   previewParseMdict,
 } from '../services/parser/preview.js'
+
+async function clearVersionDerivedData(
+  db: import('@prisma/client').PrismaClient,
+  versionId: string
+) {
+  const v = versionId
+  await db.$executeRaw`
+    DELETE FROM sense_diffs sd
+    USING entry_alignments ea, comparisons c
+    WHERE sd."alignment_id" = ea.id
+      AND ea."comparison_id" = c.id
+      AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
+  await db.$executeRaw`
+    DELETE FROM entry_alignments ea
+    USING comparisons c
+    WHERE ea."comparison_id" = c.id
+      AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
+  await db.$executeRaw`
+    DELETE FROM export_jobs ej
+    USING comparisons c
+    WHERE ej."comparison_id" = c.id
+      AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
+  await db.$executeRaw`
+    DELETE FROM comparisons WHERE "version_a_id" = ${v} OR "version_b_id" = ${v}`
+  await db.$executeRaw`
+    DELETE FROM examples ex
+    USING senses s, entries e
+    WHERE ex."sense_id" = s.id AND s."entry_id" = e.id AND e."version_id" = ${v}`
+  await db.$executeRaw`
+    DELETE FROM senses s
+    USING entries e
+    WHERE s."entry_id" = e.id AND e."version_id" = ${v}`
+  await db.$executeRaw`DELETE FROM entries WHERE "version_id" = ${v}`
+}
 
 const versionRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/dictionaries/:dictionaryId/versions
@@ -78,7 +113,17 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
       })
 
       if (!version) throw notFound('DictionaryVersion', versionId)
-      return version
+      const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+
+      return {
+        ...version,
+        activeFile: activeFileContext
+          ? {
+              ...activeFileContext.reference,
+              latestTask: activeFileContext.latestTask,
+            }
+          : null,
+      }
     } catch (error) {
       throw error
     }
@@ -164,23 +209,17 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
 
         const version = await fastify.db.dictionaryVersion.findUnique({
           where: { id: versionId },
-          include: {
-            formatConfig: true,
-            parseTasks: {
-              where: { status: { in: ['COMPLETED', 'FAILED'] } },
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
-          },
+          include: { formatConfig: true },
         })
 
         if (!version) throw notFound('DictionaryVersion', versionId)
         if (!version.formatConfig) throw badRequest('No format config found for this version')
-        if (version.parseTasks.length === 0) {
+        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        if (!activeFileContext?.latestTask) {
           throw badRequest('No uploaded file found — upload a file first')
         }
 
-        const latestTask = version.parseTasks[0]
+        const latestTask = activeFileContext.latestTask
 
         // Cancel any pending/active parse jobs for this version to avoid FK races.
         // Active jobs detect the FAILED status check and abort mid-loop.
@@ -195,40 +234,7 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
           data: { status: 'FAILED' },
         })
 
-        // Clean up existing data using raw SQL for performance (large datasets).
-        // Deletes run sequentially in dependency order; no transaction needed since
-        // reparse can be retried safely if interrupted.
-        const db = fastify.db
-
-        const v = versionId
-        await db.$executeRaw`
-          DELETE FROM sense_diffs sd
-          USING entry_alignments ea, comparisons c
-          WHERE sd."alignment_id" = ea.id
-            AND ea."comparison_id" = c.id
-            AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-        await db.$executeRaw`
-          DELETE FROM entry_alignments ea
-          USING comparisons c
-          WHERE ea."comparison_id" = c.id
-            AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-        await db.$executeRaw`
-          DELETE FROM export_jobs ej
-          USING comparisons c
-          WHERE ej."comparison_id" = c.id
-            AND (c."version_a_id" = ${v} OR c."version_b_id" = ${v})`
-        await db.$executeRaw`
-          DELETE FROM comparisons WHERE "version_a_id" = ${v} OR "version_b_id" = ${v}`
-        await db.$executeRaw`
-          DELETE FROM examples ex
-          USING senses s, entries e
-          WHERE ex."sense_id" = s.id AND s."entry_id" = e.id AND e."version_id" = ${v}`
-        await db.$executeRaw`
-          DELETE FROM senses s
-          USING entries e
-          WHERE s."entry_id" = e.id AND e."version_id" = ${v}`
-        await db.$executeRaw`
-          DELETE FROM entries WHERE "version_id" = ${v}`
+        await clearVersionDerivedData(fastify.db, versionId)
 
         // Create new parse task reusing the stored file
         const newTask = await fastify.db.parseTask.create({
@@ -237,7 +243,10 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
             status: 'PENDING',
             fileType: latestTask.fileType,
             originalFileName: latestTask.originalFileName,
-            storedFilePath: latestTask.storedFilePath,
+            storedFilePath: activeFileContext.sharedFileAsset.storagePath,
+            sharedFileAssetId: activeFileContext.sharedFileAsset.id,
+            contentHash: activeFileContext.sharedFileAsset.contentHash,
+            cacheHit: false,
           },
         })
 
@@ -246,7 +255,7 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
           {
             taskId: newTask.id,
             versionId,
-            filePath: latestTask.storedFilePath,
+            filePath: activeFileContext.sharedFileAsset.storagePath,
             fileType: latestTask.fileType,
             mode: 'full',
           },
@@ -391,23 +400,17 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
 
         const version = await fastify.db.dictionaryVersion.findUnique({
           where: { id: versionId },
-          include: {
-            formatConfig: true,
-            parseTasks: {
-              where: { status: { in: ['COMPLETED', 'FAILED'] } },
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
-          },
+          include: { formatConfig: true },
         })
 
         if (!version) throw notFound('DictionaryVersion', versionId)
         if (!version.formatConfig) throw badRequest('No format config found for this version')
-        if (version.parseTasks.length === 0) {
+        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        if (!activeFileContext?.latestTask) {
           throw badRequest('No uploaded file found for this version — upload a file first')
         }
 
-        const task = version.parseTasks[0]
+        const task = activeFileContext.latestTask
         const cap = Math.min(maxEntries, 200)
         const config = compileConfig(version.formatConfig.configJson as unknown as FormatConfigJson)
 
@@ -415,19 +418,19 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
         try {
           switch (task.fileType) {
             case 'TXT':
-              result = await previewParseTxt(task.storedFilePath, config, cap, startIndex)
+              result = await previewParseTxt(activeFileContext.sharedFileAsset.storagePath, config, cap, startIndex)
               break
             case 'DOCX':
-              result = await previewParseDocx(task.storedFilePath, config, cap, startIndex)
+              result = await previewParseDocx(activeFileContext.sharedFileAsset.storagePath, config, cap, startIndex)
               break
             case 'DOC':
-              result = await previewParseDoc(task.storedFilePath, config, cap, startIndex)
+              result = await previewParseDoc(activeFileContext.sharedFileAsset.storagePath, config, cap, startIndex)
               break
             case 'PDF':
-              result = await previewParsePdf(task.storedFilePath, config, cap, startIndex)
+              result = await previewParsePdf(activeFileContext.sharedFileAsset.storagePath, config, cap, startIndex)
               break
             case 'MDX':
-              result = await previewParseMdict(task.storedFilePath, config, cap, startIndex)
+              result = await previewParseMdict(activeFileContext.sharedFileAsset.storagePath, config, cap, startIndex)
               break
             default:
               throw badRequest(`Unsupported file type: ${task.fileType}`)
@@ -438,7 +441,7 @@ const versionRoutes: FastifyPluginAsync = async (fastify) => {
 
         return {
           versionLabel: version.label,
-          fileName: task.originalFileName,
+          fileName: activeFileContext.reference.originalFileName,
           fileType: task.fileType,
           totalLinesScanned: result.totalLinesScanned,
           entries: result.entries,

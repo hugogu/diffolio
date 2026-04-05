@@ -22,6 +22,19 @@
 
     <!-- Progress section -->
     <div v-if="taskId" class="progress-section">
+      <el-alert
+        v-if="uploadMeta"
+        :title="uploadMetaTitle"
+        :type="uploadMeta.reusedFromExistingAsset ? 'success' : 'info'"
+        show-icon
+        :closable="false"
+      >
+        <template #default>
+          <div class="upload-meta-line">{{ t('upload.sharedAssetId') }}：{{ uploadMeta.sharedFileAssetId }}</div>
+          <div class="upload-meta-line">{{ t('upload.contentHash') }}：{{ uploadMeta.contentHash }}</div>
+        </template>
+      </el-alert>
+
       <div class="progress-header">
         <span>{{ t('upload.parsingProgress') }}</span>
         <el-tag :type="statusTagType">{{ statusLabel }}</el-tag>
@@ -88,6 +101,11 @@ const emit = defineEmits<{ taskCreated: [taskId: string] }>()
 
 const maxSizeMb = props.maxSizeMb ?? 500
 const taskId = ref<string | null>(null)
+const uploadMeta = ref<{
+  sharedFileAssetId: string
+  contentHash: string
+  reusedFromExistingAsset: boolean
+} | null>(null)
 
 const { progress: currentProgress, status: socketStatus, error: socketError } = useParseSocket(taskId)
 
@@ -100,10 +118,24 @@ function beforeUpload(file: UploadRawFile): boolean {
   return true
 }
 
-function handleUploadSuccess(response: { id?: string }) {
-  if (response?.id) {
-    taskId.value = response.id
-    emit('taskCreated', response.id)
+function handleUploadSuccess(response: {
+  id?: string
+  taskId?: string
+  sharedFileAssetId?: string
+  contentHash?: string
+  reusedFromExistingAsset?: boolean
+}) {
+  const resolvedTaskId = response?.taskId ?? response?.id
+  if (resolvedTaskId) {
+    taskId.value = resolvedTaskId
+    emit('taskCreated', resolvedTaskId)
+  }
+  if (response?.sharedFileAssetId && response?.contentHash) {
+    uploadMeta.value = {
+      sharedFileAssetId: response.sharedFileAssetId,
+      contentHash: response.contentHash,
+      reusedFromExistingAsset: Boolean(response.reusedFromExistingAsset),
+    }
   }
 }
 
@@ -118,6 +150,13 @@ function trackTask(id: string) {
 }
 
 defineExpose({ trackTask })
+
+const uploadMetaTitle = computed(() => {
+  if (!uploadMeta.value) return ''
+  return uploadMeta.value.reusedFromExistingAsset
+    ? t('upload.reusedSharedAsset')
+    : t('upload.createdSharedAsset')
+})
 
 const progressPercent = computed(() => {
   if (!currentProgress.value) return 0
@@ -182,5 +221,9 @@ const statusLabel = computed(() => {
 
 .error-link {
   text-align: right;
+}
+
+.upload-meta-line {
+  word-break: break-all;
 }
 </style>

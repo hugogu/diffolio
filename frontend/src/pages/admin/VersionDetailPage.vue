@@ -107,12 +107,13 @@
           </template>
 
           <!-- Uploaded file info + reparse -->
-          <div v-if="activeTask" class="uploaded-file-info">
+          <div v-if="activeFile" class="uploaded-file-info">
             <div class="file-row">
               <el-icon class="file-icon"><Document /></el-icon>
-              <span class="file-name">{{ activeTask.originalFileName }}</span>
-              <el-tag size="small" type="info">{{ activeTask.fileType }}</el-tag>
-              <el-tag size="small" :type="taskStatusType(activeTask.status)">{{ activeTask.status }}</el-tag>
+              <span class="file-name">{{ activeFile.originalFileName }}</span>
+              <el-tag size="small" type="info">{{ activeFile.sharedFileAsset.fileType }}</el-tag>
+              <el-tag v-if="activeTask" size="small" :type="taskStatusType(activeTask.status)">{{ activeTask.status }}</el-tag>
+              <el-tag size="small" :type="activeFileTagType">{{ activeFileTagLabel }}</el-tag>
               <ActionButton
                 kind="admin"
                 :icon="Download"
@@ -123,14 +124,19 @@
               />
             </div>
             <div class="file-meta">
-              {{ $t('admin.versionDetail.uploadedAt') }} {{ formatDate(activeTask.createdAt) }}
-              <span v-if="activeTask.totalEntries">· {{ activeTask.totalEntries.toLocaleString() }} {{ $t('admin.versionDetail.entryCount') }}</span>
+              {{ $t('admin.versionDetail.uploadedAt') }} {{ formatDate(activeFile.createdAt) }}
+              <span>· {{ $t('admin.versionDetail.sharedAsset') }} {{ activeFile.sharedFileAssetId }}</span>
+              <span>· {{ $t('admin.versionDetail.fileSize') }} {{ formatFileSize(activeFile.sharedFileAsset.fileSize) }}</span>
+              <span v-if="activeTask?.totalEntries">· {{ activeTask.totalEntries.toLocaleString() }} {{ $t('admin.versionDetail.entryCount') }}</span>
+            </div>
+            <div class="file-meta">
+              {{ $t('admin.versionDetail.contentHash') }} {{ activeFile.sharedFileAsset.contentHash }}
             </div>
             <div class="reparse-row">
               <div class="table-actions is-admin">
                 <ActionButton kind="admin" type="primary" :icon="RefreshRight" :label="$t('admin.versionDetail.reparse')" :loading="reparsing" @click="handleReparse" />
                 <ActionButton
-                  v-if="activeTask.status === 'COMPLETED'"
+                  v-if="activeTask?.status === 'COMPLETED'"
                   kind="admin"
                   type="info"
                   :icon="View"
@@ -142,7 +148,7 @@
             </div>
             <el-divider style="margin: 12px 0" />
             <el-alert
-              v-if="activeTask.status === 'COMPLETED'"
+              v-if="activeTask?.status === 'COMPLETED'"
               type="warning"
               show-icon
               :closable="false"
@@ -157,6 +163,21 @@
             </el-alert>
             <div class="upload-replace-hint">{{ $t('admin.versionDetail.reuploadReplaceHint') }}</div>
           </div>
+
+          <el-alert
+            v-else-if="hasDetachedFileHistory"
+            type="info"
+            show-icon
+            :closable="false"
+            style="margin-bottom: 12px"
+          >
+            <template #title>
+              {{ $t('admin.versionDetail.detachedFileTitle') }}
+            </template>
+            <template #default>
+              {{ $t('admin.versionDetail.detachedFileDescription') }}
+            </template>
+          </el-alert>
 
           <FileUploadWithProgress
             ref="fileUploadRef"
@@ -173,7 +194,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { getVersion, reparseVersion, deleteVersionFile, versionFileDownloadUrl } from '@/api/dictionaries'
+import {
+  getVersion,
+  reparseVersion,
+  deleteVersionFile,
+  versionFileDownloadUrl,
+  type VersionActiveFile,
+} from '@/api/dictionaries'
 import { getParseTask } from '@/api/parse-tasks'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { Document, Download, Delete, RefreshRight, View } from '@element-plus/icons-vue'
@@ -191,6 +218,7 @@ const reparsing = ref(false)
 const deletingFile = ref(false)
 const applyingConfig = ref(false)
 const version = ref<Awaited<ReturnType<typeof getVersion>> | null>(null)
+const activeFile = ref<VersionActiveFile | null>(null)
 const activeTask = ref<ParseTask | null>(null)
 const fileUploadRef = ref<InstanceType<typeof FileUploadWithProgress> | null>(null)
 
@@ -198,6 +226,13 @@ const configsStore = useConfigsStore()
 const selectedConfigKey = ref<string | null>(null)
 
 const downloadUrl = computed(() => versionFileDownloadUrl(route.params.versionId as string))
+const hasDetachedFileHistory = computed(() => !activeFile.value && (version.value?.parseTasks?.length ?? 0) > 0)
+const activeFileTagType = computed(() => (activeTask.value ? 'success' : 'info'))
+const activeFileTagLabel = computed(() => (
+  activeTask.value
+    ? t('admin.versionDetail.activeSharedFile')
+    : t('admin.versionDetail.sharedFileOnly')
+))
 
 onMounted(async () => {
   loading.value = true
@@ -207,10 +242,8 @@ onMounted(async () => {
     configsStore.loadUserConfigs(),
   ])
   version.value = v
-  const tasks = (version.value?.parseTasks ?? []) as unknown as ParseTask[]
-  if (tasks && tasks.length > 0) {
-    activeTask.value = tasks[0]
-  }
+  activeFile.value = version.value?.activeFile ?? null
+  activeTask.value = (activeFile.value?.latestTask ?? null) as ParseTask | null
   loading.value = false
   // Resume progress tracking if the task is still in-flight
   const status = activeTask.value?.status
@@ -237,6 +270,14 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+function formatFileSize(size: string | number) {
+  const numericSize = typeof size === 'string' ? Number(size) : size
+  if (!Number.isFinite(numericSize)) return '--'
+  if (numericSize < 1024) return `${numericSize} B`
+  if (numericSize < 1024 * 1024) return `${(numericSize / 1024).toFixed(1)} KB`
+  return `${(numericSize / (1024 * 1024)).toFixed(1)} MB`
+}
+
 async function handleApplyConfig() {
   if (!selectedConfigKey.value) return
   const [sourceType, sourceId] = selectedConfigKey.value.split(':') as ['system' | 'user', string]
@@ -248,6 +289,8 @@ async function handleApplyConfig() {
       sourceId
     )
     version.value = await getVersion(route.params.versionId as string)
+    activeFile.value = version.value.activeFile
+    activeTask.value = (activeFile.value?.latestTask ?? null) as ParseTask | null
     ElMessage.success(t('admin.versionDetail.applySuccess'))
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : t('admin.versionDetail.applyError')
@@ -259,10 +302,14 @@ async function handleApplyConfig() {
 
 async function handleConfigUploaded(_status: 'VALID' | 'INVALID') {
   version.value = await getVersion(route.params.versionId as string)
+  activeFile.value = version.value.activeFile
+  activeTask.value = (activeFile.value?.latestTask ?? null) as ParseTask | null
 }
 
 async function handleTaskCreated(taskId: string) {
   activeTask.value = await getParseTask(taskId)
+  version.value = await getVersion(route.params.versionId as string)
+  activeFile.value = version.value.activeFile
 }
 
 async function handleReparse() {
@@ -281,6 +328,8 @@ async function handleReparse() {
     // Hand the new task ID to the file upload component so progress is shown there
     fileUploadRef.value?.trackTask(newTask.id)
     activeTask.value = await getParseTask(newTask.id)
+    version.value = await getVersion(route.params.versionId as string)
+    activeFile.value = version.value.activeFile
     ElMessage.success(t('admin.versionDetail.reparseSuccess'))
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : t('admin.versionDetail.reparseError')
@@ -303,6 +352,8 @@ async function handleDeleteFile() {
   deletingFile.value = true
   try {
     await deleteVersionFile(route.params.versionId as string)
+    version.value = await getVersion(route.params.versionId as string)
+    activeFile.value = null
     activeTask.value = null
     ElMessage.success(t('admin.versionDetail.deleteFileSuccess'))
   } catch (e: unknown) {

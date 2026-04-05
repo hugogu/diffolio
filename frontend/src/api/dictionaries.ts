@@ -28,6 +28,31 @@ export interface DictionaryVersion {
   } | null
 }
 
+export interface VersionActiveFile {
+  id: string
+  originalFileName: string
+  sharedFileAssetId: string
+  isActive: boolean
+  detachedAt?: string | null
+  createdAt: string
+  sharedFileAsset: {
+    id: string
+    contentHash: string
+    fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
+    fileSize: string | number
+    storagePath: string
+    lastReferencedAt: string
+  }
+  latestTask?: {
+    id: string
+    status: 'PENDING' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+    fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
+    originalFileName: string
+    totalEntries?: number | null
+    createdAt: string
+  } | null
+}
+
 export interface PaginatedDictionaries {
   items: Dictionary[]
   nextCursor: string | null
@@ -71,6 +96,7 @@ export async function getVersion(versionId: string): Promise<DictionaryVersion &
   dictionary: Dictionary
   formatConfig: Record<string, unknown> | null
   parseTasks: Record<string, unknown>[]
+  activeFile: VersionActiveFile | null
 }> {
   return apiFetch(`/api/v1/versions/${versionId}`)
 }

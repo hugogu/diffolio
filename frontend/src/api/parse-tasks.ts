@@ -4,8 +4,11 @@ export interface ParseTask {
   id: string
   versionId: string
   status: 'PENDING' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
-  fileType: 'TXT' | 'DOCX' | 'PDF'
+  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
   originalFileName: string
+  sharedFileAssetId?: string | null
+  contentHash?: string | null
+  cacheHit?: boolean
   totalPages?: number | null
   totalEntries?: number | null
   processedPages: number

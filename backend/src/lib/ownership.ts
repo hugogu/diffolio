@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { forbidden, notFound } from './errors.js'
+import { getActiveVersionFileReference } from '../services/uploads/shared-file-assets.js'
+import { getActiveParseArtifactReference } from '../services/parse-artifacts/query.js'
 
 type DB = PrismaClient
 
@@ -33,6 +35,29 @@ export async function assertEntryOwner(db: DB, entryId: string, userId: string):
   })
   if (!entry) throw notFound('Entry', entryId)
   if (entry.version.dictionary.userId !== userId) throw forbidden()
+}
+
+export async function getOwnedVersion(db: DB, versionId: string, userId: string) {
+  const version = await db.dictionaryVersion.findUnique({
+    where: { id: versionId },
+    include: {
+      dictionary: true,
+      formatConfig: true,
+    },
+  })
+  if (!version) throw notFound('DictionaryVersion', versionId)
+  if (version.dictionary.userId !== userId) throw forbidden()
+  return version
+}
+
+export async function getOwnedActiveVersionFileReference(db: DB, versionId: string, userId: string) {
+  await assertVersionOwner(db, versionId, userId)
+  return getActiveVersionFileReference(db, versionId)
+}
+
+export async function getOwnedActiveParseArtifactReference(db: DB, versionId: string, userId: string) {
+  await assertVersionOwner(db, versionId, userId)
+  return getActiveParseArtifactReference(db, versionId)
 }
 
 export async function assertComparisonOwner(db: DB, comparisonId: string, userId: string): Promise<void> {
