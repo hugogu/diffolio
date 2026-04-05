@@ -7,9 +7,13 @@
         <span v-if="phonetic" class="phonetic">{{ phonetic }}</span>
         <el-tag :type="entryChangeTagType" size="small">{{ entryChangeLabel }}</el-tag>
       </div>
-      <div class="entry-header-tags">
+    </div>
+
+    <div class="entry-tag-columns">
+      <section v-if="entryA" class="entry-tag-column">
+        <div class="entry-tag-column-title">{{ labelA || t('diff.versionA') }}</div>
         <EntryTagEditor
-          :tags="alignment.tags"
+          :tags="entryATags"
           :available-tags="availableTags"
           :loading="tagLoading"
           :label="t('tags.label')"
@@ -17,11 +21,28 @@
           :add-button-text="t('tags.addButton')"
           :placeholder="t('tags.selectOrCreate')"
           :helper-text="t('tags.helper')"
-          @add-existing="emit('add-tag', { tagId: $event })"
-          @create="emit('add-tag', { name: $event })"
-          @remove="emit('remove-tag', $event.id)"
+          @add-existing="handleAddEntryTag(entryA, { tagId: $event })"
+          @create="handleAddEntryTag(entryA, { name: $event })"
+          @remove="handleRemoveEntryTag(entryA, $event.id)"
         />
-      </div>
+      </section>
+      <div v-if="entryA && entryB" class="entry-tag-divider" />
+      <section v-if="entryB" class="entry-tag-column">
+        <div class="entry-tag-column-title">{{ labelB || t('diff.versionB') }}</div>
+        <EntryTagEditor
+          :tags="entryBTags"
+          :available-tags="availableTags"
+          :loading="tagLoading"
+          :label="t('tags.label')"
+          :empty-text="t('tags.empty')"
+          :add-button-text="t('tags.addButton')"
+          :placeholder="t('tags.selectOrCreate')"
+          :helper-text="t('tags.helper')"
+          @add-existing="handleAddEntryTag(entryB, { tagId: $event })"
+          @create="handleAddEntryTag(entryB, { name: $event })"
+          @remove="handleRemoveEntryTag(entryB, $event.id)"
+        />
+      </section>
     </div>
 
     <!-- Sense comparison -->
@@ -174,8 +195,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (event: 'add-tag', payload: { tagId?: string; name?: string }): void
-  (event: 'remove-tag', tagId: string): void
+  (event: 'add-entry-tag', payload: { entryId: string; tagId?: string; name?: string }): void
+  (event: 'remove-entry-tag', payload: { entryId: string; tagId: string }): void
 }>()
 
 const dmp = new DiffMatchPatch()
@@ -232,6 +253,8 @@ function equalAfterComparisonStrip(a: string, b: string): boolean {
 // ── Header ───────────────────────────────────────────────────────────────────
 const entryA = computed(() => props.alignment.entryA as Rec | null)
 const entryB = computed(() => props.alignment.entryB as Rec | null)
+const entryATags = computed<TagSummary[]>(() => ((entryA.value?.tags as TagSummary[] | undefined) ?? []))
+const entryBTags = computed<TagSummary[]>(() => ((entryB.value?.tags as TagSummary[] | undefined) ?? []))
 
 const headword = computed(() =>
   String(entryA.value?.rawHeadword ?? entryB.value?.rawHeadword ?? '')
@@ -294,6 +317,18 @@ const showPosDiff = computed(() => props.showPosDiff !== false)
 const showEtymology = computed(() => props.showEtymology !== false)
 const onlyNonMatched = computed(() => props.onlyNonMatched === true)
 const availableTags = computed(() => props.availableTags ?? [])
+
+function handleAddEntryTag(entry: Rec | null, payload: { tagId?: string; name?: string }) {
+  const entryId = entry?.id
+  if (typeof entryId !== 'string' || !entryId) return
+  emit('add-entry-tag', { entryId, ...payload })
+}
+
+function handleRemoveEntryTag(entry: Rec | null, tagId: string) {
+  const entryId = entry?.id
+  if (typeof entryId !== 'string' || !entryId) return
+  emit('remove-entry-tag', { entryId, tagId })
+}
 
 const rawSensePairs = computed<SensePair[]>(() => {
   const senseDiffs = (props.alignment.senseDiffs ?? []) as Rec[]
@@ -494,9 +529,26 @@ function exRowClass(row: ExRow): string {
   flex-wrap: wrap;
   gap: 10px;
 }
-.entry-header-tags {
+.entry-tag-columns {
   display: flex;
-  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0 16px 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+.entry-tag-column {
+  flex: 1;
+  min-width: 0;
+}
+.entry-tag-column-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+}
+.entry-tag-divider {
+  width: 1px;
+  background: var(--el-border-color-lighter);
 }
 .hw { font-size: 20px; font-weight: bold; }
 .phonetic { font-size: 14px; color: var(--el-text-color-secondary); }
@@ -511,6 +563,17 @@ function exRowClass(row: ExRow): string {
   margin-bottom: 8px;
 }
 .empty-hint { color: var(--el-text-color-placeholder); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .entry-tag-columns {
+    flex-direction: column;
+  }
+
+  .entry-tag-divider {
+    width: auto;
+    height: 1px;
+  }
+}
 
 .diff-table {
   width: 100%;

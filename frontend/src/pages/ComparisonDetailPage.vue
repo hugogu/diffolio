@@ -213,21 +213,6 @@
               </div>
               <div v-if="!a.locked && entryPreview(a)" class="entry-preview">{{ entryPreview(a) }}</div>
               <div v-else-if="a.locked" class="entry-preview entry-preview--locked">{{ $t('comparisonDetail.locked') }}</div>
-              <div class="entry-tags" @click.stop>
-                <EntryTagEditor
-                  :tags="a.tags"
-                  :available-tags="tagsStore.tagOptions"
-                  :loading="isTagMutationLoading(a.id) || tagsStore.loading"
-                  :label="$t('tags.label')"
-                  :empty-text="$t('tags.empty')"
-                  :add-button-text="$t('tags.addButton')"
-                  :placeholder="$t('tags.selectOrCreate')"
-                  :helper-text="$t('tags.helper')"
-                  @add-existing="handleAddAlignmentTag(a.id, { tagId: $event })"
-                  @create="handleAddAlignmentTag(a.id, { name: $event })"
-                  @remove="handleRemoveAlignmentTag(a.id, $event.id)"
-                />
-              </div>
             </div>
 
             <div v-if="alignments.length === 0 && !listLoading" class="list-empty">
@@ -279,9 +264,9 @@
                   :show-etymology="displayOptions.showEtymology"
                   :only-non-matched="displayOptions.onlyNonMatched"
                   :available-tags="tagsStore.tagOptions"
-                  :tag-loading="isTagMutationLoading(alignment.id) || tagsStore.loading"
-                  @add-tag="handleAddAlignmentTag(alignment.id, $event)"
-                  @remove-tag="handleRemoveAlignmentTag(alignment.id, $event)"
+                  :tag-loading="isEntryTagMutationLoading(alignment.id) || tagsStore.loading"
+                  @add-entry-tag="handleAddEntryTag(alignment.id, $event)"
+                  @remove-entry-tag="handleRemoveEntryTag(alignment.id, $event)"
                 />
               </section>
             </div>
@@ -312,7 +297,6 @@ import { getDictionaryUnlockStats } from '@/api/subscription'
 import type { EntryAlignment } from '@/api/comparisons'
 import type { TaxonomyNodeTree } from '@/api/taxonomy'
 import { useI18n } from 'vue-i18n'
-import EntryTagEditor from '@/components/tags/EntryTagEditor.vue'
 import { useTagsStore } from '@/stores/tags'
 
 const { t } = useI18n()
@@ -504,19 +488,37 @@ function clearSelectedAlignments() {
   selectedAlignmentIds.value = []
 }
 
-function isTagMutationLoading(alignmentId: string) {
+function isEntryTagMutationLoading(alignmentId: string) {
   return taggingAlignmentIds.value.includes(alignmentId)
 }
 
-async function runAlignmentTagMutation(
+async function runEntryTagMutation(
   alignmentId: string,
-  action: () => Promise<{ tags: EntryAlignment['tags'] }>
+  action: () => Promise<{ entryId: string; tags: Array<{ id: string; name: string }> }>
 ) {
   taggingAlignmentIds.value = [...taggingAlignmentIds.value, alignmentId]
   try {
     const result = await action()
     alignments.value = alignments.value.map((alignment) =>
-      alignment.id === alignmentId ? { ...alignment, tags: result.tags } : alignment
+      alignment.id === alignmentId
+        ? {
+            ...alignment,
+            entryA:
+              (alignment.entryA as Record<string, unknown> | null)?.id === result.entryId
+                ? {
+                    ...(alignment.entryA as Record<string, unknown> | null),
+                    tags: result.tags,
+                  }
+                : alignment.entryA,
+            entryB:
+              (alignment.entryB as Record<string, unknown> | null)?.id === result.entryId
+                ? {
+                    ...(alignment.entryB as Record<string, unknown> | null),
+                    tags: result.tags,
+                  }
+                : alignment.entryB,
+          }
+        : alignment
     )
   } catch {
     ElMessage.error(t('tags.messages.saveError'))
@@ -525,15 +527,15 @@ async function runAlignmentTagMutation(
   }
 }
 
-function handleAddAlignmentTag(alignmentId: string, payload: { tagId?: string; name?: string }) {
-  return runAlignmentTagMutation(alignmentId, () =>
-    tagsStore.addTagToAlignment(route.params.id as string, alignmentId, payload)
+function handleAddEntryTag(alignmentId: string, payload: { entryId: string; tagId?: string; name?: string }) {
+  return runEntryTagMutation(alignmentId, () =>
+    tagsStore.addTagToEntry(payload.entryId, { tagId: payload.tagId, name: payload.name })
   )
 }
 
-function handleRemoveAlignmentTag(alignmentId: string, tagId: string) {
-  return runAlignmentTagMutation(alignmentId, () =>
-    tagsStore.removeTagFromAlignment(route.params.id as string, alignmentId, tagId)
+function handleRemoveEntryTag(alignmentId: string, payload: { entryId: string; tagId: string }) {
+  return runEntryTagMutation(alignmentId, () =>
+    tagsStore.removeTagFromEntry(payload.entryId, payload.tagId)
   )
 }
 
@@ -867,9 +869,6 @@ async function handleSingleUnlock(a: EntryAlignment) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.entry-tags {
-  margin-top: 8px;
 }
 
 /* Right pane */

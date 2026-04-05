@@ -358,32 +358,39 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
         const locked = headword ? !unlockedSet.has(headword) : false
 
         if (!locked) {
-          const withCrossRefs = (entry: Record<string, unknown> | null) => {
+          const withCrossRefs = (entry: Record<string, unknown> | null, entryId?: string | null) => {
             if (!entry) return null
             const meta = entry['metadata'] as { crossReferences?: string[] } | null
-            return { ...entry, crossReferences: meta?.crossReferences ?? null }
+            return {
+              ...entry,
+              crossReferences: meta?.crossReferences ?? null,
+              tags: entryId ? tagsByEntryId.get(entryId) ?? [] : [],
+            }
           }
           return {
             ...a,
             tags,
             locked: false,
-            entryA: withCrossRefs(a.entryA as Record<string, unknown> | null),
-            entryB: withCrossRefs(a.entryB as Record<string, unknown> | null),
+            entryA: withCrossRefs(a.entryA as Record<string, unknown> | null, a.entryAId),
+            entryB: withCrossRefs(a.entryB as Record<string, unknown> | null, a.entryBId),
           }
         }
 
         // Strip sense data for locked entries — only expose headword + phonetic
-        const stripEntry = (entry: Record<string, unknown> | null) => {
+        const stripEntry = (entry: Record<string, unknown> | null, entryId?: string | null) => {
           if (!entry) return null
-          return Object.fromEntries(ENTRY_PUBLIC_FIELDS.map((k) => [k, entry[k]]))
+          return {
+            ...Object.fromEntries(ENTRY_PUBLIC_FIELDS.map((k) => [k, entry[k]])),
+            tags: entryId ? tagsByEntryId.get(entryId) ?? [] : [],
+          }
         }
 
         return {
           ...a,
           tags,
           locked: true,
-          entryA: stripEntry(a.entryA as Record<string, unknown> | null),
-          entryB: stripEntry(a.entryB as Record<string, unknown> | null),
+          entryA: stripEntry(a.entryA as Record<string, unknown> | null, a.entryAId),
+          entryB: stripEntry(a.entryB as Record<string, unknown> | null, a.entryBId),
           senseDiffs: [],
         }
       })
