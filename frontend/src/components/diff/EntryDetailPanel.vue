@@ -2,9 +2,26 @@
   <div class="detail-panel">
     <!-- Entry header -->
     <div class="entry-header">
-      <span class="hw">{{ headword }}</span>
-      <span v-if="phonetic" class="phonetic">{{ phonetic }}</span>
-      <el-tag :type="entryChangeTagType" size="small">{{ entryChangeLabel }}</el-tag>
+      <div class="entry-header-main">
+        <span class="hw">{{ headword }}</span>
+        <span v-if="phonetic" class="phonetic">{{ phonetic }}</span>
+        <el-tag :type="entryChangeTagType" size="small">{{ entryChangeLabel }}</el-tag>
+      </div>
+      <div class="entry-header-tags">
+        <EntryTagEditor
+          :tags="alignment.tags"
+          :available-tags="availableTags"
+          :loading="tagLoading"
+          :label="t('tags.label')"
+          :empty-text="t('tags.empty')"
+          :add-button-text="t('tags.addButton')"
+          :placeholder="t('tags.selectOrCreate')"
+          :helper-text="t('tags.helper')"
+          @add-existing="emit('add-tag', { tagId: $event })"
+          @create="emit('add-tag', { name: $event })"
+          @remove="emit('remove-tag', $event.id)"
+        />
+      </div>
     </div>
 
     <!-- Sense comparison -->
@@ -138,6 +155,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DiffMatchPatch from 'diff-match-patch'
 import type { EntryAlignment } from '@/api/comparisons'
+import type { TagSummary } from '@/api/tags'
+import EntryTagEditor from '@/components/tags/EntryTagEditor.vue'
 
 const { t } = useI18n()
 
@@ -150,6 +169,13 @@ const props = defineProps<{
   showPosDiff?: boolean
   showEtymology?: boolean
   onlyNonMatched?: boolean
+  availableTags?: TagSummary[]
+  tagLoading?: boolean
+}>()
+
+const emit = defineEmits<{
+  (event: 'add-tag', payload: { tagId?: string; name?: string }): void
+  (event: 'remove-tag', tagId: string): void
 }>()
 
 const dmp = new DiffMatchPatch()
@@ -267,6 +293,7 @@ const showRegisterDiff = computed(() => props.showRegisterDiff !== false)
 const showPosDiff = computed(() => props.showPosDiff !== false)
 const showEtymology = computed(() => props.showEtymology !== false)
 const onlyNonMatched = computed(() => props.onlyNonMatched === true)
+const availableTags = computed(() => props.availableTags ?? [])
 
 const rawSensePairs = computed<SensePair[]>(() => {
   const senseDiffs = (props.alignment.senseDiffs ?? []) as Rec[]
@@ -450,7 +477,8 @@ function exRowClass(row: ExRow): string {
 
 .entry-header {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--el-border-color-light);
@@ -459,6 +487,16 @@ function exRowClass(row: ExRow): string {
   top: 0;
   background: var(--el-bg-color);
   z-index: 1;
+}
+.entry-header-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.entry-header-tags {
+  display: flex;
+  flex-wrap: wrap;
 }
 .hw { font-size: 20px; font-weight: bold; }
 .phonetic { font-size: 14px; color: var(--el-text-color-secondary); }

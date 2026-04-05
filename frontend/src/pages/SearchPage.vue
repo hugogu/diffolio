@@ -138,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import {
   searchHeadword,
@@ -194,6 +194,25 @@ onMounted(async () => {
   ])
   allVersions.value = versions
 })
+
+watch(
+  () => tagsStore.tags.map((tag) => `${tag.id}:${tag.name}:${tag.usageCount}`),
+  (current, previous) => {
+    if (!searched.value) return
+    if (!previous || previous.length === 0) return
+
+    const availableTagIds = new Set(tagsStore.tags.map((tag) => tag.id))
+    const nextSelectedTagIds = selectedTagIds.value.filter((tagId) => availableTagIds.has(tagId))
+    const selectionChanged = nextSelectedTagIds.length !== selectedTagIds.value.length
+    if (selectionChanged) {
+      selectedTagIds.value = nextSelectedTagIds
+    }
+
+    if (selectionChanged || selectedTagIds.value.length > 0) {
+      void doSearch(currentPage.value)
+    }
+  }
+)
 
 async function doSearch(page = 1) {
   if (!query.value.trim() && !filterVersionId.value && !taxonomyFilter.value.taxonomyNodeId && selectedTagIds.value.length === 0) {
@@ -262,6 +281,10 @@ function handleTagsUpdated(payload: { entryId: string; tags: PaginatedSearchResu
           }
         : item
     ),
+  }
+
+  if (selectedTagIds.value.length > 0) {
+    void doSearch(currentPage.value)
   }
 }
 </script>

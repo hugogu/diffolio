@@ -278,6 +278,10 @@
                   :show-pos-diff="displayOptions.showPosDiff"
                   :show-etymology="displayOptions.showEtymology"
                   :only-non-matched="displayOptions.onlyNonMatched"
+                  :available-tags="tagsStore.tagOptions"
+                  :tag-loading="isTagMutationLoading(alignment.id) || tagsStore.loading"
+                  @add-tag="handleAddAlignmentTag(alignment.id, $event)"
+                  @remove-tag="handleRemoveAlignmentTag(alignment.id, $event)"
                 />
               </section>
             </div>
