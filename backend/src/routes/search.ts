@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify'
 import { Prisma } from '@prisma/client'
 import { authGuard, requireSessionUser } from '../lib/auth-guard.js'
 import { badRequest } from '../lib/errors.js'
+import { ensureVersionEntriesMaterializedFromArtifact } from '../services/parse-artifacts/persistence.js'
 
 type TagResponse = {
   id: string
@@ -67,6 +68,10 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
 
     const pageNum = Math.max(1, parseInt(page) || 1)
     const pageSizeNum = Math.min(100, Math.max(1, parseInt(pageSize) || 20))
+
+    if (versionId) {
+      await ensureVersionEntriesMaterializedFromArtifact(fastify.db, versionId)
+    }
 
     // Combine all conditions with AND to avoid key collision
     const andClauses: Prisma.EntryWhereInput[] = []

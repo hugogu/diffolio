@@ -45,6 +45,7 @@
               :placeholder="$t('admin.versionDetail.configPlaceholder')"
               style="flex: 1"
               clearable
+              @change="handleConfigProfileChange"
             >
               <el-option-group :label="$t('admin.versionDetail.systemConfig')">
                 <el-option
@@ -72,6 +73,25 @@
                   </el-tag>
                 </el-option>
               </el-option-group>
+            </el-select>
+            <el-select
+              v-model="selectedConfigVersionId"
+              style="width: 180px"
+              :placeholder="$t('admin.versionDetail.configVersionPlaceholder')"
+              :disabled="!selectedConfigKey || availableConfigVersions.length === 0"
+              clearable
+            >
+              <el-option
+                v-for="versionOption in availableConfigVersions"
+                :key="versionOption.id"
+                :label="`v${versionOption.versionNumber}${versionOption.isCurrent ? ' (current)' : ''}`"
+                :value="versionOption.id"
+              >
+                <div class="config-version-option">
+                  <span>{{ `v${versionOption.versionNumber}` }}</span>
+                  <el-tag v-if="versionOption.isCurrent" size="small" type="success">current</el-tag>
+                </div>
+              </el-option>
             </el-select>
             <el-button
               type="primary"
@@ -125,12 +145,11 @@
             </div>
             <div class="file-meta">
               {{ $t('admin.versionDetail.uploadedAt') }} {{ formatDate(activeFile.createdAt) }}
-              <span>· {{ $t('admin.versionDetail.sharedAsset') }} {{ activeFile.sharedFileAssetId }}</span>
               <span>· {{ $t('admin.versionDetail.fileSize') }} {{ formatFileSize(activeFile.sharedFileAsset.fileSize) }}</span>
               <span v-if="activeTask?.totalEntries">· {{ activeTask.totalEntries.toLocaleString() }} {{ $t('admin.versionDetail.entryCount') }}</span>
             </div>
-            <div class="file-meta">
-              {{ $t('admin.versionDetail.contentHash') }} {{ activeFile.sharedFileAsset.contentHash }}
+            <div v-if="activeTask?.cacheHit" class="file-meta">
+              {{ $t('upload.cacheHitResult') }}
             </div>
             <div class="reparse-row">
               <div class="table-actions is-admin">
@@ -208,6 +227,7 @@ import ConfigUpload from '@/components/admin/ConfigUpload.vue'
 import FileUploadWithProgress from '@/components/upload/FileUploadWithProgress.vue'
 import { useConfigsStore } from '@/stores/configs'
 import type { ParseTask } from '@/api/parse-tasks'
+import type { ConfigVersionRecord } from '@/api/configs'
 import { useI18n } from 'vue-i18n'
 import ActionButton from '@/components/common/ActionButton.vue'
 
@@ -224,6 +244,7 @@ const fileUploadRef = ref<InstanceType<typeof FileUploadWithProgress> | null>(nu
 
 const configsStore = useConfigsStore()
 const selectedConfigKey = ref<string | null>(null)
+const selectedConfigVersionId = ref<string | null>(null)
 
 const downloadUrl = computed(() => versionFileDownloadUrl(route.params.versionId as string))
 const hasDetachedFileHistory = computed(() => !activeFile.value && (version.value?.parseTasks?.length ?? 0) > 0)
@@ -233,6 +254,11 @@ const activeFileTagLabel = computed(() => (
     ? t('admin.versionDetail.activeSharedFile')
     : t('admin.versionDetail.sharedFileOnly')
 ))
+const availableConfigVersions = computed<ConfigVersionRecord[]>(() => {
+  if (!selectedConfigKey.value) return []
+  const [sourceType, profileId] = selectedConfigKey.value.split(':') as ['system' | 'user', string]
+  return configsStore.getCachedConfigVersions(sourceType === 'system' ? 'SYSTEM' : 'USER', profileId)
+})
 
 onMounted(async () => {
   loading.value = true
@@ -243,7 +269,10 @@ onMounted(async () => {
   ])
   version.value = v
   activeFile.value = version.value?.activeFile ?? null
-  activeTask.value = (activeFile.value?.latestTask ?? null) as ParseTask | null
+  activeTask.value = activeFile.value?.latestTask?.id
+    ? await getParseTask(activeFile.value.latestTask.id)
+    : null
+  await syncSelectedConfigFromVersion()
   loading.value = false
   // Resume progress tracking if the task is still in-flight
   const status = activeTask.value?.status
@@ -252,6 +281,37 @@ onMounted(async () => {
     fileUploadRef.value?.trackTask(activeTask.value!.id)
   }
 })
+
+async function syncSelectedConfigFromVersion() {
+  const appliedConfig = version.value?.formatConfig as {
+    sourceConfigType?: 'SYSTEM' | 'USER' | null
+    sourceConfigId?: string | null
+    configProfileId?: string | null
+    configVersionId?: string | null
+  } | null | undefined
+
+  const sourceType = appliedConfig?.sourceConfigType
+  const profileId = appliedConfig?.configProfileId ?? appliedConfig?.sourceConfigId ?? null
+  if (!sourceType || !profileId) {
+    selectedConfigKey.value = null
+    selectedConfigVersionId.value = null
+    return
+  }
+
+  selectedConfigKey.value = `${sourceType.toLowerCase()}:${profileId}`
+  await configsStore.loadConfigVersions(sourceType, profileId)
+  selectedConfigVersionId.value = appliedConfig?.configVersionId ?? null
+}
+
+async function handleConfigProfileChange() {
+  selectedConfigVersionId.value = null
+  if (!selectedConfigKey.value) return
+
+  const [sourceType, profileId] = selectedConfigKey.value.split(':') as ['system' | 'user', string]
+  const versions = await configsStore.loadConfigVersions(sourceType === 'system' ? 'SYSTEM' : 'USER', profileId)
+  const current = versions.find((item) => item.isCurrent) ?? versions[0] ?? null
+  selectedConfigVersionId.value = current?.id ?? null
+}
 
 function configStatusType(status?: string) {
   if (status === 'VALID') return 'success'
@@ -285,12 +345,16 @@ async function handleApplyConfig() {
   try {
     await configsStore.applyConfig(
       route.params.versionId as string,
-      sourceType === 'system' ? 'SYSTEM' : 'USER',
-      sourceId
+      {
+        sourceType: sourceType === 'system' ? 'SYSTEM' : 'USER',
+        sourceId,
+        configVersionId: selectedConfigVersionId.value ?? undefined,
+      }
     )
     version.value = await getVersion(route.params.versionId as string)
     activeFile.value = version.value.activeFile
-    activeTask.value = (activeFile.value?.latestTask ?? null) as ParseTask | null
+    activeTask.value = activeFile.value?.latestTask?.id ? await getParseTask(activeFile.value.latestTask.id) : null
+    await syncSelectedConfigFromVersion()
     ElMessage.success(t('admin.versionDetail.applySuccess'))
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : t('admin.versionDetail.applyError')
@@ -303,7 +367,7 @@ async function handleApplyConfig() {
 async function handleConfigUploaded(_status: 'VALID' | 'INVALID') {
   version.value = await getVersion(route.params.versionId as string)
   activeFile.value = version.value.activeFile
-  activeTask.value = (activeFile.value?.latestTask ?? null) as ParseTask | null
+  activeTask.value = activeFile.value?.latestTask?.id ? await getParseTask(activeFile.value.latestTask.id) : null
 }
 
 async function handleTaskCreated(taskId: string) {
@@ -383,6 +447,14 @@ async function handleDeleteFile() {
 .config-selector {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.config-version-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 

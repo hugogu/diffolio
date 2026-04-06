@@ -127,6 +127,12 @@ const router = createRouter({
           meta: { requiresAdmin: true },
         },
         {
+          path: 'admin/parse-artifacts',
+          name: 'ParseArtifacts',
+          component: () => import('@/pages/admin/ParseArtifactsPage.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
           path: 'admin/parse-errors',
           name: 'AdminParseErrors',
           component: () => import('@/pages/admin/ParseErrorsAdminPage.vue'),

@@ -37,9 +37,10 @@
       <el-table-column :label="$t('common.email')" width="150" show-overflow-tooltip>
         <template #default="{ row }">{{ row.createdBy?.email }}</template>
       </el-table-column>
-      <el-table-column :label="$t('comparisons.actions')" width="156" fixed="right" align="right" header-align="right">
+      <el-table-column :label="$t('comparisons.actions')" width="204" fixed="right" align="right" header-align="right">
         <template #default="{ row }">
           <div class="table-actions is-admin">
+            <ActionButton kind="admin" :icon="View" :label="$t('admin.configManagement.view')" @click="openHistoryDialog(row.id, row.name)" />
             <ActionButton kind="admin" :icon="Edit" :label="$t('admin.systemConfigs.edit')" @click="openEditDialog(row.id)" />
             <ActionButton kind="admin" type="warning" :icon="Setting" :label="$t('admin.systemConfigs.visibility')" @click="openVisibilityDialog(row.id)" />
             <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('admin.systemConfigs.delete')" @click="handleDelete(row.id, row.name)" />
@@ -87,6 +88,14 @@
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button
+          v-if="editingId"
+          type="success"
+          :loading="savingAsVersion"
+          @click="handleSaveAsVersion"
+        >
+          {{ $t('admin.configManagement.saveAsNewVersion') }}
+        </el-button>
         <el-button type="primary" :loading="saving" @click="handleSave">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
@@ -128,20 +137,48 @@
         <el-button type="primary" :loading="savingVisibility" @click="handleSaveVisibility">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="historyDialogVisible" :title="historyTitle" width="760px">
+      <el-table :data="historyVersions" v-loading="historyLoading" style="width: 100%">
+        <el-table-column prop="versionNumber" label="Version" width="100">
+          <template #default="{ row }">v{{ row.versionNumber }}</template>
+        </el-table-column>
+        <el-table-column prop="validationStatus" :label="$t('admin.systemConfigs.status')" width="120">
+          <template #default="{ row }">
+            <el-tag :type="statusTagType(row.validationStatus)" size="small">{{ row.validationStatus }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="contentHash" label="Hash" min-width="220" show-overflow-tooltip />
+        <el-table-column :label="$t('common.updatedAt')" width="180">
+          <template #default="{ row }">{{ new Date(row.createdAt).toLocaleString('zh-CN', { dateStyle: 'short', timeStyle: 'short' }) }}</template>
+        </el-table-column>
+        <el-table-column label="Current" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.isCurrent" type="success" size="small">current</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="historyDialogVisible = false">{{ $t('common.close') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, Edit, Delete, Setting } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Setting, View } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import {
   listAdminSystemConfigs,
   createSystemConfig,
   getAdminSystemConfig,
+  listAdminSystemConfigVersions,
+  createSystemConfigVersion,
   updateSystemConfig,
   deleteSystemConfig,
   updateSystemConfigVisibility,
+  type ConfigVersionRecord,
   type SystemConfig,
 } from '@/api/configs'
 import JsonEditor from '@/components/common/JsonEditor.vue'
@@ -161,6 +198,7 @@ const searchQuery = ref('')
 const editDialogVisible = ref(false)
 const editingId = ref<string | null>(null)
 const saving = ref(false)
+const savingAsVersion = ref(false)
 const editErrors = ref<string[]>([])
 const editForm = ref({ name: '', description: '', configJson: '{}', visibility: 'ALL_USERS' as 'ALL_USERS' | 'SPECIFIC_USERS' })
 
@@ -171,6 +209,10 @@ const loadingVisibility = ref(false)
 const savingVisibility = ref(false)
 const currentAllowedUsers = ref<{ user: { id: string; email: string } }[]>([])
 const visibilityForm = ref({ visibility: 'ALL_USERS' as 'ALL_USERS' | 'SPECIFIC_USERS', userIdsText: '' })
+const historyDialogVisible = ref(false)
+const historyLoading = ref(false)
+const historyTitle = ref('')
+const historyVersions = ref<ConfigVersionRecord[]>([])
 
 onMounted(loadConfigs)
 
@@ -269,6 +311,39 @@ async function handleSave() {
   }
 }
 
+async function handleSaveAsVersion() {
+  if (!editingId.value) return
+  if (!editForm.value.name.trim()) {
+    ElMessage.warning(t('admin.systemConfigs.validation.nameRequired'))
+    return
+  }
+  let configJson: Record<string, unknown>
+  try {
+    configJson = JSON.parse(editForm.value.configJson)
+  } catch {
+    ElMessage.error(t('admin.systemConfigs.validation.jsonInvalid'))
+    return
+  }
+
+  savingAsVersion.value = true
+  editErrors.value = []
+  try {
+    await createSystemConfigVersion(editingId.value, {
+      name: editForm.value.name,
+      description: editForm.value.description || undefined,
+      configJson,
+    })
+    editDialogVisible.value = false
+    ElMessage.success(t('admin.systemConfigs.saveSuccess'))
+    await loadConfigs()
+  } catch (e: unknown) {
+    const apiErr = e as { details?: { errors?: string[] } }
+    editErrors.value = apiErr.details?.errors ?? [(e instanceof Error ? e.message : t('admin.systemConfigs.saveError'))]
+  } finally {
+    savingAsVersion.value = false
+  }
+}
+
 async function handleDelete(id: string, name: string) {
   try {
     await ElMessageBox.confirm(
@@ -309,6 +384,22 @@ async function openVisibilityDialog(id: string) {
     visibilityDialogVisible.value = false
   } finally {
     loadingVisibility.value = false
+  }
+}
+
+async function openHistoryDialog(id: string, name: string) {
+  historyDialogVisible.value = true
+  historyLoading.value = true
+  historyTitle.value = name
+  historyVersions.value = []
+
+  try {
+    historyVersions.value = (await listAdminSystemConfigVersions(id)).data
+  } catch {
+    ElMessage.error(t('admin.systemConfigs.loadError'))
+    historyDialogVisible.value = false
+  } finally {
+    historyLoading.value = false
   }
 }
 

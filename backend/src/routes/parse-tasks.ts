@@ -9,7 +9,18 @@ const parseTaskRoutes: FastifyPluginAsync = async (fastify) => {
     const { taskId } = request.params as { taskId: string }
     const task = await fastify.db.parseTask.findUnique({
       where: { id: taskId },
-      include: { _count: { select: { errors: true } } },
+      include: {
+        _count: { select: { errors: true } },
+        parseArtifact: {
+          select: {
+            id: true,
+            status: true,
+            totalEntries: true,
+            failedEntries: true,
+            configVersionId: true,
+          },
+        },
+      },
     })
     if (!task) throw notFound('ParseTask', taskId)
     return task

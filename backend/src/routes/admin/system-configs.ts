@@ -1,7 +1,15 @@
+import { Prisma } from '@prisma/client'
 import { FastifyPluginAsync } from 'fastify'
 import { authGuard, requireSessionUser } from '../../lib/auth-guard.js'
 import { validateConfig } from '../../services/config-engine.js'
 import { notFound, unprocessable } from '../../lib/errors.js'
+import {
+  ensureSystemConfigSnapshot,
+  getConfigVersionDetail,
+  listConfigVersions,
+} from '../../services/configs/snapshots.js'
+import { appendConfigVersion, getCurrentConfigVersion } from '../../services/configs/versioning.js'
+import { FormatConfigJson } from '../../lib/types/shared.js'
 
 const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/admin/system-configs
@@ -40,7 +48,36 @@ const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
       }),
     ])
 
-    return { total, page: pageNum, pageSize: size, data: configs }
+    const profileIds = configs.map((config) => config.id)
+    const [currentVersions, versionCounts] = profileIds.length > 0
+      ? await Promise.all([
+          fastify.db.configVersion.findMany({
+            where: { profileId: { in: profileIds }, isCurrent: true },
+            select: { id: true, profileId: true, versionNumber: true },
+          }),
+          fastify.db.configVersion.groupBy({
+            by: ['profileId'],
+            where: { profileId: { in: profileIds } },
+            _count: { _all: true },
+          }),
+        ])
+      : [[], []]
+
+    const currentByProfile = new Map(currentVersions.map((version) => [version.profileId, version]))
+    const countByProfile = new Map(versionCounts.map((row) => [row.profileId, row._count._all]))
+
+    return {
+      total,
+      page: pageNum,
+      pageSize: size,
+      data: configs.map((config) => ({
+        ...config,
+        profileId: config.id,
+        currentVersionId: currentByProfile.get(config.id)?.id ?? null,
+        currentVersionNumber: currentByProfile.get(config.id)?.versionNumber ?? 1,
+        versionCount: countByProfile.get(config.id) ?? 0,
+      })),
+    }
   })
 
   // POST /api/v1/admin/system-configs
@@ -62,21 +99,14 @@ const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
       )
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const validationReportJson = validationResult.warnings.length > 0
-      ? { errors: validationResult.errors, warnings: validationResult.warnings } as any
-      : undefined
-
-    const config = await fastify.db.systemFormatConfig.create({
-      data: {
+    const config = await fastify.db.$transaction(async (tx) => {
+      return ensureSystemConfigSnapshot(tx, {
+        adminUserId: user.id,
         name: body.name,
         description: body.description,
-        configJson: body.configJson as any,
+        configJson: body.configJson as unknown as FormatConfigJson,
         visibility: body.visibility ?? 'ALL_USERS',
-        createdById: user.id,
-        validationStatus: 'VALID',
-        validationReport: validationReportJson,
-      },
+      })
     })
 
     reply.status(201).send(config)
@@ -96,7 +126,16 @@ const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
     })
 
     if (!config) throw notFound('SystemFormatConfig', id)
-    return config
+    const currentVersion = await getCurrentConfigVersion(fastify.db, id)
+
+    return {
+      ...config,
+      profileId: id,
+      currentVersionId: currentVersion?.id ?? null,
+      currentVersionNumber: currentVersion?.versionNumber ?? 1,
+      configJson: (currentVersion?.configJson ?? config.configJson) as Record<string, unknown>,
+      validationReport: (currentVersion?.validationReport ?? config.validationReport) as Record<string, unknown> | null,
+    }
   })
 
   // PATCH /api/v1/admin/system-configs/:id
@@ -114,31 +153,37 @@ const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
       visibility?: 'ALL_USERS' | 'SPECIFIC_USERS'
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: Record<string, any> = {}
-    if (body.name !== undefined) updateData.name = body.name
-    if (body.description !== undefined) updateData.description = body.description
-    if (body.visibility !== undefined) updateData.visibility = body.visibility
+    const config = await fastify.db.$transaction(async (tx) => {
+      if (body.configJson !== undefined) {
+        const validationResult = validateConfig(body.configJson)
+        if (!validationResult.isValid) {
+          throw unprocessable(
+            'Format config validation failed',
+            { errors: validationResult.errors, warnings: validationResult.warnings }
+          )
+        }
 
-    if (body.configJson !== undefined) {
-      const validationResult = validateConfig(body.configJson)
-      if (!validationResult.isValid) {
-        throw unprocessable(
-          'Format config validation failed',
-          { errors: validationResult.errors, warnings: validationResult.warnings }
-        )
+        return ensureSystemConfigSnapshot(tx, {
+          id,
+          adminUserId: exists.createdById,
+          name: body.name ?? exists.name,
+          description: body.description ?? exists.description,
+          visibility: body.visibility ?? exists.visibility,
+          configJson: body.configJson as unknown as FormatConfigJson,
+          allowedUserIds: body.visibility === 'SPECIFIC_USERS'
+            ? undefined
+            : undefined,
+        })
       }
 
-      updateData.configJson = body.configJson
-      updateData.validationStatus = 'VALID'
-      updateData.validationReport = validationResult.warnings.length > 0
-        ? { errors: validationResult.errors, warnings: validationResult.warnings }
-        : null
-    }
-
-    const config = await fastify.db.systemFormatConfig.update({
-      where: { id },
-      data: updateData,
+      return tx.systemFormatConfig.update({
+        where: { id },
+        data: {
+          name: body.name ?? undefined,
+          description: body.description ?? undefined,
+          visibility: body.visibility ?? undefined,
+        },
+      })
     })
 
     return config
@@ -152,7 +197,13 @@ const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
     const exists = await fastify.db.systemFormatConfig.findUnique({ where: { id } })
     if (!exists) throw notFound('SystemFormatConfig', id)
 
-    await fastify.db.systemFormatConfig.delete({ where: { id } })
+    await fastify.db.$transaction(async (tx) => {
+      await tx.systemFormatConfig.delete({ where: { id } })
+      await tx.configProfile.update({
+        where: { id },
+        data: { archivedAt: new Date() },
+      }).catch(() => null)
+    })
     reply.status(204).send()
   })
 
@@ -190,6 +241,97 @@ const adminSystemConfigRoutes: FastifyPluginAsync = async (fastify) => {
     })
 
     return config
+  })
+
+  fastify.get('/admin/system-configs/:id/versions', { preHandler: authGuard({ role: 'ADMIN' }) }, async (request) => {
+    const { id } = request.params as { id: string }
+    const exists = await fastify.db.systemFormatConfig.findUnique({ where: { id } })
+    if (!exists) throw notFound('SystemFormatConfig', id)
+
+    const versions = await listConfigVersions(fastify.db, id)
+    const currentVersion = versions.find((version) => version.isCurrent) ?? null
+
+    return {
+      profileId: id,
+      currentVersionId: currentVersion?.id ?? null,
+      data: versions,
+    }
+  })
+
+  fastify.get('/admin/system-configs/:id/versions/:versionId', { preHandler: authGuard({ role: 'ADMIN' }) }, async (request) => {
+    const { id, versionId } = request.params as { id: string; versionId: string }
+    const exists = await fastify.db.systemFormatConfig.findUnique({ where: { id } })
+    if (!exists) throw notFound('SystemFormatConfig', id)
+
+    const version = await getConfigVersionDetail(fastify.db, id, versionId)
+    if (!version) throw notFound('ConfigVersion', versionId)
+
+    return version
+  })
+
+  fastify.post('/admin/system-configs/:id/versions', { preHandler: authGuard({ role: 'ADMIN' }) }, async (request, reply) => {
+    const user = requireSessionUser(request)
+    const { id } = request.params as { id: string }
+    const exists = await fastify.db.systemFormatConfig.findUnique({ where: { id } })
+    if (!exists) throw notFound('SystemFormatConfig', id)
+
+    const body = request.body as {
+      name?: string
+      description?: string
+      configJson: Record<string, unknown>
+    }
+
+    const validationResult = validateConfig(body.configJson)
+    if (!validationResult.isValid) {
+      throw unprocessable(
+        'Format config validation failed',
+        { errors: validationResult.errors, warnings: validationResult.warnings }
+      )
+    }
+
+    const result = await fastify.db.$transaction(async (tx) => {
+      const version = await appendConfigVersion(tx, {
+        profileId: id,
+        configJson: body.configJson as unknown as FormatConfigJson,
+        createdBy: user.id,
+        validationStatus: 'VALID',
+        validationReport: validationResult.warnings.length > 0
+          ? { errors: validationResult.errors, warnings: validationResult.warnings }
+          : undefined,
+        markAsCurrent: true,
+      })
+
+      await tx.systemFormatConfig.update({
+        where: { id },
+        data: {
+          name: body.name ?? exists.name,
+          description: body.description ?? exists.description,
+          configJson: body.configJson as unknown as Prisma.InputJsonValue,
+          validationStatus: 'VALID',
+          validationReport: validationResult.warnings.length > 0
+            ? { errors: validationResult.errors, warnings: validationResult.warnings } as Prisma.InputJsonValue
+            : Prisma.JsonNull,
+        },
+      })
+
+      await tx.configProfile.update({
+        where: { id },
+        data: {
+          name: body.name ?? exists.name,
+          description: body.description ?? exists.description,
+        },
+      })
+
+      return version
+    })
+
+    reply.status(201).send({
+      profileId: id,
+      versionId: result.id,
+      versionNumber: result.versionNumber,
+      isCurrent: result.isCurrent,
+      validationStatus: result.validationStatus,
+    })
   })
 }
 

@@ -17,9 +17,11 @@ import {
   bindSharedFileToVersion,
   detachActiveVersionFileReference,
   ensureSharedFileAsset,
+  ensureVersionActiveFileReference,
   getActiveVersionFileContext,
 } from '../services/uploads/shared-file-assets.js'
 import { detachActiveParseArtifactReference } from '../services/parse-artifacts/persistence.js'
+import { ensureVersionConfigLinks } from '../services/configs/bootstrap.js'
 
 async function cancelInflightParseJobs(
   parseQueue: {
@@ -100,6 +102,9 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
           include: { formatConfig: true },
         })
         if (!version) throw notFound('DictionaryVersion', versionId)
+        if (version.formatConfig) {
+          await ensureVersionConfigLinks(fastify.db, versionId)
+        }
         const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
         const isReupload = Boolean(activeFileContext)
 
@@ -252,7 +257,11 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
         const version = await fastify.db.dictionaryVersion.findUnique({ where: { id: versionId } })
         if (!version) throw notFound('DictionaryVersion', versionId)
 
-        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        const activeFileContext = await ensureVersionActiveFileReference(
+          fastify.db,
+          versionId,
+          user.id
+        ) ?? await getActiveVersionFileContext(fastify.db, versionId)
         if (!activeFileContext) throw notFound('UploadedFile', versionId)
 
         // Cancel any in-flight jobs first.
@@ -290,7 +299,11 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
         const { versionId } = request.params as { versionId: string }
         await assertVersionOwner(fastify.db, versionId, user.id)
 
-        const activeFileContext = await getActiveVersionFileContext(fastify.db, versionId)
+        const activeFileContext = await ensureVersionActiveFileReference(
+          fastify.db,
+          versionId,
+          user.id
+        ) ?? await getActiveVersionFileContext(fastify.db, versionId)
         if (!activeFileContext) throw notFound('UploadedFile', versionId)
         if (!fileExists(activeFileContext.sharedFileAsset.storagePath)) {
           throw notFound('StoredFile', activeFileContext.sharedFileAsset.storagePath)

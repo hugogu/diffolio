@@ -1,4 +1,5 @@
 import { Prisma, PrismaClient, ParseArtifactStatus } from '@prisma/client'
+import { ParsedEntry } from '../parser/types.js'
 
 type TxClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
 type DbClient = PrismaClient | TxClient
@@ -70,31 +71,7 @@ export async function detachActiveParseArtifactReference(db: DbClient, versionId
 export async function replaceArtifactEntryTree(
   db: DbClient,
   parseArtifactId: string,
-  entries: Array<{
-    rawHeadword: string
-    normalizedHeadword: string
-    entrySequence?: number | null
-    phonetic?: string | null
-    pageNumber?: number | null
-    lineNumber?: number | null
-    metadata?: Prisma.InputJsonValue | null
-    senses: Array<{
-      rawNumber: string
-      normalizedNumber: string
-      definition: string
-      rawDefinition: string
-      phonetic?: string | null
-      grammaticalCat?: string | null
-      register?: string | null
-      etymology?: string | null
-      position: number
-      examples: Array<{
-        rawText: string
-        normalizedText: string
-        position: number
-      }>
-    }>
-  }>
+  entries: ParsedEntry[]
 ) {
   await db.artifactExample.deleteMany({
     where: { artifactSense: { artifactEntry: { parseArtifactId } } },
@@ -107,6 +84,10 @@ export async function replaceArtifactEntryTree(
   })
 
   for (const entry of entries) {
+    const metadata = entry.crossReferences?.length
+      ? { crossReferences: entry.crossReferences }
+      : undefined
+
     await db.artifactEntry.create({
       data: {
         parseArtifactId,
@@ -116,9 +97,116 @@ export async function replaceArtifactEntryTree(
         phonetic: entry.phonetic ?? undefined,
         pageNumber: entry.pageNumber ?? undefined,
         lineNumber: entry.lineNumber ?? undefined,
-        metadata: entry.metadata ?? undefined,
+        metadata: metadata as Prisma.InputJsonValue | undefined,
         senses: {
-          create: entry.senses.map((sense) => ({
+          create: entry.senses.map((sense, senseIndex) => ({
+            rawNumber: sense.rawNumber,
+            normalizedNumber: sense.normalizedNumber,
+            definition: sense.definition,
+            rawDefinition: sense.rawDefinition,
+            phonetic: sense.phonetic ?? undefined,
+            grammaticalCat: sense.grammaticalCat ?? undefined,
+            register: sense.register ?? undefined,
+            etymology: sense.etymology ?? undefined,
+            position: senseIndex,
+            examples: {
+              create: sense.examples.map((example, exampleIndex) => ({
+                rawText: example.rawText,
+                normalizedText: example.normalizedText,
+                position: exampleIndex,
+              })),
+            },
+          })),
+        },
+      },
+    })
+  }
+}
+
+export async function appendArtifactEntries(
+  db: DbClient,
+  parseArtifactId: string,
+  entries: ParsedEntry[]
+) {
+  if (entries.length === 0) {
+    return
+  }
+
+  for (const entry of entries) {
+    const metadata = entry.crossReferences?.length
+      ? { crossReferences: entry.crossReferences }
+      : undefined
+
+    await db.artifactEntry.create({
+      data: {
+        parseArtifactId,
+        rawHeadword: entry.rawHeadword,
+        normalizedHeadword: entry.normalizedHeadword,
+        entrySequence: entry.entrySequence ?? undefined,
+        phonetic: entry.phonetic ?? undefined,
+        pageNumber: entry.pageNumber ?? undefined,
+        lineNumber: entry.lineNumber ?? undefined,
+        metadata: metadata as Prisma.InputJsonValue | undefined,
+        senses: {
+          create: entry.senses.map((sense, senseIndex) => ({
+            rawNumber: sense.rawNumber,
+            normalizedNumber: sense.normalizedNumber,
+            definition: sense.definition,
+            rawDefinition: sense.rawDefinition,
+            phonetic: sense.phonetic ?? undefined,
+            grammaticalCat: sense.grammaticalCat ?? undefined,
+            register: sense.register ?? undefined,
+            etymology: sense.etymology ?? undefined,
+            position: senseIndex,
+            examples: {
+              create: sense.examples.map((example, exampleIndex) => ({
+                rawText: example.rawText,
+                normalizedText: example.normalizedText,
+                position: exampleIndex,
+              })),
+            },
+          })),
+        },
+      },
+    })
+  }
+}
+
+export async function materializeParseArtifactToVersion(
+  db: DbClient,
+  input: {
+    parseArtifactId: string
+    versionId: string
+    taskId?: string | null
+  }
+) {
+  const artifactEntries = await db.artifactEntry.findMany({
+    where: { parseArtifactId: input.parseArtifactId },
+    orderBy: [{ pageNumber: 'asc' }, { lineNumber: 'asc' }, { createdAt: 'asc' }],
+    include: {
+      senses: {
+        orderBy: { position: 'asc' },
+        include: {
+          examples: { orderBy: { position: 'asc' } },
+        },
+      },
+    },
+  })
+
+  for (const artifactEntry of artifactEntries) {
+    await db.entry.create({
+      data: {
+        versionId: input.versionId,
+        taskId: input.taskId ?? undefined,
+        rawHeadword: artifactEntry.rawHeadword,
+        normalizedHeadword: artifactEntry.normalizedHeadword,
+        entrySequence: artifactEntry.entrySequence ?? undefined,
+        phonetic: artifactEntry.phonetic ?? undefined,
+        pageNumber: artifactEntry.pageNumber ?? undefined,
+        lineNumber: artifactEntry.lineNumber ?? undefined,
+        metadata: artifactEntry.metadata ?? undefined,
+        senses: {
+          create: artifactEntry.senses.map((sense) => ({
             rawNumber: sense.rawNumber,
             normalizedNumber: sense.normalizedNumber,
             definition: sense.definition,
@@ -140,4 +228,38 @@ export async function replaceArtifactEntryTree(
       },
     })
   }
+}
+
+export async function ensureVersionEntriesMaterializedFromArtifact(
+  db: DbClient,
+  versionId: string
+) {
+  const existingEntry = await db.entry.findFirst({
+    where: { versionId },
+    select: { id: true },
+  })
+  if (existingEntry) {
+    return false
+  }
+
+  const activeReference = await db.parseArtifactReference.findFirst({
+    where: { versionId, isActive: true, parseArtifact: { status: 'READY' } },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      parseArtifactId: true,
+      parseTaskId: true,
+    },
+  })
+
+  if (!activeReference) {
+    return false
+  }
+
+  await materializeParseArtifactToVersion(db, {
+    parseArtifactId: activeReference.parseArtifactId,
+    versionId,
+    taskId: activeReference.parseTaskId ?? undefined,
+  })
+
+  return true
 }

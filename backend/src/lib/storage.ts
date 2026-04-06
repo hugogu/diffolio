@@ -112,6 +112,56 @@ export async function promoteStagedSharedUpload(
   return { storagePath: canonicalStoragePath, reusedExistingAsset: false }
 }
 
+export async function hashStoredFile(filePath: string): Promise<{ contentHash: string; fileSize: number }> {
+  const hash = crypto.createHash(SHARED_FILE_HASH_ALGORITHM)
+  const input = fs.createReadStream(filePath)
+  let fileSize = 0
+
+  return new Promise<{ contentHash: string; fileSize: number }>((resolve, reject) => {
+    input.on('data', (chunk) => {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+      hash.update(buffer)
+      fileSize += buffer.length
+    })
+    input.once('error', reject)
+    input.once('end', () => {
+      resolve({
+        contentHash: hash.digest('hex'),
+        fileSize,
+      })
+    })
+  })
+}
+
+export function ensureSharedStorageFile(
+  sourceFilePath: string,
+  contentHash: string,
+  originalExtension?: string | null
+): { storagePath: string; reusedExistingAsset: boolean } {
+  const canonicalStoragePath = resolveSharedStoragePath(contentHash, originalExtension ?? undefined)
+  ensureLocalDirectory(path.dirname(canonicalStoragePath))
+
+  if (path.resolve(sourceFilePath) === path.resolve(canonicalStoragePath)) {
+    return {
+      storagePath: canonicalStoragePath,
+      reusedExistingAsset: true,
+    }
+  }
+
+  if (fileExists(canonicalStoragePath)) {
+    return {
+      storagePath: canonicalStoragePath,
+      reusedExistingAsset: true,
+    }
+  }
+
+  fs.copyFileSync(sourceFilePath, canonicalStoragePath)
+  return {
+    storagePath: canonicalStoragePath,
+    reusedExistingAsset: false,
+  }
+}
+
 export function discardStagedUpload(tempFilePath: string): void {
   if (fileExists(tempFilePath)) {
     fs.unlinkSync(tempFilePath)
@@ -145,6 +195,10 @@ export function fileExists(filePath: string): boolean {
   } catch {
     return false
   }
+}
+
+export function getStoredFileSize(filePath: string): number {
+  return fs.statSync(filePath).size
 }
 
 export function deleteFile(filePath: string): boolean {

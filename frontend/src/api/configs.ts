@@ -2,10 +2,14 @@ import { apiFetch } from './client'
 
 export interface SystemConfig {
   id: string
+  profileId?: string
   name: string
   description?: string | null
   validationStatus: 'PENDING' | 'VALID' | 'INVALID'
   visibility: 'ALL_USERS' | 'SPECIFIC_USERS'
+  currentVersionId?: string | null
+  currentVersionNumber?: number
+  versionCount?: number
   createdAt: string
   updatedAt: string
 }
@@ -17,10 +21,14 @@ export interface SystemConfigDetail extends SystemConfig {
 
 export interface UserConfig {
   id: string
+  profileId?: string
   name: string
   description?: string | null
   validationStatus: 'PENDING' | 'VALID' | 'INVALID'
   clonedFromId?: string | null
+  currentVersionId?: string | null
+  currentVersionNumber?: number
+  versionCount?: number
   createdAt: string
   updatedAt: string
 }
@@ -28,6 +36,19 @@ export interface UserConfig {
 export interface UserConfigDetail extends UserConfig {
   configJson: Record<string, unknown>
   validationReport?: { errors: string[]; warnings: string[] } | null
+}
+
+export interface ConfigVersionRecord {
+  id: string
+  profileId: string
+  versionNumber: number
+  configJson: Record<string, unknown>
+  validationStatus: 'PENDING' | 'VALID' | 'INVALID'
+  validationReport?: { errors: string[]; warnings: string[] } | null
+  contentHash: string
+  isCurrent: boolean
+  createdAt: string
+  createdByUser?: { id: string; email: string }
 }
 
 export async function listSystemConfigs(search?: string): Promise<SystemConfig[]> {
@@ -41,6 +62,18 @@ export async function getSystemConfig(id: string): Promise<SystemConfigDetail> {
   return apiFetch<SystemConfigDetail>(`/api/v1/system-configs/${id}`)
 }
 
+export async function listSystemConfigVersions(id: string): Promise<{
+  profileId: string
+  currentVersionId: string | null
+  data: ConfigVersionRecord[]
+}> {
+  return apiFetch(`/api/v1/system-configs/${id}/versions`)
+}
+
+export async function getSystemConfigVersion(id: string, versionId: string): Promise<ConfigVersionRecord> {
+  return apiFetch(`/api/v1/system-configs/${id}/versions/${versionId}`)
+}
+
 export async function listUserConfigs(search?: string): Promise<UserConfig[]> {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
@@ -50,6 +83,18 @@ export async function listUserConfigs(search?: string): Promise<UserConfig[]> {
 
 export async function getUserConfig(id: string): Promise<UserConfigDetail> {
   return apiFetch<UserConfigDetail>(`/api/v1/configs/${id}`)
+}
+
+export async function listUserConfigVersions(id: string): Promise<{
+  profileId: string
+  currentVersionId: string | null
+  data: ConfigVersionRecord[]
+}> {
+  return apiFetch(`/api/v1/configs/${id}/versions`)
+}
+
+export async function getUserConfigVersion(id: string, versionId: string): Promise<ConfigVersionRecord> {
+  return apiFetch(`/api/v1/configs/${id}/versions/${versionId}`)
 }
 
 export async function createUserConfig(payload: {
@@ -77,14 +122,27 @@ export async function deleteUserConfig(id: string): Promise<void> {
   return apiFetch<void>(`/api/v1/configs/${id}`, { method: 'DELETE' })
 }
 
+export async function createUserConfigVersion(
+  id: string,
+  payload: { name?: string; description?: string; configJson: Record<string, unknown> }
+): Promise<{ profileId: string; versionId: string; versionNumber: number; isCurrent: boolean; validationStatus: string }> {
+  return apiFetch(`/api/v1/configs/${id}/versions`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function applyConfigToVersion(
   versionId: string,
-  sourceType: 'SYSTEM' | 'USER',
-  sourceId: string
+  payload: {
+    sourceType?: 'SYSTEM' | 'USER'
+    sourceId?: string
+    configVersionId?: string
+  }
 ): Promise<{ id: string; name: string; validationStatus: string }> {
   return apiFetch(`/api/v1/versions/${versionId}/config/apply`, {
     method: 'POST',
-    body: JSON.stringify({ sourceType, sourceId }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -129,6 +187,18 @@ export async function getAdminSystemConfig(id: string): Promise<SystemConfigDeta
   return apiFetch(`/api/v1/admin/system-configs/${id}`)
 }
 
+export async function listAdminSystemConfigVersions(id: string): Promise<{
+  profileId: string
+  currentVersionId: string | null
+  data: ConfigVersionRecord[]
+}> {
+  return apiFetch(`/api/v1/admin/system-configs/${id}/versions`)
+}
+
+export async function getAdminSystemConfigVersion(id: string, versionId: string): Promise<ConfigVersionRecord> {
+  return apiFetch(`/api/v1/admin/system-configs/${id}/versions/${versionId}`)
+}
+
 export async function updateSystemConfig(
   id: string,
   payload: { name?: string; description?: string; configJson?: Record<string, unknown>; visibility?: 'ALL_USERS' | 'SPECIFIC_USERS' }
@@ -141,6 +211,16 @@ export async function updateSystemConfig(
 
 export async function deleteSystemConfig(id: string): Promise<void> {
   return apiFetch<void>(`/api/v1/admin/system-configs/${id}`, { method: 'DELETE' })
+}
+
+export async function createSystemConfigVersion(
+  id: string,
+  payload: { name?: string; description?: string; configJson: Record<string, unknown> }
+): Promise<{ profileId: string; versionId: string; versionNumber: number; isCurrent: boolean; validationStatus: string }> {
+  return apiFetch(`/api/v1/admin/system-configs/${id}/versions`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function updateSystemConfigVisibility(

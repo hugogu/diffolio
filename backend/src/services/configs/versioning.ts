@@ -19,9 +19,22 @@ export async function getCurrentConfigVersion(db: DbClient, profileId: string) {
   })
 }
 
+export async function getConfigVersionById(db: DbClient, versionId: string) {
+  return db.configVersion.findUnique({
+    where: { id: versionId },
+    include: {
+      profile: true,
+      createdByUser: {
+        select: { id: true, email: true },
+      },
+    },
+  })
+}
+
 export async function createConfigProfile(
   db: DbClient,
   input: {
+    id?: string
     ownerType: ConfigOwnerType
     ownerUserId?: string | null
     name: string
@@ -32,6 +45,7 @@ export async function createConfigProfile(
 ) {
   return db.configProfile.create({
     data: {
+      id: input.id,
       ownerType: input.ownerType,
       ownerUserId: input.ownerUserId ?? undefined,
       name: input.name,
@@ -83,6 +97,7 @@ export async function appendConfigVersion(
 export async function createConfigProfileVersion(
   db: DbClient,
   input: {
+    id?: string
     ownerType: ConfigOwnerType
     ownerUserId?: string | null
     name: string
@@ -99,6 +114,7 @@ export async function createConfigProfileVersion(
     : undefined
 
   const profile = await createConfigProfile(db, {
+    id: input.id,
     ownerType: input.ownerType,
     ownerUserId: input.ownerUserId ?? undefined,
     name: input.name,

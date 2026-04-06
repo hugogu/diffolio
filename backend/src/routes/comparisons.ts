@@ -3,6 +3,7 @@ import { authGuard, requireSessionUser } from '../lib/auth-guard.js'
 import { assertComparisonOwner, assertVersionOwner } from '../lib/ownership.js'
 import { notFound, badRequest, extractRootCause } from '../lib/errors.js'
 import { chargeComparisonEnergy } from '../services/subscription/energy.js'
+import { ensureVersionEntriesMaterializedFromArtifact } from '../services/parse-artifacts/persistence.js'
 
 type TagResponse = {
   id: string
@@ -36,6 +37,10 @@ const comparisonRoutes: FastifyPluginAsync = async (fastify) => {
       const { versionAId, versionBId } = request.body as { versionAId: string; versionBId: string }
       await assertVersionOwner(fastify.db, versionAId, user.id)
       await assertVersionOwner(fastify.db, versionBId, user.id)
+      await Promise.all([
+        ensureVersionEntriesMaterializedFromArtifact(fastify.db, versionAId),
+        ensureVersionEntriesMaterializedFromArtifact(fastify.db, versionBId),
+      ])
 
       const existing = await fastify.db.comparison.findUnique({
         where: { versionAId_versionBId: { versionAId, versionBId } },

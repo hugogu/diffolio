@@ -4,6 +4,7 @@ import path from 'node:path'
 import { authGuard, requireSessionUser, checkExportEnabled } from '../lib/auth-guard.js'
 import { assertComparisonOwner } from '../lib/ownership.js'
 import { notFound, badRequest, forbidden } from '../lib/errors.js'
+import { ensureVersionEntriesMaterializedFromArtifact } from '../services/parse-artifacts/persistence.js'
 
 const exportRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /api/v1/comparisons/:comparisonId/exports
@@ -17,6 +18,10 @@ const exportRoutes: FastifyPluginAsync = async (fastify) => {
       await assertComparisonOwner(fastify.db, comparisonId, user.id)
       const comparison = await fastify.db.comparison.findUnique({ where: { id: comparisonId } })
       if (!comparison) throw notFound('Comparison', comparisonId)
+      await Promise.all([
+        ensureVersionEntriesMaterializedFromArtifact(fastify.db, comparison.versionAId),
+        ensureVersionEntriesMaterializedFromArtifact(fastify.db, comparison.versionBId),
+      ])
 
       const body = (request.body ?? {}) as { senseChangeTypes?: string[]; orderBy?: string; taxonomySourceId?: string }
       const senseChangeTypes = Array.isArray(body.senseChangeTypes) && body.senseChangeTypes.length > 0

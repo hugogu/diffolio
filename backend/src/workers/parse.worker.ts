@@ -3,6 +3,17 @@ import IORedis from 'ioredis'
 import { PrismaClient } from '@prisma/client'
 import { ParseJobData } from '../plugins/bullmq.js'
 import { compileConfig } from '../services/config-engine.js'
+import { createParserFingerprint } from '../services/parse-artifacts/fingerprint.js'
+import { findSharedParseArtifactByKey } from '../services/parse-artifacts/query.js'
+import {
+  appendArtifactEntries,
+  bindParseArtifactToVersion,
+  ensureSharedParseArtifact,
+  materializeParseArtifactToVersion,
+  replaceArtifactEntryTree,
+} from '../services/parse-artifacts/persistence.js'
+import { ensureVersionConfigLinks } from '../services/configs/bootstrap.js'
+import { ensureTaskSharedFileAsset } from '../services/uploads/shared-file-assets.js'
 import { parseTxt } from '../services/parser/txt.parser.js'
 import { parseDoc } from '../services/parser/doc.parser.js'
 import { parseDocx } from '../services/parser/docx.parser.js'
@@ -34,13 +45,18 @@ async function processParseJob(job: Job<ParseJobData>) {
     where: { id: versionId },
     include: {
       formatConfig: true,
-      dictionary: { select: { id: true } },
+      dictionary: { select: { id: true, userId: true } },
     },
   })
 
   if (!version?.formatConfig) {
     throw new Error(`No valid FormatConfig found for version ${versionId}`)
   }
+  if (!version.dictionary.userId) {
+    throw new Error(`No owning user found for version ${versionId}`)
+  }
+
+  const configLink = await ensureVersionConfigLinks(prisma, versionId)
 
   // Resolve config inheritance if needed
   let configJson = version.formatConfig.configJson as unknown as FormatConfigJson
@@ -59,6 +75,77 @@ async function processParseJob(job: Job<ParseJobData>) {
   }
 
   const compiled = compileConfig(configJson)
+  const parserFingerprint = createParserFingerprint({ fileType, configJson })
+  const configVersionId = configLink?.configVersionId ?? version.formatConfig.configVersionId
+  const sharedFileAssetId = (await ensureTaskSharedFileAsset(prisma, taskId))?.id
+
+  if (!sharedFileAssetId || !configVersionId) {
+    throw new Error(`Shared parse reuse requires sharedFileAssetId and configVersionId for task ${taskId}`)
+  }
+
+  const existingArtifact = await findSharedParseArtifactByKey(prisma, {
+    sharedFileAssetId,
+    configVersionId,
+    parserFingerprint,
+  })
+
+  if (existingArtifact?.status === 'READY') {
+    await materializeParseArtifactToVersion(prisma, {
+      parseArtifactId: existingArtifact.id,
+      versionId,
+      taskId,
+    })
+
+    await bindParseArtifactToVersion(prisma, {
+      parseArtifactId: existingArtifact.id,
+      versionId,
+      parseTaskId: taskId,
+      userId: version.dictionary.userId,
+    })
+
+    await prisma.parseTask.update({
+      where: { id: taskId },
+      data: {
+        parseArtifactId: existingArtifact.id,
+        cacheHit: true,
+        status: 'COMPLETED',
+        processedEntries: existingArtifact.totalEntries,
+        totalEntries: existingArtifact.totalEntries,
+        failedEntries: existingArtifact.failedEntries,
+        checkpointOffset: existingArtifact.totalEntries,
+        completedAt: new Date(),
+      },
+    })
+
+    await redis.publish('parse:completed', JSON.stringify({
+      taskId,
+      status: 'COMPLETED',
+      processedEntries: existingArtifact.totalEntries,
+      failedEntries: existingArtifact.failedEntries,
+      cacheHit: true,
+      parseArtifactId: existingArtifact.id,
+      completedAt: new Date().toISOString(),
+    }))
+
+    return { processedEntries: existingArtifact.totalEntries, failedEntries: existingArtifact.failedEntries, cacheHit: true }
+  }
+
+  const parseArtifact = await ensureSharedParseArtifact(prisma, {
+    sharedFileAssetId,
+    configVersionId,
+    parserFingerprint,
+    status: 'BUILDING',
+    builtFromTaskId: taskId,
+  })
+
+  await replaceArtifactEntryTree(prisma, parseArtifact.id, [])
+  await prisma.parseTask.update({
+    where: { id: taskId },
+    data: {
+      parseArtifactId: parseArtifact.id,
+      cacheHit: false,
+    },
+  })
 
   // Choose parser
   type ChunkGenerator = ReturnType<typeof parseTxt>
@@ -141,6 +228,8 @@ async function processParseJob(job: Job<ParseJobData>) {
           })
           void dbEntry // suppress unused warning
         }
+
+        await appendArtifactEntries(tx, parseArtifact.id, chunk.entries)
       }, {
         maxWait: PRISMA_TRANSACTION_TIMEOUT_MS,
         timeout: PRISMA_TRANSACTION_TIMEOUT_MS,
@@ -191,9 +280,28 @@ async function processParseJob(job: Job<ParseJobData>) {
   }
 
   // Mark completed
+  await prisma.sharedParseArtifact.update({
+    where: { id: parseArtifact.id },
+    data: {
+      status: 'READY',
+      totalEntries: processedEntries,
+      failedEntries,
+      completedAt: new Date(),
+      builtFromTaskId: taskId,
+    },
+  })
+
+  await bindParseArtifactToVersion(prisma, {
+    parseArtifactId: parseArtifact.id,
+    versionId,
+    parseTaskId: taskId,
+    userId: version.dictionary.userId,
+  })
+
   await prisma.parseTask.update({
     where: { id: taskId },
     data: {
+      parseArtifactId: parseArtifact.id,
       status: 'COMPLETED',
       processedEntries,
       failedEntries,
@@ -227,10 +335,21 @@ worker.on('completed', (job) => {
 worker.on('failed', async (job, err) => {
   logger.error({ jobId: job?.id, err: err.message }, 'Parse job failed')
   if (job?.data?.taskId) {
-    await prisma.parseTask.update({
+    const task = await prisma.parseTask.update({
       where: { id: job.data.taskId },
       data: { status: 'FAILED' },
-    }).catch((e: Error) => logger.error({ err: e.message }, 'Failed to update task status to FAILED'))
+      select: { parseArtifactId: true },
+    }).catch((e: Error) => {
+      logger.error({ err: e.message }, 'Failed to update task status to FAILED')
+      return null
+    })
+
+    if (task?.parseArtifactId) {
+      await prisma.sharedParseArtifact.update({
+        where: { id: task.parseArtifactId },
+        data: { status: 'FAILED' },
+      }).catch((e: Error) => logger.error({ err: e.message }, 'Failed to update artifact status to FAILED'))
+    }
 
     // Persist a ParseError record so the errors page shows what went wrong.
     await prisma.parseError.create({

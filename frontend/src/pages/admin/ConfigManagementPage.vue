@@ -32,9 +32,10 @@
           <el-table-column :label="$t('common.updatedAt')" width="150">
             <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
           </el-table-column>
-          <el-table-column :label="$t('comparisons.actions')" width="96" fixed="right" align="right" header-align="right">
+          <el-table-column :label="$t('comparisons.actions')" width="144" fixed="right" align="right" header-align="right">
             <template #default="{ row }">
               <div class="table-actions is-admin">
+                <ActionButton kind="admin" :icon="View" :label="$t('admin.configManagement.view')" @click="openHistoryDialog(row.id, 'USER')" />
                 <ActionButton kind="admin" :icon="Edit" :label="$t('admin.systemConfigs.edit')" @click="openEditDialog(row.id)" />
                 <ActionButton kind="admin" type="danger" :icon="Delete" :label="$t('admin.systemConfigs.delete')" @click="handleDelete(row.id, row.name)" />
               </div>
@@ -98,6 +99,14 @@
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button
+          v-if="editingId"
+          type="success"
+          :loading="savingAsVersion"
+          @click="handleSaveAsVersion"
+        >
+          {{ $t('admin.configManagement.saveAsNewVersion') }}
+        </el-button>
         <el-button type="primary" :loading="saving" @click="handleSave">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
@@ -117,6 +126,35 @@
         <el-button type="primary" :loading="cloning" @click="handleClone">{{ $t('admin.configManagement.clone') }}</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="historyDialogVisible"
+      :title="historyTitle"
+      width="760px"
+    >
+      <el-table :data="historyVersions" v-loading="historyLoading" style="width: 100%">
+        <el-table-column prop="versionNumber" label="Version" width="100">
+          <template #default="{ row }">v{{ row.versionNumber }}</template>
+        </el-table-column>
+        <el-table-column prop="validationStatus" :label="$t('admin.systemConfigs.status')" width="120">
+          <template #default="{ row }">
+            <el-tag :type="statusTagType(row.validationStatus)" size="small">{{ row.validationStatus }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="contentHash" label="Hash" min-width="220" show-overflow-tooltip />
+        <el-table-column :label="$t('common.updatedAt')" width="180">
+          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="Current" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.isCurrent" type="success" size="small">current</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="historyDialogVisible = false">{{ $t('common.close') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -125,7 +163,13 @@ import { ref, onMounted } from 'vue'
 import { Plus, Edit, Delete, View } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useConfigsStore } from '@/stores/configs'
-import { getUserConfig, getSystemConfig, type SystemConfigDetail } from '@/api/configs'
+import {
+  getUserConfig,
+  getSystemConfig,
+  listSystemConfigVersions,
+  type ConfigVersionRecord,
+  type SystemConfigDetail,
+} from '@/api/configs'
 import JsonEditor from '@/components/common/JsonEditor.vue'
 import { useI18n } from 'vue-i18n'
 import ActionButton from '@/components/common/ActionButton.vue'
@@ -141,6 +185,7 @@ const loadingSystem = ref(false)
 const editDialogVisible = ref(false)
 const editingId = ref<string | null>(null)
 const saving = ref(false)
+const savingAsVersion = ref(false)
 const editErrors = ref<string[]>([])
 const editForm = ref({ name: '', description: '', configJson: '{}' })
 
@@ -148,6 +193,10 @@ const editForm = ref({ name: '', description: '', configJson: '{}' })
 const viewDialogVisible = ref(false)
 const viewingConfig = ref<SystemConfigDetail | null>(null)
 const cloning = ref(false)
+const historyDialogVisible = ref(false)
+const historyLoading = ref(false)
+const historyTitle = ref('')
+const historyVersions = ref<ConfigVersionRecord[]>([])
 
 onMounted(async () => {
   loadingUser.value = true
@@ -229,6 +278,38 @@ async function handleSave() {
   }
 }
 
+async function handleSaveAsVersion() {
+  if (!editingId.value) return
+  if (!editForm.value.name.trim()) {
+    ElMessage.warning(t('admin.configManagement.validation.nameRequired'))
+    return
+  }
+  let configJson: Record<string, unknown>
+  try {
+    configJson = JSON.parse(editForm.value.configJson)
+  } catch {
+    ElMessage.error(t('admin.configManagement.validation.jsonInvalid'))
+    return
+  }
+
+  savingAsVersion.value = true
+  editErrors.value = []
+  try {
+    await configsStore.saveConfigAsVersion(editingId.value, {
+      name: editForm.value.name,
+      description: editForm.value.description || undefined,
+      configJson,
+    })
+    editDialogVisible.value = false
+    ElMessage.success(t('admin.configManagement.saveSuccess'))
+  } catch (e: unknown) {
+    const apiErr = e as { details?: { errors?: string[] } }
+    editErrors.value = apiErr.details?.errors ?? [(e instanceof Error ? e.message : t('admin.configManagement.saveError'))]
+  } finally {
+    savingAsVersion.value = false
+  }
+}
+
 async function handleDelete(id: string, name: string) {
   try {
     await ElMessageBox.confirm(
@@ -259,6 +340,26 @@ async function openViewDialog(id: string) {
   } catch {
     ElMessage.error(t('admin.configManagement.loadError'))
     viewDialogVisible.value = false
+  }
+}
+
+async function openHistoryDialog(id: string, type: 'USER' | 'SYSTEM') {
+  historyDialogVisible.value = true
+  historyLoading.value = true
+  historyVersions.value = []
+  historyTitle.value = type === 'USER'
+    ? t('admin.configManagement.userConfigs')
+    : t('admin.configManagement.systemConfigs')
+
+  try {
+    historyVersions.value = type === 'USER'
+      ? await configsStore.loadConfigVersions('USER', id)
+      : (await listSystemConfigVersions(id)).data
+  } catch {
+    ElMessage.error(t('admin.configManagement.loadError'))
+    historyDialogVisible.value = false
+  } finally {
+    historyLoading.value = false
   }
 }
 

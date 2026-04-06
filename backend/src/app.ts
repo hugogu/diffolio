@@ -31,6 +31,7 @@ import adminFileRoutes from './routes/admin/files.js'
 import adminSubscriptionManageRoutes from './routes/admin/subscription-manage.js'
 import adminSubscriptionPlansRoutes from './routes/admin/subscription-plans.js'
 import adminParseErrorRoutes from './routes/admin/parse-errors.js'
+import adminParseArtifactRoutes from './routes/admin/parse-artifacts.js'
 import subscriptionRoutes from './routes/subscription.js'
 import energyRoutes from './routes/energy.js'
 import systemConfigRoutes from './routes/system-configs.js'
@@ -244,6 +245,7 @@ export async function buildApp(jwtSecret?: string): Promise<FastifyInstance> {
   await fastify.register(adminSubscriptionManageRoutes, { prefix: '/api/v1' })
   await fastify.register(adminSubscriptionPlansRoutes, { prefix: '/api/v1' })
   await fastify.register(adminParseErrorRoutes, { prefix: '/api/v1' })
+  await fastify.register(adminParseArtifactRoutes, { prefix: '/api/v1' })
   await fastify.register(subscriptionRoutes, { prefix: '/api/v1' })
   await fastify.register(energyRoutes, { prefix: '/api/v1' })
   await fastify.register(systemConfigRoutes, { prefix: '/api/v1' })

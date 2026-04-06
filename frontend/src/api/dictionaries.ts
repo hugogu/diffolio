@@ -25,6 +25,10 @@ export interface DictionaryVersion {
     id: string
     name: string
     validationStatus: 'PENDING' | 'VALID' | 'INVALID'
+    configProfileId?: string | null
+    configVersionId?: string | null
+    sourceConfigType?: 'SYSTEM' | 'USER' | null
+    sourceConfigId?: string | null
   } | null
 }
 

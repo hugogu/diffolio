@@ -51,6 +51,18 @@
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
+
+          <el-select
+            v-model="filters.unreferenced"
+            placeholder="引用状态"
+            clearable
+            style="width: 160px; margin-left: 10px"
+            @change="handleFilterChange"
+          >
+            <el-option label="全部引用状态" value="" />
+            <el-option label="仅未引用" value="true" />
+            <el-option label="仅仍在引用" value="false" />
+          </el-select>
         </div>
 
         <!-- Action buttons -->
@@ -137,6 +149,7 @@ const filters = reactive<FileFilters>({
   userId: undefined,
   fileType: undefined,
   search: '',
+  unreferenced: undefined,
 })
 
 const userOptions = ref<UserOption[]>([])
@@ -153,11 +166,18 @@ const sort = reactive<SortParams>({
 })
 
 const fileColumns: ColumnConfig<FileItem>[] = [
-  { key: 'originalFileName', title: t('admin.fileManagement.fileName'), sortable: true },
-  { key: 'userEmail', title: t('admin.fileManagement.user'), sortable: true, width: 200 },
-  { key: 'dictionaryName', title: t('admin.fileManagement.dictionary') },
-  { key: 'versionLabel', title: t('admin.fileManagement.version'), width: 100 },
+  { key: 'originalFileName', title: t('admin.fileManagement.fileName'), sortable: false },
+  { key: 'contentHash', title: t('admin.versionDetail.contentHash'), sortable: false, width: 220 },
   { key: 'fileType', title: t('admin.fileManagement.type'), width: 100 },
+  { key: 'referenceCount', title: 'Active Refs', sortable: true, width: 120 },
+  { key: 'historicalReferenceCount', title: 'History Refs', sortable: true, width: 120 },
+  { key: 'userCount', title: 'Users', sortable: true, width: 100 },
+  {
+    key: 'isUnreferenced',
+    title: 'State',
+    width: 120,
+    formatter: (row) => row.isUnreferenced ? 'Unreferenced' : 'Referenced',
+  },
   { 
     key: 'fileSize', 
     title: t('admin.fileManagement.size'), 
@@ -166,11 +186,11 @@ const fileColumns: ColumnConfig<FileItem>[] = [
     formatter: (row) => formatFileSize(row.fileSize),
   },
   { 
-    key: 'createdAt', 
-    title: t('admin.fileManagement.uploadTime'), 
+    key: 'lastReferencedAt',
+    title: 'Last Ref', 
     sortable: true, 
     width: 150,
-    formatter: (row) => formatDate(row.createdAt),
+    formatter: (row) => formatDate(row.lastReferencedAt),
   },
 ]
 
@@ -289,7 +309,7 @@ async function handleDownloadSelected() {
     for (const file of selectedFiles.value) {
       const response = await fetch(getFileDownloadUrl(file.id))
       const blob = await response.blob()
-      folder?.file(file.originalFileName, blob)
+      folder?.file(file.originalFileName ?? `${file.contentHash}.${file.fileType.toLowerCase()}`, blob)
     }
     
     const content = await zip.generateAsync({ type: 'blob' })

@@ -7,6 +7,7 @@ export interface ParseTask {
   fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
   originalFileName: string
   sharedFileAssetId?: string | null
+  parseArtifactId?: string | null
   contentHash?: string | null
   cacheHit?: boolean
   totalPages?: number | null
@@ -19,6 +20,13 @@ export interface ParseTask {
   completedAt?: string | null
   createdAt: string
   updatedAt: string
+  parseArtifact?: {
+    id: string
+    status: 'BUILDING' | 'READY' | 'FAILED'
+    totalEntries: number
+    failedEntries: number
+    configVersionId: string
+  } | null
 }
 
 export interface ParseError {

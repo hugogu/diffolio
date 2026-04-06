@@ -2,14 +2,16 @@ import { apiFetch } from './client'
 
 export interface FileItem {
   id: string
-  originalFileName: string
-  userId: string
-  userEmail: string
-  dictionaryName: string
-  versionLabel: string
+  originalFileName?: string | null
+  contentHash: string
   fileSize: number
-  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF'
-  createdAt: string
+  fileType: 'TXT' | 'DOC' | 'DOCX' | 'PDF' | 'MDX'
+  referenceCount: number
+  historicalReferenceCount: number
+  userCount: number
+  isUnreferenced: boolean
+  firstSeenAt: string
+  lastReferencedAt: string
 }
 
 export interface UserFileStats {
@@ -23,6 +25,7 @@ export interface FileFilters {
   userId?: string
   fileType?: string
   search?: string
+  unreferenced?: string
 }
 
 export interface SortParams {
@@ -56,6 +59,7 @@ export async function listFiles(params: ListFilesParams = {}): Promise<ListFiles
   if (params.userId) qs.set('userId', params.userId)
   if (params.fileType) qs.set('fileType', params.fileType)
   if (params.search) qs.set('search', params.search)
+  if (params.unreferenced) qs.set('unreferenced', params.unreferenced)
   if (params.sortBy) qs.set('sortBy', params.sortBy)
   if (params.sortOrder) qs.set('sortOrder', params.sortOrder)
   return apiFetch<ListFilesResponse>(`/api/v1/admin/files?${qs}`)

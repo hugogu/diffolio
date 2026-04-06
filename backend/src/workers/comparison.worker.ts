@@ -5,6 +5,7 @@ import { ComparisonJobData } from '../plugins/bullmq.js'
 import { align } from '../services/aligner.js'
 import logger from '../lib/worker-logger.js'
 import { diffSenses } from '../services/differ.js'
+import { ensureVersionEntriesMaterializedFromArtifact } from '../services/parse-artifacts/persistence.js'
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379'
 const redis = new IORedis(REDIS_URL, { maxRetriesPerRequest: null })
@@ -25,6 +26,10 @@ async function processComparisonJob(job: Job<ComparisonJobData>) {
     if (!comparison) throw new Error(`Comparison ${comparisonId} not found`)
 
     const { versionAId, versionBId } = comparison
+    await Promise.all([
+      ensureVersionEntriesMaterializedFromArtifact(prisma, versionAId),
+      ensureVersionEntriesMaterializedFromArtifact(prisma, versionBId),
+    ])
 
     // ── Step 1: Align entries ─────────────────────────────────────────────
     await redis.publish('comparison:progress', JSON.stringify({

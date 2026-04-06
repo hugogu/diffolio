@@ -28,12 +28,7 @@
         :type="uploadMeta.reusedFromExistingAsset ? 'success' : 'info'"
         show-icon
         :closable="false"
-      >
-        <template #default>
-          <div class="upload-meta-line">{{ t('upload.sharedAssetId') }}：{{ uploadMeta.sharedFileAssetId }}</div>
-          <div class="upload-meta-line">{{ t('upload.contentHash') }}：{{ uploadMeta.contentHash }}</div>
-        </template>
-      </el-alert>
+      />
 
       <div class="progress-header">
         <span>{{ t('upload.parsingProgress') }}</span>
@@ -102,8 +97,6 @@ const emit = defineEmits<{ taskCreated: [taskId: string] }>()
 const maxSizeMb = props.maxSizeMb ?? 500
 const taskId = ref<string | null>(null)
 const uploadMeta = ref<{
-  sharedFileAssetId: string
-  contentHash: string
   reusedFromExistingAsset: boolean
 } | null>(null)
 
@@ -121,8 +114,6 @@ function beforeUpload(file: UploadRawFile): boolean {
 function handleUploadSuccess(response: {
   id?: string
   taskId?: string
-  sharedFileAssetId?: string
-  contentHash?: string
   reusedFromExistingAsset?: boolean
 }) {
   const resolvedTaskId = response?.taskId ?? response?.id
@@ -130,12 +121,8 @@ function handleUploadSuccess(response: {
     taskId.value = resolvedTaskId
     emit('taskCreated', resolvedTaskId)
   }
-  if (response?.sharedFileAssetId && response?.contentHash) {
-    uploadMeta.value = {
-      sharedFileAssetId: response.sharedFileAssetId,
-      contentHash: response.contentHash,
-      reusedFromExistingAsset: Boolean(response.reusedFromExistingAsset),
-    }
+  uploadMeta.value = {
+    reusedFromExistingAsset: Boolean(response?.reusedFromExistingAsset),
   }
 }
 
@@ -221,9 +208,5 @@ const statusLabel = computed(() => {
 
 .error-link {
   text-align: right;
-}
-
-.upload-meta-line {
-  word-break: break-all;
 }
 </style>
