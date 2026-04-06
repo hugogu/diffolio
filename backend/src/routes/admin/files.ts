@@ -326,6 +326,7 @@ const adminFileRoutes: FastifyPluginAsync = async (fastify) => {
     return { data: stats }
   })
 
+  // Admin "delete" detaches active version references; shared assets remain retained.
   fastify.delete('/admin/files', {
     preHandler: authGuard({ role: 'ADMIN' }),
   }, async (request) => {

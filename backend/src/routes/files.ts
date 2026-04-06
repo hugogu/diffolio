@@ -244,7 +244,7 @@ const fileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   )
 
-  // DELETE /api/v1/versions/:versionId/file — delete uploaded file(s) and reset version to uploadable state
+  // DELETE /api/v1/versions/:versionId/file — detach the active file reference and reset the version to uploadable state
   fastify.delete(
     '/versions/:versionId/file',
     { preHandler: authGuard() },

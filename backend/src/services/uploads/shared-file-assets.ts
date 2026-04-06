@@ -124,6 +124,14 @@ export async function getActiveVersionFileContext(db: DbClient, versionId: strin
     }
   }
 
+  const hasHistoricalReferences = await db.versionFileReference.findFirst({
+    where: { versionId },
+    select: { id: true },
+  })
+  if (hasHistoricalReferences) {
+    return null
+  }
+
   const legacyTask = await db.parseTask.findFirst({
     where: {
       versionId,
@@ -249,6 +257,14 @@ export async function ensureVersionActiveFileReference(
   const existingContext = await getActiveVersionFileContext(db, versionId)
   if (existingContext && !existingContext.isLegacyFallback) {
     return existingContext
+  }
+
+  const hasHistoricalReferences = await db.versionFileReference.findFirst({
+    where: { versionId },
+    select: { id: true },
+  })
+  if (hasHistoricalReferences) {
+    return null
   }
 
   const version = await db.dictionaryVersion.findUnique({

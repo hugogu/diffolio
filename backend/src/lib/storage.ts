@@ -168,6 +168,8 @@ export function discardStagedUpload(tempFilePath: string): void {
   }
 }
 
+// Legacy helper kept for transient file flows such as conversions.
+// Dictionary source uploads now go through the shared-storage staging path above.
 export async function saveFile(
   stream: Readable,
   filename: string
@@ -201,6 +203,8 @@ export function getStoredFileSize(filePath: string): number {
   return fs.statSync(filePath).size
 }
 
+// Legacy helper for transient files only. Version source files are now detached
+// by reference and retained in shared storage instead of being physically deleted.
 export function deleteFile(filePath: string): boolean {
   try {
     fs.unlinkSync(filePath)
