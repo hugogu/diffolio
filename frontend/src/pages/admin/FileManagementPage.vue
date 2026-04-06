@@ -54,14 +54,14 @@
 
           <el-select
             v-model="filters.unreferenced"
-            placeholder="引用状态"
+            :placeholder="$t('admin.fileManagement.referenceStatus')"
             clearable
             style="width: 160px; margin-left: 10px"
             @change="handleFilterChange"
           >
-            <el-option label="全部引用状态" value="" />
-            <el-option label="仅未引用" value="true" />
-            <el-option label="仅仍在引用" value="false" />
+            <el-option :label="$t('admin.fileManagement.allReferenceStates')" value="" />
+            <el-option :label="$t('admin.fileManagement.unreferencedOnly')" value="true" />
+            <el-option :label="$t('admin.fileManagement.referencedOnly')" value="false" />
           </el-select>
         </div>
 
@@ -167,16 +167,18 @@ const sort = reactive<SortParams>({
 
 const fileColumns: ColumnConfig<FileItem>[] = [
   { key: 'originalFileName', title: t('admin.fileManagement.fileName'), sortable: false },
-  { key: 'contentHash', title: t('admin.versionDetail.contentHash'), sortable: false, width: 220 },
+  { key: 'contentHash', title: t('admin.fileManagement.contentHash'), sortable: false, width: 220 },
   { key: 'fileType', title: t('admin.fileManagement.type'), width: 100 },
-  { key: 'referenceCount', title: 'Active Refs', sortable: true, width: 120 },
-  { key: 'historicalReferenceCount', title: 'History Refs', sortable: true, width: 120 },
-  { key: 'userCount', title: 'Users', sortable: true, width: 100 },
+  { key: 'referenceCount', title: t('admin.fileManagement.activeRefs'), sortable: true, width: 120 },
+  { key: 'historicalReferenceCount', title: t('admin.fileManagement.historyRefs'), sortable: true, width: 120 },
+  { key: 'userCount', title: t('admin.fileManagement.users'), sortable: true, width: 100 },
   {
     key: 'isUnreferenced',
-    title: 'State',
+    title: t('admin.fileManagement.state'),
     width: 120,
-    formatter: (row) => row.isUnreferenced ? 'Unreferenced' : 'Referenced',
+    formatter: (row) => row.isUnreferenced
+      ? t('admin.fileManagement.stateUnreferenced')
+      : t('admin.fileManagement.stateReferenced'),
   },
   { 
     key: 'fileSize', 
@@ -187,7 +189,7 @@ const fileColumns: ColumnConfig<FileItem>[] = [
   },
   { 
     key: 'lastReferencedAt',
-    title: 'Last Ref', 
+    title: t('admin.fileManagement.lastReferencedAt'),
     sortable: true, 
     width: 150,
     formatter: (row) => formatDate(row.lastReferencedAt),
