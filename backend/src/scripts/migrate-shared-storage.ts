@@ -743,6 +743,7 @@ async function runPhase(
   batchSize: number
 ) {
   const batch = await claimBatch(prisma, kind)
+  console.log(`[${kind}] batch=${batch.id} dryRun=${dryRun} batchSize=${batchSize} — starting`)
 
   try {
     if (kind === 'CONFIGS') {
@@ -759,8 +760,12 @@ async function runPhase(
       notes: { dryRun, stage: 'done' },
       cursor: { stage: 'done', lastId: null },
     })
+
+    const done = await prisma.migrationBatch.findUnique({ where: { id: batch.id } })
+    console.log(`[${kind}] COMPLETED processed=${done?.processedCount ?? 0} errors=${done?.errorCount ?? 0}`)
   } catch (error) {
     await failBatch(prisma, batch.id, error)
+    console.error(`[${kind}] FAILED:`, error)
     throw error
   }
 }
@@ -771,12 +776,15 @@ async function main() {
   const dryRun = Boolean(args.get('dry-run'))
   const batchSize = Math.max(1, parseInt(String(args.get('batch-size') ?? '100'), 10))
 
+  console.log(`migrate-shared-storage kinds=${requestedKinds.join(',')} dryRun=${dryRun} batchSize=${batchSize}`)
+
   const prisma = new PrismaClient()
 
   try {
     for (const kind of requestedKinds) {
       await runPhase(prisma, kind, dryRun, batchSize)
     }
+    console.log('All phases done.')
   } finally {
     await prisma.$disconnect()
   }
