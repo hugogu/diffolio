@@ -89,3 +89,50 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
 </div>`,
   })
 }
+
+export async function sendPasswordResetEmail(to: string, token: string): Promise<void> {
+  const baseUrl = process.env.APP_BASE_URL ?? 'http://localhost:5173'
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`
+  const from = resolveVerificationFromAddress()
+  const ttl = process.env.RESET_PASSWORD_TOKEN_TTL_HOURS ?? '2'
+
+  if (!process.env.SMTP_HOST) {
+    console.log(`[email] SMTP not configured — skipping send. Password reset URL for ${to}:`)
+    console.log(`[email] ${resetUrl}`)
+    return
+  }
+
+  const transport = createTransport()
+  await transport.sendMail({
+    from,
+    to,
+    subject: '辞书研习平台密码重置',
+    text: `您好！\n\n我们收到了您的密码重置请求。请点击以下链接设置新密码：\n\n${resetUrl}\n\n该链接将在 ${ttl} 小时后失效。如果这不是您的操作，请忽略本邮件，您的密码不会被修改。`,
+    html: `<div style="margin:0;padding:24px;background:#f3f6fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
+    <tr>
+      <td style="padding:28px 28px 10px 28px;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);color:#ffffff;">
+        <div style="font-size:18px;font-weight:700;letter-spacing:.2px;">辞书研习平台</div>
+        <div style="margin-top:8px;font-size:14px;opacity:.9;">密码重置</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 28px 8px 28px;">
+        <p style="margin:0 0 12px 0;font-size:16px;line-height:1.7;">您好，</p>
+        <p style="margin:0 0 14px 0;font-size:15px;line-height:1.8;color:#374151;">我们收到了您的密码重置请求。请点击下方按钮设置新密码，重置链接将在 <strong>${ttl} 小时</strong>后失效。</p>
+        <p style="margin:22px 0 22px 0;">
+          <a href="${resetUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:10px;">设置新密码</a>
+        </p>
+        <p style="margin:0 0 10px 0;font-size:13px;line-height:1.7;color:#6b7280;">若按钮无法点击，请复制以下链接到浏览器打开：</p>
+        <p style="margin:0 0 18px 0;font-size:13px;line-height:1.8;word-break:break-all;"><a href="${resetUrl}" style="color:#1d4ed8;text-decoration:underline;">${resetUrl}</a></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 28px 22px 28px;border-top:1px solid #e5e7eb;">
+        <p style="margin:0;font-size:12px;line-height:1.8;color:#6b7280;">如果您没有发起本次请求，请忽略此邮件，您的密码不会发生变化。</p>
+      </td>
+    </tr>
+  </table>
+</div>`,
+  })
+}

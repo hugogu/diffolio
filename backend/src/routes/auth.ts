@@ -4,19 +4,29 @@ import { randomUUID } from 'node:crypto'
 import { unauthorized, badRequest, conflict, tooManyRequests, internalError, extractRootCause } from '../lib/errors.js'
 import { authGuard, getSessionUser, SessionUser } from '../lib/auth-guard.js'
 import { validatePassword } from '../lib/password-validator.js'
-import { sendVerificationEmail } from '../lib/email.js'
+import { sendPasswordResetEmail, sendVerificationEmail } from '../lib/email.js'
 import { z } from 'zod'
 
-const TTL_HOURS = parseInt(process.env.VERIFICATION_TOKEN_TTL_HOURS ?? '24', 10)
+const VERIFICATION_TTL_HOURS = parseInt(process.env.VERIFICATION_TOKEN_TTL_HOURS ?? '24', 10)
+const RESET_PASSWORD_TTL_HOURS = parseInt(process.env.RESET_PASSWORD_TOKEN_TTL_HOURS ?? '2', 10)
 
 // Simple in-memory rate limit for resend-verification (max 3 per email per hour)
 const resendCounts = new Map<string, { count: number; resetAt: number }>()
+const forgotPasswordCounts = new Map<string, { count: number; resetAt: number }>()
 
 function checkResendRateLimit(email: string): boolean {
+  return checkSimpleRateLimit(resendCounts, email)
+}
+
+function checkForgotPasswordRateLimit(email: string): boolean {
+  return checkSimpleRateLimit(forgotPasswordCounts, email)
+}
+
+function checkSimpleRateLimit(store: Map<string, { count: number; resetAt: number }>, key: string): boolean {
   const now = Date.now()
-  const entry = resendCounts.get(email)
+  const entry = store.get(key)
   if (!entry || now > entry.resetAt) {
-    resendCounts.set(email, { count: 1, resetAt: now + 60 * 60 * 1000 })
+    store.set(key, { count: 1, resetAt: now + 60 * 60 * 1000 })
     return true
   }
   if (entry.count >= 3) return false
@@ -55,7 +65,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
       const passwordHash = await bcrypt.hash(password!, 12)
       const verificationToken = randomUUID()
-      const verificationTokenExpiry = new Date(Date.now() + TTL_HOURS * 60 * 60 * 1000)
+      const verificationTokenExpiry = new Date(Date.now() + VERIFICATION_TTL_HOURS * 60 * 60 * 1000)
 
       await fastify.db.user.create({
         data: {
@@ -130,7 +140,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const user = await fastify.db.user.findUnique({ where: { email } })
       if (user && !user.emailVerified) {
         const verificationToken = randomUUID()
-        const verificationTokenExpiry = new Date(Date.now() + TTL_HOURS * 60 * 60 * 1000)
+        const verificationTokenExpiry = new Date(Date.now() + VERIFICATION_TTL_HOURS * 60 * 60 * 1000)
         await fastify.db.user.update({
           where: { id: user.id },
           data: { verificationToken, verificationTokenExpiry },
@@ -144,6 +154,99 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       reply.send({ message: '如该邮箱已注册且未验证，验证邮件已重新发送。' })
+    } catch (error) {
+      throw error
+    }
+  })
+
+  // POST /api/v1/auth/forgot-password
+  fastify.post('/auth/forgot-password', async (request, reply) => {
+    try {
+      const { email } = request.body as { email?: string }
+
+      if (!email) {
+        return reply.send({ message: '如该邮箱已注册，我们会向其发送密码重置邮件。' })
+      }
+
+      const emailParsed = z.string().email().safeParse(email)
+      if (!emailParsed.success) {
+        throw badRequest('Invalid email address', [{ field: 'email', message: 'Must be a valid email address' }])
+      }
+
+      if (!checkForgotPasswordRateLimit(email)) {
+        throw tooManyRequests('Too many password reset requests. Please wait before trying again.', 3600)
+      }
+
+      const user = await fastify.db.user.findUnique({ where: { email } })
+      if (user && user.emailVerified && !user.disabled) {
+        const resetPasswordToken = randomUUID()
+        const resetPasswordTokenExpiry = new Date(Date.now() + RESET_PASSWORD_TTL_HOURS * 60 * 60 * 1000)
+        await fastify.db.user.update({
+          where: { id: user.id },
+          data: { resetPasswordToken, resetPasswordTokenExpiry },
+        })
+
+        try {
+          await sendPasswordResetEmail(email, resetPasswordToken)
+        } catch (err: unknown) {
+          const msg = extractRootCause(err)
+          fastify.log.error({ err }, `[forgot-password] Failed to send password reset email to ${email}`)
+          throw internalError(`密码重置邮件发送失败：${msg}`, msg)
+        }
+      }
+
+      reply.send({ message: '如该邮箱已注册，我们会向其发送密码重置邮件。' })
+    } catch (error) {
+      throw error
+    }
+  })
+
+  // GET /api/v1/auth/reset-password/validate?token=...
+  fastify.get('/auth/reset-password/validate', async (request, reply) => {
+    try {
+      const { token } = request.query as { token?: string }
+      if (!token) throw badRequest('Password reset token is required')
+
+      const user = await fastify.db.user.findUnique({ where: { resetPasswordToken: token } })
+      if (!user || user.disabled || !user.resetPasswordTokenExpiry || user.resetPasswordTokenExpiry < new Date()) {
+        throw badRequest('Invalid or expired password reset link')
+      }
+
+      reply.status(204).send()
+    } catch (error) {
+      throw error
+    }
+  })
+
+  // POST /api/v1/auth/reset-password
+  fastify.post('/auth/reset-password', async (request, reply) => {
+    try {
+      const { token, newPassword } = request.body as { token?: string; newPassword?: string }
+      if (!token || !newPassword) {
+        throw badRequest('token and newPassword are required')
+      }
+
+      const user = await fastify.db.user.findUnique({ where: { resetPasswordToken: token } })
+      if (!user || user.disabled || !user.resetPasswordTokenExpiry || user.resetPasswordTokenExpiry < new Date()) {
+        throw badRequest('Invalid or expired password reset link')
+      }
+
+      const pwResult = validatePassword(newPassword)
+      if (!pwResult.valid) {
+        throw badRequest('Password does not meet requirements', pwResult.issues.map((m) => ({ field: 'newPassword', message: m })))
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 12)
+      await fastify.db.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash,
+          resetPasswordToken: null,
+          resetPasswordTokenExpiry: null,
+        },
+      })
+
+      reply.send({ message: '密码已重置，您现在可以使用新密码登录。' })
     } catch (error) {
       throw error
     }
@@ -231,7 +334,14 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const newHash = await bcrypt.hash(newPassword, 12)
-      await fastify.db.user.update({ where: { id: sessionUser.id }, data: { passwordHash: newHash } })
+      await fastify.db.user.update({
+        where: { id: sessionUser.id },
+        data: {
+          passwordHash: newHash,
+          resetPasswordToken: null,
+          resetPasswordTokenExpiry: null,
+        },
+      })
 
       reply.status(204).send()
     } catch (error) {

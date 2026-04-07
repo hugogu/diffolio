@@ -17,6 +17,18 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/forgot-password',
+      name: 'ForgotPassword',
+      component: () => import('@/pages/ForgotPasswordPage.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/reset-password',
+      name: 'ResetPassword',
+      component: () => import('@/pages/ResetPasswordPage.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/verify-email',
       name: 'VerifyEmail',
       component: () => import('@/pages/VerifyEmailPage.vue'),

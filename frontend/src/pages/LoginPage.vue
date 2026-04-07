@@ -35,6 +35,10 @@
           />
         </el-form-item>
 
+        <div class="login-actions">
+          <router-link class="forgot-link" to="/forgot-password">{{ $t('auth.login.forgotPassword') }}</router-link>
+        </div>
+
         <el-alert
           v-if="errorMessage"
           :title="errorMessage"
@@ -150,5 +154,15 @@ h2 {
   text-align: center;
   font-size: 14px;
   color: var(--color-text-secondary);
+}
+
+.login-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 16px;
+}
+
+.forgot-link {
+  font-size: 13px;
 }
 </style>

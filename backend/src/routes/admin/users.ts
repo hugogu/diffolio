@@ -230,7 +230,14 @@ const adminUserRoutes: FastifyPluginAsync = async (fastify) => {
       if (user.role === 'ADMIN') throw badRequest('Cannot reset password for an admin account')
 
       const newHash = await bcrypt.hash(DEFAULT_PASSWORD, 12)
-      await fastify.db.user.update({ where: { id }, data: { passwordHash: newHash } })
+      await fastify.db.user.update({
+        where: { id },
+        data: {
+          passwordHash: newHash,
+          resetPasswordToken: null,
+          resetPasswordTokenExpiry: null,
+        },
+      })
 
       return { message: `用户 ${user.email} 的密码已重置为默认密码` }
     } catch (error) {

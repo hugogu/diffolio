@@ -467,6 +467,28 @@
       "error": "Verification failed, link may have expired",
       "login": "Go to Login"
     },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your registered email and we'll send you a reset link",
+      "email": "Email",
+      "emailPlaceholder": "Enter your registered email",
+      "submit": "Send Reset Email",
+      "successTitle": "Reset Email Sent",
+      "successMessage": "If this email is registered, a password reset email has been sent. Please check your inbox."
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Set a new password for your account",
+      "validating": "Validating reset link...",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Reset Password",
+      "successTitle": "Password Reset Successful",
+      "successMessage": "Your password has been updated. You can now sign in with the new password.",
+      "invalidTitle": "Reset Link Unavailable",
+      "invalidMessage": "This reset link is invalid or has expired. Please request a new one.",
+      "requestAgain": "Request Again"
+    },
     "changePassword": {
       "title": "Change Password",
       "currentPassword": "Current Password",

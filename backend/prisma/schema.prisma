@@ -13,33 +13,35 @@ datasource db {
 // ─────────────────────────────────────────────
 
 model User {
-  id                      String    @id @default(uuid())
-  username                String?   @unique
-  email                   String    @unique
-  emailVerified           Boolean   @default(false) @map("email_verified")
-  verificationToken       String?   @map("verification_token")
-  verificationTokenExpiry DateTime? @map("verification_token_expiry")
-  passwordHash            String    @map("password_hash")
-  role                    UserRole  @default(REGULAR)
-  exportEnabled           Boolean   @default(false) @map("export_enabled")
-  maxVersions             Int       @default(2) @map("max_versions")
-  maxBooks                Int       @default(1) @map("max_books")
-  canEditBuiltinConfigs   Boolean   @default(false) @map("can_edit_builtin_configs")
-  watermarkEnabled        Boolean   @default(true) @map("watermark_enabled")
-  disabled                Boolean   @default(false) @map("disabled")
-  agreedToTerms           Boolean   @default(false) @map("agreed_to_terms")
-  termsAgreedAt           DateTime? @map("terms_agreed_at")
-  lastLoginAt             DateTime? @map("last_login_at")
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @updatedAt @map("updated_at")
+  id                       String    @id @default(uuid())
+  username                 String?   @unique
+  email                    String    @unique
+  emailVerified            Boolean   @default(false) @map("email_verified")
+  verificationToken        String?   @map("verification_token")
+  verificationTokenExpiry  DateTime? @map("verification_token_expiry")
+  resetPasswordToken       String?   @unique @map("reset_password_token")
+  resetPasswordTokenExpiry DateTime? @map("reset_password_token_expiry")
+  passwordHash             String    @map("password_hash")
+  role                     UserRole  @default(REGULAR)
+  exportEnabled            Boolean   @default(false) @map("export_enabled")
+  maxVersions              Int       @default(2) @map("max_versions")
+  maxBooks                 Int       @default(1) @map("max_books")
+  canEditBuiltinConfigs    Boolean   @default(false) @map("can_edit_builtin_configs")
+  watermarkEnabled         Boolean   @default(true) @map("watermark_enabled")
+  disabled                 Boolean   @default(false) @map("disabled")
+  agreedToTerms            Boolean   @default(false) @map("agreed_to_terms")
+  termsAgreedAt            DateTime? @map("terms_agreed_at")
+  lastLoginAt              DateTime? @map("last_login_at")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
 
-  dictionaries            Dictionary[]
-  taxonomySources         TaxonomySource[]
-  subscription            UserSubscription?
-  energyBalance           EnergyBalance?
-  energyEvents            EnergyEvent[]
-  wordUnlocks             WordUnlock[]
-  entryTags               EntryTag[]
+  dictionaries             Dictionary[]
+  taxonomySources          TaxonomySource[]
+  subscription             UserSubscription?
+  energyBalance            EnergyBalance?
+  energyEvents             EnergyEvent[]
+  wordUnlocks              WordUnlock[]
+  entryTags                EntryTag[]
   systemFormatConfigs      SystemFormatConfig[]
   systemConfigVisibilities SystemConfigVisibility[]
   userFormatConfigs        UserFormatConfig[]
@@ -576,10 +578,10 @@ model Entry {
   createdAt          DateTime          @default(now()) @map("created_at")
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
-  senses             Sense[]
-  alignmentsAsA      EntryAlignment[]  @relation("AlignEntryA")
-  alignmentsAsB      EntryAlignment[]  @relation("AlignEntryB")
-  tagAssignments     EntryTagAssignment[]
+  senses         Sense[]
+  alignmentsAsA  EntryAlignment[]     @relation("AlignEntryA")
+  alignmentsAsB  EntryAlignment[]     @relation("AlignEntryB")
+  tagAssignments EntryTagAssignment[]
 
   @@index([versionId, normalizedHeadword])
   @@map("entries")

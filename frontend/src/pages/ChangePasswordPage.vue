@@ -70,13 +70,13 @@ const rules: FormRules = {
   currentPassword: [{ required: true, message: t('auth.changePassword.currentPassword'), trigger: 'blur' }],
   newPassword: [
     { required: true, message: t('auth.changePassword.newPassword'), trigger: 'blur' },
-    { min: 8, message: t('auth.register.error'), trigger: 'blur' },
+    { min: 6, message: t('auth.register.errors.passwordTooShort'), trigger: 'blur' },
   ],
   confirmPassword: [
     { required: true, message: t('auth.changePassword.confirmPassword'), trigger: 'blur' },
     {
       validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => {
-        if (value !== form.value.newPassword) callback(new Error(t('auth.register.error')))
+        if (value !== form.value.newPassword) callback(new Error(t('auth.register.errors.passwordMismatch')))
         else callback()
       },
       trigger: 'blur',
