@@ -4,6 +4,7 @@ export interface UserInfo {
   id: string
   email: string
   role: 'ADMIN' | 'REGULAR' | 'SUBSCRIBED'
+  emailVerified: boolean
   exportEnabled: boolean
   maxVersions: number
   maxBooks: number

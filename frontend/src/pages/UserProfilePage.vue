@@ -8,6 +8,7 @@
       <p class="user-email-line">
         <el-icon><User /></el-icon>
         {{ authStore.user?.email }}
+        <el-tag v-if="!authStore.user?.emailVerified" size="small" type="warning">{{ $t('profile.emailNotVerified') }}</el-tag>
         <el-tag size="small" :type="authStore.user?.role === 'ADMIN' ? 'danger' : 'info'">
           {{ authStore.user?.role }}
         </el-tag>

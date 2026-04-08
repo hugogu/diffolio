@@ -5,6 +5,7 @@ export interface SessionUser {
   id: string
   email: string
   role: 'ADMIN' | 'REGULAR' | 'READER' | 'SUBSCRIBED'
+  emailVerified: boolean
   exportEnabled: boolean
   maxVersions: number
   maxBooks: number

@@ -154,6 +154,7 @@
   "profile": {
     "title": "Profile",
     "changePassword": "Change Password",
+    "emailNotVerified": "Email Not Verified",
     "myDesk": "My Desk",
     "donationPlan": "Donation Plan",
     "bookSlots": "Book Slots",
@@ -428,7 +429,13 @@
       "noAccount": "Don't have an account?",
       "registerLink": "Register now",
       "success": "Login successful",
-      "error": "Login failed, please check your email and password"
+      "error": "Login failed, please check your email and password",
+      "errors": {
+        "missingCredentials": "Please enter email and password",
+        "userNotFound": "This email is not registered",
+        "accountDisabled": "Account has been disabled, please contact administrator",
+        "invalidPassword": "Incorrect password"
+      }
     },
     "register": {
       "title": "Register",

@@ -111,6 +111,14 @@ async function handleSubmit() {
   } catch (error: any) {
     if (error?.status === 502 || error?.status === 503 || error?.status === 504) {
       errorMessage.value = t('common.error')
+    } else if (error?.code === 'MISSING_CREDENTIALS') {
+      errorMessage.value = t('auth.login.errors.missingCredentials')
+    } else if (error?.code === 'USER_NOT_FOUND') {
+      errorMessage.value = t('auth.login.errors.userNotFound')
+    } else if (error?.code === 'ACCOUNT_DISABLED') {
+      errorMessage.value = t('auth.login.errors.accountDisabled')
+    } else if (error?.code === 'INVALID_PASSWORD') {
+      errorMessage.value = t('auth.login.errors.invalidPassword')
     } else if (error?.status === 401 || error?.code === 'UNAUTHORIZED') {
       errorMessage.value = t('auth.login.error')
     } else {

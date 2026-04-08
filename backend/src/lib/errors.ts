@@ -45,8 +45,8 @@ export function badRequest(message: string, details?: unknown, rootCause?: strin
 /**
  * HTTP 401 - Unauthorized
  */
-export function unauthorized(message = 'Authentication required', rootCause?: string): ApiError {
-  return new ApiError(401, 'UNAUTHORIZED', message, undefined, rootCause)
+export function unauthorized(message = 'Authentication required', code = 'UNAUTHORIZED', rootCause?: string): ApiError {
+  return new ApiError(401, code, message, undefined, rootCause)
 }
 
 /**

@@ -256,19 +256,28 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/auth/login', async (request, reply) => {
     try {
       const { email, password } = request.body as { email?: string; password?: string }
-      if (!email || !password) throw unauthorized('Invalid credentials')
+      if (!email || !password) {
+        throw unauthorized('Email and password are required', 'MISSING_CREDENTIALS')
+      }
 
       const user = await fastify.db.user.findUnique({ where: { email } })
-      if (!user || !user.emailVerified) throw unauthorized('Invalid credentials')
-      if (user.disabled) throw unauthorized('Account has been disabled')
+      if (!user) {
+        throw unauthorized('User not found', 'USER_NOT_FOUND')
+      }
+      if (user.disabled) {
+        throw unauthorized('Account has been disabled', 'ACCOUNT_DISABLED')
+      }
 
       const valid = await bcrypt.compare(password, user.passwordHash)
-      if (!valid) throw unauthorized('Invalid credentials')
+      if (!valid) {
+        throw unauthorized('Invalid password', 'INVALID_PASSWORD')
+      }
 
       const sessionUser: SessionUser = {
         id: user.id,
         email: user.email,
         role: user.role,
+        emailVerified: user.emailVerified,
         exportEnabled: user.exportEnabled,
         maxVersions: user.maxVersions,
         maxBooks: user.maxBooks,
@@ -369,6 +378,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         id: user.id,
         email: user.email,
         role: user.role,
+        emailVerified: user.emailVerified,
         exportEnabled: user.exportEnabled,
         maxVersions: user.maxVersions,
         maxBooks: user.maxBooks,
