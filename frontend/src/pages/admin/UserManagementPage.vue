@@ -110,15 +110,16 @@
     </el-table>
 
     <div class="pagination">
-      <el-pagination
-        v-model:current-page="page"
-        v-model:page-size="pageSize"
-        :total="total"
-        :page-sizes="[20, 50, 100]"
-        layout="total, sizes, prev, pager, next"
-        @change="handlePaginationChange"
-      />
-    </div>
+    <el-pagination
+      v-model:current-page="page"
+      v-model:page-size="pageSize"
+      :total="total"
+      :page-sizes="[20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
+      @current-change="handlePaginationChange"
+      @size-change="handlePaginationChange"
+    />
+  </div>
 
     <UserEditDialog
       v-if="editingUser"
@@ -136,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs } from 'vue'
+import { ref, toRefs, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { MoreFilled } from '@element-plus/icons-vue'
@@ -168,6 +169,7 @@ const { state: routeState, updateQuery } = useRouteQueryState(
     watermarkEnabled: enumQueryParam(['true', 'false', ''] as const, ''),
   },
   {
+    runOnInit: false,
     onQueryStateChange: async () => {
       await loadUsers()
     },
@@ -232,6 +234,10 @@ async function handlePaginationChange() {
   await updateQuery()
   await loadUsers()
 }
+
+onMounted(() => {
+  void loadUsers()
+})
 
 function openEdit(user: AdminUser) {
   editingUser.value = user

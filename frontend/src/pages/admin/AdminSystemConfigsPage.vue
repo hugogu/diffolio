@@ -166,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs } from 'vue'
+import { ref, toRefs, onMounted } from 'vue'
 import { Plus, Edit, Delete, Setting, View } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import {
@@ -202,6 +202,7 @@ const { state: routeState, updateQuery } = useRouteQueryState(
     search: optionalStringQueryParam(),
   },
   {
+    runOnInit: false,
     onQueryStateChange: async () => {
       await loadConfigs()
     },
@@ -259,6 +260,10 @@ async function handlePageChange(page: number) {
   await updateQuery({ page })
   await loadConfigs()
 }
+
+onMounted(() => {
+  void loadConfigs()
+})
 
 function statusTagType(status: string) {
   if (status === 'VALID') return 'success'

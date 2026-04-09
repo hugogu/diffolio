@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRefs } from 'vue'
+import { ref, computed, toRefs, onMounted } from 'vue'
 import { listEnergyEvents } from '@/api/subscription'
 import { useI18n } from 'vue-i18n'
 import {
@@ -87,6 +87,7 @@ const { state: routeState, updateQuery } = useRouteQueryState(
     to: optionalStringQueryParam(),
   },
   {
+    runOnInit: false,
     onQueryStateChange: async () => {
       await loadEvents()
     },
@@ -177,6 +178,10 @@ async function handlePageChange(nextPage: number): Promise<void> {
   await updateQuery({ page: nextPage })
   await loadEvents()
 }
+
+onMounted(() => {
+  void loadEvents()
+})
 </script>
 
 <style scoped>

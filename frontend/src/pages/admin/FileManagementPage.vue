@@ -108,7 +108,8 @@
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next"
           style="margin-top: 15px; justify-content: flex-end"
-          @change="handlePaginationChange"
+          @current-change="handlePaginationChange"
+          @size-change="handlePaginationChange"
         />
       </el-tab-pane>
       
@@ -162,6 +163,7 @@ const { state: routeState, updateQuery } = useRouteQueryState(
     statsSortOrder: enumQueryParam(['asc', 'desc'] as const, 'desc'),
   },
   {
+    runOnInit: false,
     onQueryStateChange: async () => {
       if (activeTab.value === 'stats') {
         await loadUserStats()
@@ -402,6 +404,11 @@ async function handleTabChange(tabName: string | number) {
 
 onMounted(() => {
   void loadUserOptions()
+  if (activeTab.value === 'stats') {
+    void loadUserStats()
+  } else {
+    void loadFiles()
+  }
 })
 </script>
 

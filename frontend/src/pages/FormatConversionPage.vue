@@ -184,6 +184,7 @@ const { state: routeState, updateQuery } = useRouteQueryState(
     pageSize: numberQueryParam(20, { min: 1, max: 100 }),
   },
   {
+    runOnInit: false,
     onQueryStateChange: async () => {
       await loadHistory()
     },
@@ -320,6 +321,7 @@ function startPolling() {
 
 onMounted(() => {
   startPolling()
+  void loadHistory()
 })
 
 onUnmounted(() => {

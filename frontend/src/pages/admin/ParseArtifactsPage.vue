@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRefs } from 'vue'
+import { computed, ref, toRefs, onMounted } from 'vue'
 import SortableTable from '@/components/common/SortableTable.vue'
 import type { ColumnConfig } from '@/components/common/SortableTable.vue'
 import { listAdminParseArtifacts, type ParseArtifactItem } from '@/api/admin-parse-artifacts'
@@ -77,6 +77,7 @@ const { state: routeState, updateQuery } = useRouteQueryState(
     sortOrder: enumQueryParam(['asc', 'desc'] as const, 'desc'),
   },
   {
+    runOnInit: false,
     onQueryStateChange: async () => {
       await loadData()
     },
@@ -168,4 +169,8 @@ async function handlePageChange(page: number) {
   await updateQuery({ page })
   await loadData()
 }
+
+onMounted(() => {
+  void loadData()
+})
 </script>
