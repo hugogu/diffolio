@@ -9,7 +9,10 @@
       >
         <el-card class="entry-card">
           <div class="entry-header">
-            <span class="headword">{{ item.entry.rawHeadword }}</span>
+            <span class="headword">
+              {{ item.entry.rawHeadword }}
+              <span v-if="item.entry.entrySequence" class="headword-sequence">{{ item.entry.entrySequence }}</span>
+            </span>
             <span v-if="item.entry.phonetic" class="phonetic">{{ item.entry.phonetic }}</span>
             <span v-if="item.entry.pageNumber" class="page-ref">第 {{ item.entry.pageNumber }} 页</span>
           </div>
@@ -131,9 +134,18 @@ function handleRemove(entryId: string, tagId: string) {
 }
 
 .headword {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 1px;
   font-size: 20px;
   font-weight: bold;
   color: var(--el-text-color-primary);
+}
+
+.headword-sequence {
+  font-size: 0.72em;
+  line-height: 1;
+  transform: translateY(-0.28em);
 }
 
 .phonetic {

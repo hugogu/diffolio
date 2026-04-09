@@ -12,6 +12,7 @@ export interface HeadwordTimelineEntry {
     versionId: string
     rawHeadword: string
     normalizedHeadword: string
+    entrySequence?: number | null
     phonetic?: string | null
     pageNumber?: number | null
     crossReferences?: string[] | null

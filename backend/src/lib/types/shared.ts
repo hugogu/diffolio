@@ -203,6 +203,7 @@ export interface EntryDto {
   versionId: string
   rawHeadword: string
   normalizedHeadword: string
+  entrySequence?: number | null
   phonetic?: string | null
   pageNumber?: number | null
   lineNumber?: number | null
