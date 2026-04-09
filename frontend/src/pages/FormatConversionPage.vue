@@ -141,14 +141,14 @@
         :total="total"
         layout="total, prev, pager, next"
         class="pagination"
-        @current-change="loadHistory"
+        @current-change="handlePageChange"
       />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, toRefs } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled, Download, Delete } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -160,6 +160,7 @@ import {
   type ConversionTask
 } from '@/api/conversions'
 import ActionButton from '@/components/common/ActionButton.vue'
+import { numberQueryParam, useRouteQueryState } from '@/composables/useRouteQueryState'
 
 const { t } = useI18n()
 
@@ -176,9 +177,19 @@ const submitting = ref(false)
 // History list
 const tasks = ref<ConversionTask[]>([])
 const loading = ref(false)
-const page = ref(1)
-const pageSize = ref(20)
 const total = ref(0)
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    page: numberQueryParam(1, { min: 1 }),
+    pageSize: numberQueryParam(20, { min: 1, max: 100 }),
+  },
+  {
+    onQueryStateChange: async () => {
+      await loadHistory()
+    },
+  }
+)
+const { page, pageSize } = toRefs(routeState)
 
 // Computed
 const canSubmit = computed(() => {
@@ -308,13 +319,18 @@ function startPolling() {
 }
 
 onMounted(() => {
-  loadHistory()
   startPolling()
 })
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
 })
+
+async function handlePageChange(nextPage: number) {
+  page.value = nextPage
+  await updateQuery({ page: nextPage })
+  await loadHistory()
+}
 </script>
 
 <style scoped>

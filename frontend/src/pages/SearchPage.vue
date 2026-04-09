@@ -94,7 +94,12 @@
     <div class="body-row">
       <!-- Left: taxonomy filter -->
       <div class="taxonomy-sidebar">
-        <TaxonomyFilterPanel @filter-change="onTaxonomyFilterChange" />
+        <TaxonomyFilterPanel
+          :selected-source-id="taxonomySourceId"
+          :selected-node-id="taxonomyNodeId"
+          auto-select-first-source
+          @filter-change="onTaxonomyFilterChange"
+        />
       </div>
 
       <!-- Right: results -->
@@ -138,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, toRefs, watch } from 'vue'
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import {
   searchHeadword,
@@ -150,28 +155,52 @@ import HeadwordTimeline from '@/components/search/HeadwordTimeline.vue'
 import TaxonomyFilterPanel from '@/components/taxonomy/TaxonomyFilterPanel.vue'
 import ActionButton from '@/components/common/ActionButton.vue'
 import { useTagsStore } from '@/stores/tags'
+import {
+  enumQueryParam,
+  numberQueryParam,
+  optionalStringQueryParam,
+  stringArrayQueryParam,
+  useRouteQueryState,
+} from '@/composables/useRouteQueryState'
 
-const query = ref('')
 const loading = ref(false)
 const searched = ref(false)
 const tagsStore = useTagsStore()
 
 const result = ref<PaginatedSearchResult>({ items: [], total: 0, page: 1, pageSize: 20, totalPages: 0 })
-const currentPage = ref(1)
-const pageSize = ref(20)
 
-// Filter state
-const filterVersionId = ref<string | undefined>(undefined)
-const filterHeadwordType = ref<'all' | 'single' | 'compound'>('all')
-const filterMatchMode = ref<'contains' | 'startsWith'>('contains')
-const searchScope = ref<'entry' | 'definition'>('entry')
-const selectedTagIds = ref<string[]>([])
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    q: optionalStringQueryParam(),
+    versionId: optionalStringQueryParam(),
+    headwordType: enumQueryParam(['all', 'single', 'compound'] as const, 'all'),
+    matchMode: enumQueryParam(['contains', 'startsWith'] as const, 'contains'),
+    searchScope: enumQueryParam(['entry', 'definition'] as const, 'entry'),
+    tagIds: stringArrayQueryParam(),
+    taxonomySourceId: optionalStringQueryParam(),
+    taxonomyNodeId: optionalStringQueryParam(),
+    page: numberQueryParam(1, { min: 1 }),
+    pageSize: numberQueryParam(20, { min: 1, max: 100 }),
+  },
+  {
+    onQueryStateChange: async () => {
+      await runSearchFromState()
+    },
+  }
+)
 
-// Taxonomy filter state
-const taxonomyFilter = ref<{ taxonomySourceId: string | null; taxonomyNodeId: string | null }>({
-  taxonomySourceId: null,
-  taxonomyNodeId: null,
-})
+const {
+  q: query,
+  versionId: filterVersionId,
+  headwordType: filterHeadwordType,
+  matchMode: filterMatchMode,
+  searchScope,
+  tagIds: selectedTagIds,
+  taxonomySourceId,
+  taxonomyNodeId,
+  page: currentPage,
+  pageSize,
+} = toRefs(routeState)
 
 // Versions for filter dropdown
 const allVersions = ref<SearchVersionInfo[]>([])
@@ -206,6 +235,7 @@ watch(
     const selectionChanged = nextSelectedTagIds.length !== selectedTagIds.value.length
     if (selectionChanged) {
       selectedTagIds.value = nextSelectedTagIds
+      void updateQuery({ tagIds: nextSelectedTagIds })
     }
 
     if (selectionChanged || selectedTagIds.value.length > 0) {
@@ -214,23 +244,34 @@ watch(
   }
 )
 
+function hasSearchCriteria() {
+  return Boolean(
+    query.value?.trim() ||
+    filterVersionId.value ||
+    taxonomyNodeId.value ||
+    selectedTagIds.value.length > 0
+  )
+}
+
 async function doSearch(page = 1) {
-  if (!query.value.trim() && !filterVersionId.value && !taxonomyFilter.value.taxonomyNodeId && selectedTagIds.value.length === 0) {
+  if (!hasSearchCriteria()) {
+    result.value = { items: [], total: 0, page: 1, pageSize: pageSize.value, totalPages: 0 }
+    searched.value = false
     return
   }
   loading.value = true
   searched.value = false
   try {
     result.value = await searchHeadword({
-      q: query.value.trim() || undefined,
+      q: query.value?.trim() || undefined,
       versionId: filterVersionId.value,
       matchMode: filterMatchMode.value,
       headwordType: filterHeadwordType.value,
       searchScope: searchScope.value,
       page,
       pageSize: pageSize.value,
-      taxonomySourceId: taxonomyFilter.value.taxonomySourceId ?? undefined,
-      taxonomyNodeId: taxonomyFilter.value.taxonomyNodeId ?? undefined,
+      taxonomySourceId: taxonomySourceId.value ?? undefined,
+      taxonomyNodeId: taxonomyNodeId.value ?? undefined,
       tagIds: selectedTagIds.value,
     })
     currentPage.value = result.value.page
@@ -240,31 +281,50 @@ async function doSearch(page = 1) {
   }
 }
 
-function handleSearch() {
-  currentPage.value = 1
-  doSearch(1)
+async function runSearchFromState() {
+  if (!hasSearchCriteria()) {
+    result.value = { items: [], total: 0, page: 1, pageSize: pageSize.value, totalPages: 0 }
+    searched.value = false
+    return
+  }
+  await doSearch(currentPage.value)
 }
 
-function handleFilterChange() {
-  if (searched.value) {
-    currentPage.value = 1
-    doSearch(1)
+async function handleSearch() {
+  currentPage.value = 1
+  await updateQuery({ page: 1 })
+  await doSearch(1)
+}
+
+async function handleFilterChange() {
+  currentPage.value = 1
+  await updateQuery({ page: 1 })
+  if (hasSearchCriteria()) {
+    await doSearch(1)
+  } else {
+    result.value = { items: [], total: 0, page: 1, pageSize: pageSize.value, totalPages: 0 }
+    searched.value = false
   }
 }
 
-function handlePageChange(page: number) {
-  doSearch(page)
+async function handlePageChange(page: number) {
+  currentPage.value = page
+  await updateQuery({ page })
+  await doSearch(page)
 }
 
-function handlePageSizeChange(_size: number) {
+async function handlePageSizeChange(_size: number) {
   currentPage.value = 1
-  doSearch(1)
+  await updateQuery({ page: 1 })
+  await runSearchFromState()
 }
 
-function onTaxonomyFilterChange(filter: { taxonomySourceId: string | null; taxonomyNodeId: string | null }) {
-  taxonomyFilter.value = filter
+async function onTaxonomyFilterChange(filter: { taxonomySourceId: string | null; taxonomyNodeId: string | null }) {
+  taxonomySourceId.value = filter.taxonomySourceId ?? undefined
+  taxonomyNodeId.value = filter.taxonomyNodeId ?? undefined
   currentPage.value = 1
-  doSearch(1)
+  await updateQuery({ page: 1 })
+  await runSearchFromState()
 }
 
 function handleTagsUpdated(payload: { entryId: string; tags: PaginatedSearchResult['items'][number]['entry']['tags'] }) {

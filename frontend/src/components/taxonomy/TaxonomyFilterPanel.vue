@@ -45,6 +45,15 @@ import { useTaxonomyStore } from '@/stores/taxonomy'
 import TaxonomyTreeBrowser from './TaxonomyTreeBrowser.vue'
 
 const { t } = useI18n()
+const props = withDefaults(defineProps<{
+  selectedSourceId?: string | null
+  selectedNodeId?: string | null
+  autoSelectFirstSource?: boolean
+}>(), {
+  selectedSourceId: null,
+  selectedNodeId: null,
+  autoSelectFirstSource: false,
+})
 
 const emit = defineEmits<{
   (e: 'filter-change', filter: { taxonomySourceId: string | null; taxonomyNodeId: string | null }): void
@@ -55,6 +64,14 @@ const selectedSourceId = ref<string | null>(null)
 const selectedNodeId = ref<string | null>(null)
 
 const activeSources = computed(() => store.sources.filter((s) => s.status === 'ACTIVE'))
+
+watch(() => props.selectedSourceId, (value) => {
+  selectedSourceId.value = value ?? null
+}, { immediate: true })
+
+watch(() => props.selectedNodeId, (value) => {
+  selectedNodeId.value = value ?? null
+}, { immediate: true })
 
 function onSourceChange(id: string | null) {
   selectedNodeId.value = null
@@ -73,7 +90,7 @@ function clear() {
 }
 
 watch(activeSources, (sources) => {
-  if (sources.length > 0 && !selectedSourceId.value) {
+  if (props.autoSelectFirstSource && sources.length > 0 && !selectedSourceId.value) {
     selectedSourceId.value = sources[0].id
     emit('filter-change', { taxonomySourceId: sources[0].id, taxonomyNodeId: null })
   }

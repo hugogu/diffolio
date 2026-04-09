@@ -59,24 +59,59 @@
         :total="total"
         layout="total, prev, pager, next"
         size="small"
-        @current-change="loadEvents"
+        @current-change="handlePageChange"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, toRefs } from 'vue'
 import { listEnergyEvents } from '@/api/subscription'
 import { useI18n } from 'vue-i18n'
+import {
+  numberQueryParam,
+  optionalStringQueryParam,
+  useRouteQueryState,
+} from '@/composables/useRouteQueryState'
 
 const { t } = useI18n()
 const loading = ref(false)
 const events = ref<Array<Record<string, unknown>>>([])
-const page = ref(1)
 const pageSize = 50
 const total = ref(0)
-const dateRange = ref<[Date, Date] | null>(null)
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    page: numberQueryParam(1, { min: 1 }),
+    from: optionalStringQueryParam(),
+    to: optionalStringQueryParam(),
+  },
+  {
+    onQueryStateChange: async () => {
+      await loadEvents()
+    },
+  }
+)
+const { page, from, to } = toRefs(routeState)
+
+const dateRange = computed<[Date, Date] | null>({
+  get: () => {
+    if (!from.value || !to.value) return null
+    const start = new Date(`${from.value}T00:00:00`)
+    const end = new Date(`${to.value}T00:00:00`)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null
+    return [start, end] as [Date, Date]
+  },
+  set: (value: [Date, Date] | null) => {
+    if (!value || value.length < 2) {
+      from.value = undefined
+      to.value = undefined
+      return
+    }
+    from.value = value[0].toISOString().slice(0, 10)
+    to.value = value[1].toISOString().slice(0, 10)
+  },
+})
 
 const EVENT_LABELS = computed<Record<string, string>>(() => ({
   WORD_UNLOCK: t('energyHistory.eventTypes.WORD_UNLOCK'),
@@ -111,9 +146,12 @@ function formatDate(iso: string): string {
 async function loadEvents(): Promise<void> {
   loading.value = true
   try {
-    const from = dateRange.value?.[0]?.toISOString().slice(0, 10)
-    const to = dateRange.value?.[1]?.toISOString().slice(0, 10)
-    const result = await listEnergyEvents({ page: page.value, pageSize, from, to })
+    const result = await listEnergyEvents({
+      page: page.value,
+      pageSize,
+      from: from.value,
+      to: to.value,
+    })
     events.value = result.data as unknown as Array<Record<string, unknown>>
     total.value = result.total
   } finally {
@@ -121,18 +159,24 @@ async function loadEvents(): Promise<void> {
   }
 }
 
-function onFilter(): void {
+async function onFilter(): Promise<void> {
   page.value = 1
-  loadEvents()
+  await updateQuery({ page: 1 })
+  await loadEvents()
 }
 
-function resetFilter(): void {
+async function resetFilter(): Promise<void> {
   dateRange.value = null
   page.value = 1
-  loadEvents()
+  await updateQuery({ page: 1 })
+  await loadEvents()
 }
 
-onMounted(loadEvents)
+async function handlePageChange(nextPage: number): Promise<void> {
+  page.value = nextPage
+  await updateQuery({ page: nextPage })
+  await loadEvents()
+}
 </script>
 
 <style scoped>

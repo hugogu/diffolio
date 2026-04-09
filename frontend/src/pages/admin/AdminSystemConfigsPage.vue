@@ -55,7 +55,7 @@
         :page-size="pageSize"
         :total="total"
         layout="total, prev, pager, next"
-        @current-change="loadConfigs"
+        @current-change="handlePageChange"
       />
     </div>
 
@@ -166,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, toRefs } from 'vue'
 import { Plus, Edit, Delete, Setting, View } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import {
@@ -184,15 +184,30 @@ import {
 import JsonEditor from '@/components/common/JsonEditor.vue'
 import { useI18n } from 'vue-i18n'
 import ActionButton from '@/components/common/ActionButton.vue'
+import {
+  numberQueryParam,
+  optionalStringQueryParam,
+  useRouteQueryState,
+} from '@/composables/useRouteQueryState'
 
 const { t } = useI18n()
 
 const loading = ref(false)
 const configs = ref<(SystemConfig & { createdBy: { id: string; email: string } })[]>([])
 const total = ref(0)
-const currentPage = ref(1)
 const pageSize = 20
-const searchQuery = ref('')
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    page: numberQueryParam(1, { min: 1 }),
+    search: optionalStringQueryParam(),
+  },
+  {
+    onQueryStateChange: async () => {
+      await loadConfigs()
+    },
+  }
+)
+const { page: currentPage, search: searchQuery } = toRefs(routeState)
 
 // Edit dialog
 const editDialogVisible = ref(false)
@@ -214,8 +229,6 @@ const historyLoading = ref(false)
 const historyTitle = ref('')
 const historyVersions = ref<ConfigVersionRecord[]>([])
 
-onMounted(loadConfigs)
-
 async function loadConfigs() {
   loading.value = true
   try {
@@ -236,8 +249,15 @@ function handleSearch() {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     currentPage.value = 1
-    loadConfigs()
+    void updateQuery({ page: 1 })
+    void loadConfigs()
   }, 300)
+}
+
+async function handlePageChange(page: number) {
+  currentPage.value = page
+  await updateQuery({ page })
+  await loadConfigs()
 }
 
 function statusTagType(status: string) {

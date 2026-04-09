@@ -6,13 +6,13 @@
       </div>
     </div>
     
-    <el-tabs v-model="activeTab">
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <!-- File Management Tab -->
       <el-tab-pane :label="$t('admin.fileManagement.files')" name="files">
         <!-- Filters -->
         <div class="filter-bar filter-toolbar">
           <el-select
-            v-model="filters.userId"
+            v-model="filterUserId"
             :placeholder="$t('admin.fileManagement.selectUser')"
             clearable
             style="width: 220px"
@@ -27,7 +27,7 @@
           </el-select>
           
           <el-select
-            v-model="filters.fileType"
+            v-model="filterFileType"
             :placeholder="$t('admin.fileManagement.fileType')"
             clearable
             style="width: 180px; margin-left: 10px"
@@ -40,7 +40,7 @@
           </el-select>
           
           <el-input
-            v-model="filters.search"
+            v-model="filterSearch"
             :placeholder="$t('admin.fileManagement.searchFile')"
             style="width: 200px; margin-left: 10px"
             clearable
@@ -53,7 +53,7 @@
           </el-input>
 
           <el-select
-            v-model="filters.unreferenced"
+            v-model="filterUnreferenced"
             :placeholder="$t('admin.fileManagement.referenceStatus')"
             clearable
             style="width: 160px; margin-left: 10px"
@@ -108,7 +108,7 @@
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next"
           style="margin-top: 15px; justify-content: flex-end"
-          @change="loadFiles"
+          @change="handlePaginationChange"
         />
       </el-tab-pane>
       
@@ -126,44 +126,71 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, onMounted, toRefs } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Download, Delete } from '@element-plus/icons-vue'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import SortableTable from '@/components/common/SortableTable.vue'
 import type { ColumnConfig } from '@/components/common/SortableTable.vue'
-import type { FileItem, UserFileStats, UserOption, FileFilters, SortParams } from '@/api/admin-files'
+import type { FileItem, UserFileStats, UserOption } from '@/api/admin-files'
 import { listFiles, getFileUsers, getFileStats, deleteFiles, getFileDownloadUrl } from '@/api/admin-files'
 import { formatFileSize, formatDate } from '@/utils/format'
 import { useI18n } from 'vue-i18n'
 import ActionButton from '@/components/common/ActionButton.vue'
+import {
+  enumQueryParam,
+  numberQueryParam,
+  optionalStringQueryParam,
+  useRouteQueryState,
+} from '@/composables/useRouteQueryState'
 
 const { t } = useI18n()
 
-// Tab state
-const activeTab = ref('files')
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    tab: enumQueryParam(['files', 'stats'] as const, 'files'),
+    page: numberQueryParam(1, { min: 1 }),
+    pageSize: numberQueryParam(20, { min: 1, max: 100 }),
+    userId: optionalStringQueryParam(),
+    fileType: optionalStringQueryParam(),
+    search: optionalStringQueryParam(),
+    unreferenced: enumQueryParam(['true', 'false', ''] as const, ''),
+    sortBy: optionalStringQueryParam(),
+    sortOrder: enumQueryParam(['asc', 'desc'] as const, 'desc'),
+    statsSortBy: optionalStringQueryParam(),
+    statsSortOrder: enumQueryParam(['asc', 'desc'] as const, 'desc'),
+  },
+  {
+    onQueryStateChange: async () => {
+      if (activeTab.value === 'stats') {
+        await loadUserStats()
+      } else {
+        await loadFiles()
+      }
+    },
+  }
+)
 
-// File management state
-const filters = reactive<FileFilters>({
-  userId: undefined,
-  fileType: undefined,
-  search: '',
-  unreferenced: undefined,
-})
+const {
+  tab: activeTab,
+  page: currentPage,
+  pageSize,
+  userId: filterUserId,
+  fileType: filterFileType,
+  search: filterSearch,
+  unreferenced: filterUnreferenced,
+  sortBy,
+  sortOrder,
+  statsSortBy,
+  statsSortOrder,
+} = toRefs(routeState)
 
 const userOptions = ref<UserOption[]>([])
 const fileList = ref<FileItem[]>([])
 const selectedFiles = ref<FileItem[]>([])
-const currentPage = ref(1)
-const pageSize = ref(20)
 const total = ref(0)
 const loading = ref(false)
-
-const sort = reactive<SortParams>({
-  sortBy: 'createdAt',
-  sortOrder: 'desc',
-})
 
 const fileColumns: ColumnConfig<FileItem>[] = [
   { key: 'originalFileName', title: t('admin.fileManagement.fileName'), sortable: false },
@@ -199,10 +226,6 @@ const fileColumns: ColumnConfig<FileItem>[] = [
 // User stats state
 const userStats = ref<UserFileStats[]>([])
 const statsLoading = ref(false)
-const statsSort = reactive<SortParams>({
-  sortBy: 'totalSize',
-  sortOrder: 'desc',
-})
 
 const statsColumns: ColumnConfig<UserFileStats>[] = [
   { key: 'userEmail', title: t('admin.fileManagement.userEmail'), sortable: true },
@@ -238,8 +261,12 @@ async function loadFiles() {
     const res = await listFiles({
       page: currentPage.value,
       pageSize: pageSize.value,
-      ...filters,
-      ...sort,
+      userId: filterUserId.value,
+      fileType: filterFileType.value,
+      search: filterSearch.value,
+      unreferenced: filterUnreferenced.value || undefined,
+      sortBy: sortBy.value || 'createdAt',
+      sortOrder: sortOrder.value,
     })
     fileList.value = res.data
     total.value = res.total
@@ -254,7 +281,10 @@ async function loadFiles() {
 async function loadUserStats() {
   statsLoading.value = true
   try {
-    const res = await getFileStats(statsSort)
+    const res = await getFileStats({
+      sortBy: statsSortBy.value || 'totalSize',
+      sortOrder: statsSortOrder.value,
+    })
     userStats.value = res.data
   } catch (error) {
     ElMessage.error(t('admin.fileManagement.loadStatsError'))
@@ -263,10 +293,10 @@ async function loadUserStats() {
   }
 }
 
-// Filter change
-function handleFilterChange() {
+async function handleFilterChange() {
   currentPage.value = 1
-  loadFiles()
+  await updateQuery({ page: 1 })
+  await loadFiles()
 }
 
 // Table selection change
@@ -277,25 +307,27 @@ function handleSelectionChange(selection: FileItem[]) {
 // File list sort change
 function handleSortChange(sortInfo: { prop: string; order: string | null }) {
   if (sortInfo.order) {
-    sort.sortBy = sortInfo.prop
-    sort.sortOrder = sortInfo.order === 'ascending' ? 'asc' : 'desc'
+    sortBy.value = sortInfo.prop
+    sortOrder.value = sortInfo.order === 'ascending' ? 'asc' : 'desc'
   } else {
-    sort.sortBy = 'createdAt'
-    sort.sortOrder = 'desc'
+    sortBy.value = undefined
+    sortOrder.value = 'desc'
   }
-  loadFiles()
+  void updateQuery()
+  void loadFiles()
 }
 
 // User stats sort change
 function handleStatsSortChange(sortInfo: { prop: string; order: string | null }) {
   if (sortInfo.order) {
-    statsSort.sortBy = sortInfo.prop
-    statsSort.sortOrder = sortInfo.order === 'ascending' ? 'asc' : 'desc'
+    statsSortBy.value = sortInfo.prop
+    statsSortOrder.value = sortInfo.order === 'ascending' ? 'asc' : 'desc'
   } else {
-    statsSort.sortBy = 'totalSize'
-    statsSort.sortOrder = 'desc'
+    statsSortBy.value = undefined
+    statsSortOrder.value = 'desc'
   }
-  loadUserStats()
+  void updateQuery()
+  void loadUserStats()
 }
 
 // Batch download selected files
@@ -353,16 +385,23 @@ async function handleDeleteSelected() {
   }
 }
 
-// Watch tab switch, load user stats
-watch(activeTab, (newTab) => {
-  if (newTab === 'stats' && userStats.value.length === 0) {
-    loadUserStats()
+async function handlePaginationChange() {
+  await updateQuery()
+  await loadFiles()
+}
+
+async function handleTabChange(tabName: string | number) {
+  activeTab.value = String(tabName) as 'files' | 'stats'
+  await updateQuery()
+  if (activeTab.value === 'stats') {
+    await loadUserStats()
+  } else {
+    await loadFiles()
   }
-})
+}
 
 onMounted(() => {
-  loadUserOptions()
-  loadFiles()
+  void loadUserOptions()
 })
 </script>
 

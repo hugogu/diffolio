@@ -10,29 +10,29 @@
           :placeholder="$t('admin.users.searchEmail')"
           clearable
           style="width: 200px"
-          @change="loadUsers"
+          @change="handleFilterChange"
         />
-        <el-select v-model="filterRole" :placeholder="$t('admin.users.allRoles')" clearable style="width: 160px" @change="loadUsers">
+        <el-select v-model="filterRole" :placeholder="$t('admin.users.allRoles')" clearable style="width: 160px" @change="handleFilterChange">
           <el-option :label="$t('admin.users.roles.ADMIN')" value="ADMIN" />
           <el-option :label="$t('admin.users.roles.SUBSCRIBED')" value="SUBSCRIBED" />
           <el-option :label="$t('admin.users.roles.REGULAR')" value="REGULAR" />
         </el-select>
-        <el-radio-group v-model="filterEmailVerified" size="small" @change="loadUsers">
+        <el-radio-group v-model="filterEmailVerified" size="small" @change="handleFilterChange">
           <el-radio-button label="">{{ $t('admin.users.verified') }}</el-radio-button>
           <el-radio-button label="true">{{ $t('common.yes') }}</el-radio-button>
           <el-radio-button label="false">{{ $t('common.no') }}</el-radio-button>
         </el-radio-group>
-        <el-radio-group v-model="filterExportEnabled" size="small" @change="loadUsers">
+        <el-radio-group v-model="filterExportEnabled" size="small" @change="handleFilterChange">
           <el-radio-button label="">{{ $t('admin.users.export') }}</el-radio-button>
           <el-radio-button label="true">{{ $t('common.yes') }}</el-radio-button>
           <el-radio-button label="false">{{ $t('common.no') }}</el-radio-button>
         </el-radio-group>
-        <el-radio-group v-model="filterCanEditBuiltinConfigs" size="small" @change="loadUsers">
+        <el-radio-group v-model="filterCanEditBuiltinConfigs" size="small" @change="handleFilterChange">
           <el-radio-button label="">{{ $t('admin.users.editConfig') }}</el-radio-button>
           <el-radio-button label="true">{{ $t('common.yes') }}</el-radio-button>
           <el-radio-button label="false">{{ $t('common.no') }}</el-radio-button>
         </el-radio-group>
-        <el-radio-group v-model="filterWatermarkEnabled" size="small" @change="loadUsers">
+        <el-radio-group v-model="filterWatermarkEnabled" size="small" @change="handleFilterChange">
           <el-radio-button label="">{{ $t('admin.users.watermark') }}</el-radio-button>
           <el-radio-button label="true">{{ $t('common.yes') }}</el-radio-button>
           <el-radio-button label="false">{{ $t('common.no') }}</el-radio-button>
@@ -116,7 +116,7 @@
         :total="total"
         :page-sizes="[20, 50, 100]"
         layout="total, sizes, prev, pager, next"
-        @change="loadUsers"
+        @change="handlePaginationChange"
       />
     </div>
 
@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, toRefs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { MoreFilled } from '@element-plus/icons-vue'
@@ -144,20 +144,45 @@ import { listAdminUsers, adminGetUserSubscription, updateAdminUser, adminResetPa
 import UserEditDialog from '@/components/admin/UserEditDialog.vue'
 import SubscriptionEditDialog from '@/components/admin/SubscriptionEditDialog.vue'
 import ActionButton from '@/components/common/ActionButton.vue'
+import {
+  enumQueryParam,
+  numberQueryParam,
+  optionalStringQueryParam,
+  useRouteQueryState,
+} from '@/composables/useRouteQueryState'
 
 const { t } = useI18n()
 
 const loading = ref(false)
 const users = ref<AdminUser[]>([])
 const total = ref(0)
-const page = ref(1)
-const pageSize = ref(20)
-const filterEmail = ref('')
-const filterRole = ref('')
-const filterEmailVerified = ref('')
-const filterExportEnabled = ref('')
-const filterCanEditBuiltinConfigs = ref('')
-const filterWatermarkEnabled = ref('')
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    page: numberQueryParam(1, { min: 1 }),
+    pageSize: numberQueryParam(20, { min: 1, max: 100 }),
+    search: optionalStringQueryParam(),
+    role: enumQueryParam(['ADMIN', 'SUBSCRIBED', 'REGULAR', ''] as const, ''),
+    emailVerified: enumQueryParam(['true', 'false', ''] as const, ''),
+    exportEnabled: enumQueryParam(['true', 'false', ''] as const, ''),
+    canEditBuiltinConfigs: enumQueryParam(['true', 'false', ''] as const, ''),
+    watermarkEnabled: enumQueryParam(['true', 'false', ''] as const, ''),
+  },
+  {
+    onQueryStateChange: async () => {
+      await loadUsers()
+    },
+  }
+)
+const {
+  page,
+  pageSize,
+  search: filterEmail,
+  role: filterRole,
+  emailVerified: filterEmailVerified,
+  exportEnabled: filterExportEnabled,
+  canEditBuiltinConfigs: filterCanEditBuiltinConfigs,
+  watermarkEnabled: filterWatermarkEnabled,
+} = toRefs(routeState)
 const editingUser = ref<AdminUser | null>(null)
 const editingSubUser = ref<AdminUser | null>(null)
 const subscriptionMap = ref<Record<string, { tier: string; status: string }>>({})
@@ -195,6 +220,17 @@ async function loadUsers() {
   } finally {
     loading.value = false
   }
+}
+
+async function handleFilterChange() {
+  page.value = 1
+  await updateQuery({ page: 1 })
+  await loadUsers()
+}
+
+async function handlePaginationChange() {
+  await updateQuery()
+  await loadUsers()
 }
 
 function openEdit(user: AdminUser) {
@@ -265,7 +301,6 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', { hour12: false })
 }
 
-onMounted(loadUsers)
 </script>
 
 <style scoped>

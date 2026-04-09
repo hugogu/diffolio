@@ -44,7 +44,7 @@
           :comparison-id="route.params.id as string"
           :disabled="comparison.status !== 'COMPLETED'"
           :sense-change-types="senseChangeTypeFilter"
-          :taxonomy-source-id="taxonomyFilter.taxonomySourceId"
+          :taxonomy-source-id="taxonomySourceId"
         />
       </div>
     </div>
@@ -119,7 +119,7 @@
           
           <!-- 分类筛选 inline -->
           <el-select
-            v-model="taxonomyFilter.taxonomySourceId"
+            v-model="taxonomySourceId"
             :placeholder="$t('comparisonDetail.taxonomy')"
             clearable
             style="width: 140px"
@@ -133,8 +133,8 @@
             />
           </el-select>
           <el-tree-select
-            v-if="taxonomyFilter.taxonomySourceId"
-            v-model="taxonomyFilter.taxonomyNodeIds"
+            v-if="taxonomySourceId"
+            v-model="taxonomyNodeId"
             :data="taxonomyTreeData"
             :props="{ label: 'label', value: 'id', children: 'children' }"
             :placeholder="$t('comparisonDetail.selectTaxonomy')"
@@ -283,7 +283,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, toRefs, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import { Search, Loading, Lock, Unlock } from '@element-plus/icons-vue'
@@ -298,6 +298,13 @@ import type { EntryAlignment } from '@/api/comparisons'
 import type { TaxonomyNodeTree } from '@/api/taxonomy'
 import { useI18n } from 'vue-i18n'
 import { useTagsStore } from '@/stores/tags'
+import {
+  numberQueryParam,
+  optionalStringQueryParam,
+  stringArrayQueryParam,
+  stringQueryParam,
+  useRouteQueryState,
+} from '@/composables/useRouteQueryState'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -310,19 +317,39 @@ const loading = ref(false)
 const listLoading = ref(false)
 const comparison = ref(store.current)
 const alignments = ref(store.alignments)
-const selectedAlignmentIds = ref<string[]>([])
 
-const senseChangeTypeFilter = ref<string[]>([])
-const searchHeadword = ref('')
-const searchText = ref('')
-const selectedTagIds = ref<string[]>([])
-const currentPage = ref(1)
+const { state: routeState, updateQuery } = useRouteQueryState(
+  {
+    senseChangeType: stringArrayQueryParam(),
+    headword: stringQueryParam(''),
+    q: stringQueryParam(''),
+    tagIds: stringArrayQueryParam(),
+    taxonomySourceId: optionalStringQueryParam(),
+    taxonomyNodeId: stringArrayQueryParam(),
+    selected: stringArrayQueryParam(),
+    page: numberQueryParam(1, { min: 1 }),
+  },
+  {
+    runOnInit: false,
+    onQueryStateChange: async () => {
+      if (comparison.value?.status === 'COMPLETED') {
+        await loadAlignments()
+      }
+    },
+  }
+)
+const {
+  senseChangeType: senseChangeTypeFilter,
+  headword: searchHeadword,
+  q: searchText,
+  tagIds: selectedTagIds,
+  taxonomySourceId,
+  taxonomyNodeId,
+  selected: selectedAlignmentIds,
+  page: currentPage,
+} = toRefs(routeState)
 const pageSize = ref(20)
 const total = ref(0)
-const taxonomyFilter = ref<{ taxonomySourceId: string | null; taxonomyNodeIds: string[] }>({
-  taxonomySourceId: null,
-  taxonomyNodeIds: [],
-})
 type ComparisonDisplayOptions = {
   showExamples: boolean
   showRegisterDiff: boolean
@@ -349,7 +376,7 @@ const selectedAlignments = computed(() => {
 
 const activeTaxonomySources = computed(() => taxonomyStore.sources.filter((s) => s.status === 'ACTIVE'))
 const taxonomyTreeData = computed(() => {
-  const sourceId = taxonomyFilter.value.taxonomySourceId
+  const sourceId = taxonomySourceId.value
   return sourceId ? taxonomyStore.treeBySourceId[sourceId] ?? [] : []
 })
 const taggingAlignmentIds = ref<string[]>([])
@@ -405,11 +432,10 @@ onMounted(async () => {
 })
 
 // Watch for taxonomy source changes to load tree
-watch(() => taxonomyFilter.value.taxonomySourceId, (newId) => {
+watch(taxonomySourceId, (newId) => {
   if (newId && !taxonomyStore.treeBySourceId[newId]) {
-    taxonomyStore.fetchTree(newId)
+    void taxonomyStore.fetchTree(newId)
   }
-  taxonomyFilter.value.taxonomyNodeIds = []
 })
 
 watch(displayOptions, (value) => {
@@ -431,9 +457,9 @@ async function loadAlignments() {
         : undefined,
       headword: searchHeadword.value.trim() || undefined,
       q: searchText.value.trim() || undefined,
-      taxonomySourceId: taxonomyFilter.value.taxonomySourceId ?? undefined,
-      taxonomyNodeId: taxonomyFilter.value.taxonomyNodeIds.length > 0
-        ? taxonomyFilter.value.taxonomyNodeIds.join(',')
+      taxonomySourceId: taxonomySourceId.value ?? undefined,
+      taxonomyNodeId: taxonomyNodeId.value.length > 0
+        ? taxonomyNodeId.value.join(',')
         : undefined,
       tagIds: selectedTagIds.value,
     })
@@ -442,7 +468,12 @@ async function loadAlignments() {
     alignments.value = store.alignments
     total.value = result.total
     const idsOnPage = new Set(alignments.value.map((alignment) => alignment.id))
-    selectedAlignmentIds.value = selectedAlignmentIds.value.filter((id) => idsOnPage.has(id))
+    const nextSelectedAlignmentIds = selectedAlignmentIds.value.filter((id) => idsOnPage.has(id))
+    const selectionChanged = nextSelectedAlignmentIds.length !== selectedAlignmentIds.value.length
+    selectedAlignmentIds.value = nextSelectedAlignmentIds
+    if (selectionChanged) {
+      void updateQuery({ selected: nextSelectedAlignmentIds })
+    }
   } finally {
     listLoading.value = false
   }
@@ -450,25 +481,33 @@ async function loadAlignments() {
 
 function onSearchInput() {
   if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => { currentPage.value = 1; loadAlignments() }, 400)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1
+    void updateQuery({ page: 1 })
+    void loadAlignments()
+  }, 400)
 }
 
 async function onSearch() {
   currentPage.value = 1
+  await updateQuery({ page: 1 })
   await loadAlignments()
 }
 
 async function onFilterChange() {
   currentPage.value = 1
+  await updateQuery({ page: 1 })
   await loadAlignments()
 }
 
-function onTaxonomySourceChange() {
-  onFilterChange()
+async function onTaxonomySourceChange() {
+  taxonomyNodeId.value = []
+  await onFilterChange()
 }
 
 async function onPageChange(page: number) {
   currentPage.value = page
+  await updateQuery({ page })
   await loadAlignments()
 }
 
@@ -476,16 +515,19 @@ function isAlignmentSelected(id: string): boolean {
   return selectedAlignmentIds.value.includes(id)
 }
 
-function toggleAlignmentSelection(a: EntryAlignment) {
+async function toggleAlignmentSelection(a: EntryAlignment) {
   if (isAlignmentSelected(a.id)) {
     selectedAlignmentIds.value = selectedAlignmentIds.value.filter((id) => id !== a.id)
+    await updateQuery({ selected: selectedAlignmentIds.value })
     return
   }
   selectedAlignmentIds.value = [...selectedAlignmentIds.value, a.id]
+  await updateQuery({ selected: selectedAlignmentIds.value })
 }
 
-function clearSelectedAlignments() {
+async function clearSelectedAlignments() {
   selectedAlignmentIds.value = []
+  await updateQuery({ selected: [] })
 }
 
 function isEntryTagMutationLoading(alignmentId: string) {
