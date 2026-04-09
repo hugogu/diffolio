@@ -23,13 +23,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="publishedYear" :label="$t('admin.dictionaryDetail.publishedYear')" width="100" />
-        <el-table-column :label="$t('admin.dictionaryDetail.formatConfig')" width="120">
-          <template #default="{ row }">
-            <el-tag :type="configStatusType(row.formatConfig?.validationStatus)">
-              {{ row.formatConfig?.validationStatus ?? $t('admin.versionDetail.notConfigured') }}
-            </el-tag>
-          </template>
-        </el-table-column>
+         <el-table-column :label="$t('admin.dictionaryDetail.formatConfig')" width="120">
+           <template #default="{ row }">
+             <el-tag :type="configStatusType(row.formatConfig?.validationStatus)">
+               {{ row.formatConfig?.validationStatus ? t('admin.versionDetail.statusLabels.' + row.formatConfig.validationStatus) : $t('admin.versionDetail.notConfigured') }}
+             </el-tag>
+           </template>
+         </el-table-column>
         <el-table-column :label="$t('admin.dictionaryDetail.entryCount')" width="90" align="center">
           <template #default="{ row }">
             <span v-if="row.entryCount != null">{{ row.entryCount }}</span>

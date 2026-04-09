@@ -27,12 +27,12 @@
                 </span>
               </div>
               <div class="card-header-right">
-                <el-tag
-                  v-if="version?.formatConfig"
-                  :type="configStatusType(version?.formatConfig?.validationStatus)"
-                >
-                  {{ version?.formatConfig?.validationStatus }}
-                </el-tag>
+               <el-tag
+                 v-if="version?.formatConfig"
+                 :type="configStatusType(version?.formatConfig?.validationStatus)"
+               >
+                 {{ version?.formatConfig?.validationStatus ? t('admin.versionDetail.statusLabels.' + version.formatConfig.validationStatus) : '' }}
+               </el-tag>
                 <el-tag v-else type="info">{{ $t('admin.versionDetail.notConfigured') }}</el-tag>
               </div>
             </div>
@@ -48,30 +48,30 @@
               @change="handleConfigProfileChange"
             >
               <el-option-group :label="$t('admin.versionDetail.systemConfig')">
-                <el-option
-                  v-for="c in configsStore.systemConfigs"
-                  :key="`system:${c.id}`"
-                  :label="c.name"
-                  :value="`system:${c.id}`"
-                >
-                  <span>{{ c.name }}</span>
-                  <el-tag size="small" :type="configStatusType(c.validationStatus)" style="margin-left: 8px">
-                    {{ c.validationStatus }}
-                  </el-tag>
-                </el-option>
+                 <el-option
+                   v-for="c in configsStore.systemConfigs"
+                   :key="`system:${c.id}`"
+                   :label="c.name"
+                   :value="`system:${c.id}`"
+                 >
+                   <span>{{ c.name }}</span>
+                   <el-tag size="small" :type="configStatusType(c.validationStatus)" style="margin-left: 8px">
+                     {{ t('admin.versionDetail.statusLabels.' + c.validationStatus) }}
+                   </el-tag>
+                 </el-option>
               </el-option-group>
               <el-option-group :label="$t('admin.versionDetail.userConfig')">
-                <el-option
-                  v-for="c in configsStore.userConfigs"
-                  :key="`user:${c.id}`"
-                  :label="c.name"
-                  :value="`user:${c.id}`"
-                >
-                  <span>{{ c.name }}</span>
-                  <el-tag size="small" :type="configStatusType(c.validationStatus)" style="margin-left: 8px">
-                    {{ c.validationStatus }}
-                  </el-tag>
-                </el-option>
+                 <el-option
+                   v-for="c in configsStore.userConfigs"
+                   :key="`user:${c.id}`"
+                   :label="c.name"
+                   :value="`user:${c.id}`"
+                 >
+                   <span>{{ c.name }}</span>
+                   <el-tag size="small" :type="configStatusType(c.validationStatus)" style="margin-left: 8px">
+                     {{ t('admin.versionDetail.statusLabels.' + c.validationStatus) }}
+                   </el-tag>
+                 </el-option>
               </el-option-group>
             </el-select>
             <el-select
@@ -84,12 +84,12 @@
               <el-option
                 v-for="versionOption in availableConfigVersions"
                 :key="versionOption.id"
-                :label="`v${versionOption.versionNumber}${versionOption.isCurrent ? ' (current)' : ''}`"
+                :label="`v${versionOption.versionNumber}${versionOption.isCurrent ? ' (' + t('admin.versionDetail.current') + ')' : ''}`"
                 :value="versionOption.id"
               >
                 <div class="config-version-option">
                   <span>{{ `v${versionOption.versionNumber}` }}</span>
-                  <el-tag v-if="versionOption.isCurrent" size="small" type="success">current</el-tag>
+                  <el-tag v-if="versionOption.isCurrent" size="small" type="success">{{ t('admin.versionDetail.current') }}</el-tag>
                 </div>
               </el-option>
             </el-select>
@@ -132,7 +132,7 @@
               <el-icon class="file-icon"><Document /></el-icon>
               <span class="file-name">{{ activeFile.originalFileName }}</span>
               <el-tag size="small" type="info">{{ activeFile.sharedFileAsset.fileType }}</el-tag>
-              <el-tag v-if="activeTask" size="small" :type="taskStatusType(activeTask.status)">{{ activeTask.status }}</el-tag>
+              <el-tag v-if="activeTask" size="small" :type="taskStatusType(activeTask.status)">{{ t('admin.versionDetail.statusLabels.' + activeTask.status) }}</el-tag>
               <el-tag size="small" :type="activeFileTagType">{{ activeFileTagLabel }}</el-tag>
               <ActionButton
                 kind="admin"

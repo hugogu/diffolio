@@ -603,6 +603,10 @@
       "validation": {
         "nameRequired": "Please enter config name",
         "jsonInvalid": "Invalid JSON format"
+      },
+      "statusLabels": {
+        "VALID": "Valid",
+        "INVALID": "Invalid"
       }
     },
     "dictionaryList": {
@@ -685,7 +689,13 @@
       "reparseSuccess": "Reparse task started",
       "reparseError": "Failed to start reparse",
       "deleteFileSuccess": "File reference detached, you can re-upload",
-      "deleteFileError": "Failed to delete file"
+      "deleteFileError": "Failed to delete file",
+      "statusLabels": {
+        "VALID": "Valid",
+        "INVALID": "Invalid",
+        "COMPLETED": "Completed"
+      },
+      "current": "current"
     },
     "configManagement": {
       "title": "Config Management",
@@ -715,6 +725,10 @@
       "validation": {
         "nameRequired": "Please enter config name",
         "jsonInvalid": "Invalid JSON format"
+      },
+      "statusLabels": {
+        "VALID": "Valid",
+        "INVALID": "Invalid"
       }
     },
     "taxonomy": {

@@ -22,12 +22,12 @@
     <el-table :data="configs" v-loading="loading" style="width: 100%">
       <el-table-column prop="name" :label="$t('common.name')" min-width="160" />
       <el-table-column prop="description" :label="$t('common.description')" min-width="200" show-overflow-tooltip />
-      <el-table-column :label="$t('admin.systemConfigs.status')" width="110">
-        <template #default="{ row }">
-          <el-tag :type="statusTagType(row.validationStatus)" size="small">{{ row.validationStatus }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="$t('admin.systemConfigs.visibility')" width="130">
+       <el-table-column :label="$t('admin.systemConfigs.status')" width="110">
+         <template #default="{ row }">
+           <el-tag :type="statusTagType(row.validationStatus)" size="small">{{ t('admin.systemConfigs.statusLabels.' + row.validationStatus) }}</el-tag>
+         </template>
+       </el-table-column>
+       <el-table-column :label="$t('admin.systemConfigs.visibility')" width="130">
         <template #default="{ row }">
           <el-tag :type="row.visibility === 'ALL_USERS' ? 'success' : 'warning'" size="small">
             {{ row.visibility === 'ALL_USERS' ? $t('admin.systemConfigs.allUsers') : $t('admin.systemConfigs.specificUsers') }}
@@ -143,20 +143,20 @@
         <el-table-column prop="versionNumber" label="Version" width="100">
           <template #default="{ row }">v{{ row.versionNumber }}</template>
         </el-table-column>
-        <el-table-column prop="validationStatus" :label="$t('admin.systemConfigs.status')" width="120">
-          <template #default="{ row }">
-            <el-tag :type="statusTagType(row.validationStatus)" size="small">{{ row.validationStatus }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="contentHash" label="Hash" min-width="220" show-overflow-tooltip />
+         <el-table-column prop="validationStatus" :label="$t('admin.systemConfigs.status')" width="120">
+           <template #default="{ row }">
+             <el-tag :type="statusTagType(row.validationStatus)" size="small">{{ t('admin.systemConfigs.statusLabels.' + row.validationStatus) }}</el-tag>
+           </template>
+         </el-table-column>
+         <el-table-column prop="contentHash" label="Hash" min-width="220" show-overflow-tooltip />
         <el-table-column :label="$t('common.updatedAt')" width="180">
           <template #default="{ row }">{{ new Date(row.createdAt).toLocaleString('zh-CN', { dateStyle: 'short', timeStyle: 'short' }) }}</template>
         </el-table-column>
-        <el-table-column label="Current" width="100">
-          <template #default="{ row }">
-            <el-tag v-if="row.isCurrent" type="success" size="small">current</el-tag>
-          </template>
-        </el-table-column>
+         <el-table-column label="Current" width="100">
+           <template #default="{ row }">
+             <el-tag v-if="row.isCurrent" type="success" size="small">{{ t('admin.versionDetail.current') }}</el-tag>
+           </template>
+         </el-table-column>
       </el-table>
       <template #footer>
         <el-button @click="historyDialogVisible = false">{{ $t('common.close') }}</el-button>

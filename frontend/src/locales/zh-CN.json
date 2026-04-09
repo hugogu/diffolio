@@ -603,6 +603,10 @@
       "validation": {
         "nameRequired": "请输入配置名称",
         "jsonInvalid": "JSON 格式不正确"
+      },
+      "statusLabels": {
+        "VALID": "有效",
+        "INVALID": "无效"
       }
     },
     "dictionaryList": {
@@ -685,7 +689,13 @@
       "reparseSuccess": "重新解析任务已启动",
       "reparseError": "启动重新解析失败",
       "deleteFileSuccess": "文件引用已解除，可重新上传",
-      "deleteFileError": "删除文件失败"
+      "deleteFileError": "删除文件失败",
+      "statusLabels": {
+        "VALID": "有效",
+        "INVALID": "无效",
+        "COMPLETED": "已完成"
+      },
+      "current": "当前"
     },
     "configManagement": {
       "title": "配置管理",
@@ -715,6 +725,10 @@
       "validation": {
         "nameRequired": "请输入配置名称",
         "jsonInvalid": "JSON 格式不正确"
+      },
+      "statusLabels": {
+        "VALID": "有效",
+        "INVALID": "无效"
       }
     },
     "taxonomy": {
